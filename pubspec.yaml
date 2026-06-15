@@ -1,0 +1,32 @@
+name: cubed_app
+description: CUBED — 편의점 저당/제로 제품의 혈당 영향·0g 마케팅 함정을 직관적으로 보여주는 앱.
+publish_to: "none"
+version: 0.2.0+1
+
+environment:
+  sdk: ">=3.6.0 <4.0.0"
+  flutter: ">=3.27.0"
+
+dependencies:
+  flutter:
+    sdk: flutter
+  # 상태관리
+  flutter_riverpod: ^2.5.1
+  # 백엔드
+  supabase_flutter: ^2.5.6
+  # 바코드 스캔
+  mobile_scanner: ^5.1.1
+  # OCR 사진 촬영/선택
+  image_picker: ^1.1.2
+  # 썸네일
+  cached_network_image: ^3.3.1
+  # 아이콘/타이포
+  cupertino_icons: ^1.0.6
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^4.0.0
+
+flutter:
+  uses-material-design: true
