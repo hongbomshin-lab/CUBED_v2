@@ -73,7 +73,7 @@ class _StoreReportSheetState extends ConsumerState<StoreReportSheet> {
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
+    return SingleChildScrollView(
       padding: EdgeInsets.only(
         bottom: MediaQuery.of(context).viewInsets.bottom + 24,
         left: 24,

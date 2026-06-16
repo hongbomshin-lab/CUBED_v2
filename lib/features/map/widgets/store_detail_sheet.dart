@@ -9,6 +9,7 @@ import '../../../data/models/store.dart';
 import '../../../data/models/store_review.dart';
 import '../../../providers/providers.dart';
 import '../../auth/login_screen.dart';
+import '../../report/menu_board_report_sheet.dart';
 import '../../review/review_sheet.dart';
 
 /// 마커 탭 시 표시하는 매장 상세 바텀시트.
@@ -146,10 +147,15 @@ class _StoreDetailSheetState extends ConsumerState<StoreDetailSheet>
       );
       return;
     }
-    // TODO(Step 4 확장): MenuBoardReportSheet 구현 후 연결.
     if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('메뉴판 제보 기능은 곧 추가될 예정이에요')),
+    await showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: CubedColors.surface,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      builder: (_) => MenuBoardReportSheet(storeId: s.id, storeName: s.name),
     );
   }
 

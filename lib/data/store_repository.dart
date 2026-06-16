@@ -41,6 +41,34 @@ class StoreRepository {
     return rows.map((m) => Store.fromMap(m)).toList();
   }
 
+  /// 이름으로 매장 검색 (부분일치, 최신 등록순). 지도 검색바용.
+  Future<List<Store>> searchByName(String query, {int limit = 20}) async {
+    final q = query.trim();
+    if (q.isEmpty) return const [];
+    final rows = await _db
+        .from('stores')
+        .select(_cols)
+        .eq('is_active', true)
+        .ilike('name', '%$q%')
+        .limit(limit);
+    return rows.map((m) => Store.fromMap(m)).toList();
+  }
+
+  /// 메뉴판 제보 등록. 사진 URL 필수 + 메모 선택. 승인 시 store_photos 자동 등록.
+  Future<void> submitMenuBoardReport({
+    required String storeId,
+    required String reportedBy,
+    required String imageUrl,
+    String? note,
+  }) async {
+    await _db.from('menu_board_reports').insert({
+      'store_id': storeId,
+      'reported_by': reportedBy,
+      'image_url': imageUrl,
+      if (note != null && note.isNotEmpty) 'note': note,
+    });
+  }
+
   /// 매장 리뷰 목록 (최신순).
   Future<List<StoreReview>> reviews(String storeId, {int limit = 50}) async {
     final rows = await _db
