@@ -11,6 +11,49 @@ class OcrResult {
   final List<String> unknownSweeteners;
   final String? rawText;
   const OcrResult({required this.product, this.unknownSweeteners = const [], this.rawText});
+
+  /// 파싱 결과 맵 → OcrResult (순수 변환; 네트워크 무관). ocr-parse/submit-product 응답 공용.
+  factory OcrResult.fromParsed(Map<String, dynamic> m, {String? barcode}) {
+    double d(dynamic v) => (v as num?)?.toDouble() ?? 0;
+    final swList = ((m['sweeteners'] as List?) ?? const [])
+        .asMap()
+        .entries
+        .map((e) => ProductSweetener(
+              slug: (e.value as Map)['slug'] as String,
+              amountG: ((e.value as Map)['amount_g'] as num?)?.toDouble(),
+              sortOrder: e.key,
+            ))
+        .toList();
+    final product = Product(
+      productId: 'ocr-temp',
+      name: (m['name'] as String?) ?? '촬영한 제품',
+      brand: m['brand'] as String?,
+      category: m['category'] as String?,
+      servingSize: d(m['serving_size']),
+      unit: (m['unit'] as String?) ?? 'g',
+      kcal: d(m['kcal']),
+      carb: d(m['carb']),
+      sugar: d(m['sugar']),
+      protein: d(m['protein']),
+      fat: d(m['fat']),
+      sodiumMg: (m['sodium_mg'] as num?)?.toDouble(),
+      fiber: d(m['fiber']),
+      sugarAlcohol: d(m['sugar_alcohol']),
+      rareSugarG: d(m['rare_sugar_g']),
+      ingredientsRaw: m['ingredients_raw'] as String?,
+      sweetenerCount: swList.length,
+      barcode: barcode,
+      verified: false,
+      sourceType: 'OCR제보',
+      notes: m['notes'] as String?,
+      sweeteners: swList,
+    );
+    return OcrResult(
+      product: product,
+      unknownSweeteners: ((m['unknown_sweeteners'] as List?) ?? const []).cast<String>(),
+      rawText: m['ingredients_raw'] as String?,
+    );
+  }
 }
 
 class OcrService {
