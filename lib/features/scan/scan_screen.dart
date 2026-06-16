@@ -4,7 +4,7 @@ import 'package:mobile_scanner/mobile_scanner.dart';
 
 import '../../core/theme.dart';
 import '../../providers/providers.dart';
-import '../ocr/ocr_screen.dart';
+import '../capture/capture_screen.dart';
 import '../result/result_screen.dart';
 
 /// 바코드 스캔 → 제품 조회. 없으면 OCR 폴백 안내.
@@ -76,7 +76,7 @@ class _ScanScreenState extends ConsumerState<ScanScreen> {
                 onPressed: () {
                   Navigator.of(context).pop();
                   Navigator.of(context).pushReplacement(
-                    MaterialPageRoute(builder: (_) => OcrScreen(prefillBarcode: code)),
+                    MaterialPageRoute(builder: (_) => CaptureScreen(prefillBarcode: code)),
                   );
                 },
                 icon: const Icon(Icons.center_focus_strong_rounded),
