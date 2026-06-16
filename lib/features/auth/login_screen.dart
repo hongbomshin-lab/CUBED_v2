@@ -27,6 +27,26 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     super.dispose();
   }
 
+  Future<void> _kakao() async {
+    setState(() {
+      _busy = true;
+      _error = null;
+    });
+    try {
+      // 외부 브라우저로 OAuth를 띄운다. 완료는 딥링크 복귀로 처리되고,
+      // currentUser 리스너가 화면을 닫는다. 사용자가 취소하고 돌아오면 버튼을 다시 활성화.
+      await ref.read(authRepositoryProvider).signInWithKakao();
+      if (mounted) setState(() => _busy = false);
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _busy = false;
+          _error = '카카오 로그인 실패: $e';
+        });
+      }
+    }
+  }
+
   Future<void> _submitEmail() async {
     final email = _email.text.trim();
     final pw = _pw.text;
@@ -93,6 +113,34 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
           const Text('로그인하고 좋아요·코멘트를 남겨보세요',
               style: TextStyle(color: CubedColors.inkSoft, fontSize: 14)),
           const SizedBox(height: 28),
+
+          // 카카오 로그인
+          SizedBox(
+            width: double.infinity,
+            child: FilledButton.icon(
+              style: FilledButton.styleFrom(
+                backgroundColor: const Color(0xFFFEE500),
+                foregroundColor: const Color(0xFF191600),
+                padding: const EdgeInsets.symmetric(vertical: 15),
+                elevation: 0,
+              ),
+              onPressed: _busy ? null : _kakao,
+              icon: const Icon(Icons.chat_bubble_rounded, size: 18),
+              label: const Text('카카오로 시작하기',
+                  style: TextStyle(fontWeight: FontWeight.w800, fontSize: 15)),
+            ),
+          ),
+          const SizedBox(height: 18),
+          const Row(children: [
+            Expanded(child: Divider(color: CubedColors.line)),
+            Padding(
+              padding: EdgeInsets.symmetric(horizontal: 12),
+              child: Text('또는 이메일로',
+                  style: TextStyle(color: CubedColors.inkSoft, fontSize: 12)),
+            ),
+            Expanded(child: Divider(color: CubedColors.line)),
+          ]),
+          const SizedBox(height: 18),
 
           if (_register) ...[
             _field(_nick, '닉네임', Icons.badge_outlined),
