@@ -46,3 +46,8 @@ app.*.map.json
 
 # Claude Code MCP 설정 — Supabase 서비스 액세스 토큰이 들어 있으므로 절대 커밋 금지.
 .mcp.json
+
+# API 키 — 절대 커밋 금지
+.env
+.env.*
+scripts/.env
