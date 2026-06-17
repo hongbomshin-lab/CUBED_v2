@@ -13,4 +13,9 @@ class Env {
   /// 대표 썸네일 베이스 경로 (Storage product-images 버킷).
   /// products.image_file = "{product_id}.png"
   static const imageBaseUrl = '$supabaseUrl/storage/v1/object/public/product-images';
+
+  /// 네이버 클라우드 플랫폼 Maps > Application 의 Client ID.
+  /// (NCP 콘솔 → Maps → Application 등록 → API "Dynamic Map" 체크 → 인증정보의 Client ID)
+  /// TODO: 발급받은 값으로 교체. 비어 있으면 지도 인증 실패(onAuthFailed)로 지도만 렌더되지 않음.
+  static const naverMapClientId = 'fxapwfixct';
 }

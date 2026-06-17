@@ -22,6 +22,11 @@ dependencies:
   cached_network_image: ^3.3.1
   # 아이콘/타이포
   cupertino_icons: ^1.0.6
+  # 저당맵
+  flutter_naver_map: ^1.4.4
+  geolocator: ^14.0.3
+  shared_preferences: ^2.5.5
+  url_launcher: ^6.3.2
   # 웹 클립보드 JS interop (관리자 콘솔 사진 붙여넣기)
   web: ^1.1.1
 

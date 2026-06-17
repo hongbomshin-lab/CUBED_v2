@@ -1,11 +1,14 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import '../core/location_cache.dart';
 import '../data/auth_repository.dart';
 import '../data/models/comment.dart';
 import '../data/models/product.dart';
+import '../data/models/store_review.dart';
 import '../data/product_repository.dart';
 import '../data/social_repository.dart';
+import '../data/store_repository.dart';
 import '../domain/interpretation.dart';
 import '../features/chat/chat_service.dart';
 
@@ -23,6 +26,21 @@ final chatServiceProvider = Provider<ChatService>(
 final socialRepositoryProvider = Provider<SocialRepository>(
   (ref) => SocialRepository(ref.watch(supabaseProvider)),
 );
+
+/// 저당맵 매장 데이터 접근
+final storeRepositoryProvider = Provider<StoreRepository>(
+  (ref) => StoreRepository(ref.watch(supabaseProvider)),
+);
+
+/// 저당맵: 권한 허용 후 확보한 사용자 현재 위치(없으면 null).
+/// 지도 중심·거리 계산의 기준점으로 사용.
+final userLocationProvider = StateProvider<LatLng?>((ref) => null);
+
+/// 매장별 리뷰 목록 (리뷰 작성/수정 후 invalidate 로 갱신).
+final storeReviewsProvider =
+    FutureProvider.family<List<StoreReview>, String>((ref, storeId) async {
+  return ref.watch(storeRepositoryProvider).reviews(storeId);
+});
 
 final authRepositoryProvider = Provider<AuthRepository>(
   (ref) => AuthRepository(ref.watch(supabaseProvider)),
