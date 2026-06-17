@@ -45,6 +45,8 @@ Deno.serve(async (req: Request) => {
       case "list_products":    return await listProducts(db, body);
       case "update_product":   return await updateProduct(db, body);
       case "set_verified":     return await setVerified(db, body);
+      case "signed_urls":      return await signedUrls(db, body);
+      case "update_product_sweeteners": return await updateProductSweeteners(db, body);
       default: return json({ error: `unknown action: ${action}` }, 400);
     }
   } catch (e) {
@@ -144,6 +146,38 @@ async function setVerified(db: SupabaseClient, b: Record<string, unknown>) {
   if (!id) return json({ error: "product_id 필요" }, 400);
   const { error } = await db.from("products").update({ verified }).eq("product_id", id);
   if (error) throw error;
+  return json({ ok: true }, 200);
+}
+
+// 제보 원본 사진 3장의 서명 URL(비공개 버킷). image_path = user_submissions.image_path(uuid 폴더).
+async function signedUrls(db: SupabaseClient, b: Record<string, unknown>) {
+  const path = b.image_path as string;
+  if (!path) return json({ error: "image_path 필요" }, 400);
+  const bucket = db.storage.from("submission-images");
+  const out: Record<string, string | null> = {};
+  for (const n of ["full", "ingredients", "nutrition"]) {
+    const { data } = await bucket.createSignedUrl(`${path}/${n}.jpg`, 3600);
+    out[n] = data?.signedUrl ?? null;
+  }
+  return json({ urls: out }, 200);
+}
+
+// 제품 감미료 행 전체 교체(삭제 후 재삽입) + sweetener_count 동기화.
+async function updateProductSweeteners(db: SupabaseClient, b: Record<string, unknown>) {
+  const id = b.product_id as string;
+  const list = (b.sweeteners as Array<{ slug?: string; amount_g?: number | null }>) ?? [];
+  if (!id) return json({ error: "product_id 필요" }, 400);
+  const clean = list.filter((s) => s.slug && s.slug.trim() !== "");
+  const del = await db.from("product_sweeteners").delete().eq("product_id", id);
+  if (del.error) throw del.error;
+  if (clean.length > 0) {
+    const rows = clean.map((s, i) => ({
+      product_id: id, slug: s.slug, amount_g: s.amount_g ?? null, sort_order: i,
+    }));
+    const ins = await db.from("product_sweeteners").insert(rows);
+    if (ins.error) throw ins.error;
+  }
+  await db.from("products").update({ sweetener_count: clean.length }).eq("product_id", id);
   return json({ ok: true }, 200);
 }
 
