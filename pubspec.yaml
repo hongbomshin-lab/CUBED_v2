@@ -22,6 +22,8 @@ dependencies:
   cached_network_image: ^3.3.1
   # 아이콘/타이포
   cupertino_icons: ^1.0.6
+  # 웹 클립보드 JS interop (관리자 콘솔 사진 붙여넣기)
+  web: ^1.1.1
 
 dev_dependencies:
   flutter_test:

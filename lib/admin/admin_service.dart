@@ -62,4 +62,10 @@ class AdminService {
 
   Future<void> updateProductSweeteners(String productId, List<Map<String, dynamic>> sweeteners) =>
       _call('update_product_sweeteners', {'product_id': productId, 'sweeteners': sweeteners});
+
+  /// 제품 대표 이미지 교체. base64 새 사진 업로드 → 새 image_file 반환(기존 파일은 서버가 삭제).
+  Future<String> replaceProductImage(String productId, String base64Image) async {
+    final m = await _call('replace_product_image', {'product_id': productId, 'image_base64': base64Image});
+    return m['image_file'] as String;
+  }
 }

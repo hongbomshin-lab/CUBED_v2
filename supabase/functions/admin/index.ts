@@ -47,6 +47,7 @@ Deno.serve(async (req: Request) => {
       case "set_verified":     return await setVerified(db, body);
       case "signed_urls":      return await signedUrls(db, body);
       case "update_product_sweeteners": return await updateProductSweeteners(db, body);
+      case "replace_product_image": return await replaceProductImage(db, body);
       default: return json({ error: `unknown action: ${action}` }, 400);
     }
   } catch (e) {
@@ -112,6 +113,18 @@ async function promote(db: SupabaseClient, b: Record<string, unknown>) {
     p_submission_id: id, p_product_id: pid, p_image_file: imageFile,
   });
   if (rpcErr) return json({ error: `승격 실패: ${rpcErr.message}` }, 400);
+
+  // 승격 후 상세 사진 2장(원재료/영양성분)은 불필요 → submission-images에서 삭제(용량 절약, 비치명적).
+  // 메인(full)은 product-images로 이미 복사됨.
+  try {
+    await db.storage.from("submission-images").remove([
+      `${sub.image_path}/ingredients.jpg`,
+      `${sub.image_path}/nutrition.jpg`,
+    ]);
+  } catch (delErr) {
+    console.error("승격 후 상세 사진 삭제 실패(비치명적):", String(delErr));
+  }
+
   return json({ product_id: newPid }, 200);
 }
 
@@ -179,6 +192,32 @@ async function updateProductSweeteners(db: SupabaseClient, b: Record<string, unk
   }
   await db.from("products").update({ sweetener_count: clean.length }).eq("product_id", id);
   return json({ ok: true }, 200);
+}
+
+function b64ToBytes(b64: string): Uint8Array {
+  const bin = atob(b64);
+  const out = new Uint8Array(bin.length);
+  for (let i = 0; i < bin.length; i++) out[i] = bin.charCodeAt(i);
+  return out;
+}
+
+// 제품 대표 이미지 교체: 새 사진 업로드(캐시버스트 파일명) + products.image_file 갱신 + 기존 파일 삭제.
+async function replaceProductImage(db: SupabaseClient, b: Record<string, unknown>) {
+  const id = b.product_id as string;
+  const b64 = b.image_base64 as string;
+  if (!id || !b64) return json({ error: "product_id, image_base64 필요" }, 400);
+  const { data: prod } = await db.from("products").select("image_file").eq("product_id", id).single();
+  const oldFile = (prod?.image_file as string | null) ?? null;
+  const newFile = `${id}-${crypto.randomUUID().slice(0, 8)}.jpg`;
+  const up = await db.storage.from("product-images")
+    .upload(newFile, b64ToBytes(b64), { contentType: "image/jpeg", upsert: true });
+  if (up.error) throw up.error;
+  const { error } = await db.from("products").update({ image_file: newFile }).eq("product_id", id);
+  if (error) throw error;
+  if (oldFile && oldFile !== newFile) {
+    try { await db.storage.from("product-images").remove([oldFile]); } catch (_) { /* 비치명적 */ }
+  }
+  return json({ image_file: newFile }, 200);
 }
 
 function json(body: unknown, status: number): Response {

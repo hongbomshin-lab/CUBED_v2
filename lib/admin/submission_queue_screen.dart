@@ -169,12 +169,12 @@ class _SubmissionPhotos extends ConsumerWidget {
                         child: ClipRRect(
                           borderRadius: BorderRadius.circular(8),
                           child: Image.network(m[slot[0]]!,
-                              height: 120, width: double.infinity, fit: BoxFit.cover),
+                              height: 220, width: double.infinity, fit: BoxFit.contain),
                         ),
                       )
                     else
                       Container(
-                        height: 120,
+                        height: 220,
                         alignment: Alignment.center,
                         decoration: BoxDecoration(
                           color: CubedColors.bg,

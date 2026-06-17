@@ -1,5 +1,9 @@
+import 'dart:convert';
+import 'dart:typed_data';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:image_picker/image_picker.dart';
 
 import '../core/env.dart';
 import '../core/rulebook.dart';
@@ -7,6 +11,7 @@ import '../core/theme.dart';
 import '../domain/interpretation.dart';
 import '../features/ocr/ocr_service.dart';
 import 'admin_providers.dart';
+import 'clipboard_image.dart';
 import 'parsed_form.dart';
 
 /// 기존 408개 + 승격분 검색 → 선택 시 상세 편집(제보 큐와 동일한 ParsedForm 재사용).
@@ -89,6 +94,50 @@ class _ProductBrowserScreenState extends ConsumerState<ProductBrowserScreen> {
     }
   }
 
+  Future<void> _replaceWithBytes(Uint8List bytes) async {
+    final id = _selectedId!;
+    setState(() => _busy = true);
+    try {
+      final newFile = await ref.read(adminServiceProvider).replaceProductImage(id, base64Encode(bytes));
+      ref.invalidate(productSearchProvider(_q));
+      setState(() => _selectedImageFile = newFile);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('사진 재등록 완료')));
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('$e')));
+      }
+    } finally {
+      if (mounted) setState(() => _busy = false);
+    }
+  }
+
+  Future<void> _pickAndReplaceImage() async {
+    final file = await ImagePicker().pickImage(source: ImageSource.gallery, maxWidth: 1280, imageQuality: 85);
+    if (file == null) return;
+    await _replaceWithBytes(await file.readAsBytes());
+  }
+
+  Future<void> _pasteAndReplaceImage() async {
+    try {
+      final bytes = await readClipboardImage();
+      if (bytes == null) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text('클립보드에 이미지가 없습니다. 이미지를 복사한 뒤 다시 눌러주세요.')));
+        }
+        return;
+      }
+      await _replaceWithBytes(bytes);
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('붙여넣기 실패: $e (브라우저 클립보드 권한을 확인하세요)')));
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final results = ref.watch(productSearchProvider(_q));
@@ -153,7 +202,7 @@ class _ProductBrowserScreenState extends ConsumerState<ProductBrowserScreen> {
                       ),
                     ]),
                     const SizedBox(height: 12),
-                    if (_selectedImageFile != null && _selectedImageFile!.isNotEmpty) ...[
+                    if (_selectedImageFile != null && _selectedImageFile!.isNotEmpty)
                       Center(
                         child: ClipRRect(
                           borderRadius: BorderRadius.circular(12),
@@ -169,8 +218,24 @@ class _ProductBrowserScreenState extends ConsumerState<ProductBrowserScreen> {
                           ),
                         ),
                       ),
-                      const SizedBox(height: 12),
-                    ],
+                    const SizedBox(height: 8),
+                    Wrap(
+                      alignment: WrapAlignment.center,
+                      spacing: 8,
+                      children: [
+                        TextButton.icon(
+                          onPressed: _busy ? null : _pickAndReplaceImage,
+                          icon: const Icon(Icons.upload_file, size: 18),
+                          label: const Text('파일로 사진 재등록'),
+                        ),
+                        TextButton.icon(
+                          onPressed: _busy ? null : _pasteAndReplaceImage,
+                          icon: const Icon(Icons.content_paste, size: 18),
+                          label: const Text('붙여넣기로 재등록'),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 12),
                     ParsedForm(
                       key: ValueKey(_selectedId),
                       parsed: _draft!,
