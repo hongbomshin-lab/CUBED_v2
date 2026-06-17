@@ -1,4 +1,6 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- 네트워크 통신(Supabase·이미지). release/APK 빌드에 필수 — 없으면 디버그(flutter run)에선 되지만 배포 빌드에선 연결 실패. -->
+    <uses-permission android:name="android.permission.INTERNET"/>
     <!-- 바코드 스캔·영양성분 촬영 -->
     <uses-permission android:name="android.permission.CAMERA"/>
     <uses-feature android:name="android.hardware.camera" android:required="false"/>
