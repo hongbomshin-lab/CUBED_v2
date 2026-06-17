@@ -17,6 +17,7 @@ class SubmissionQueueScreen extends ConsumerStatefulWidget {
 class _SubmissionQueueScreenState extends ConsumerState<SubmissionQueueScreen> {
   int? _selectedId;
   Map<String, dynamic>? _draft;
+  String? _selectedImagePath;
   bool _busy = false;
 
   @override
@@ -35,7 +36,9 @@ class _SubmissionQueueScreenState extends ConsumerState<SubmissionQueueScreen> {
               selected: s.id == _selectedId,
               title: Text((s.parsed['name'] as String?) ?? '(이름 없음)'),
               subtitle: Text('${s.barcode ?? '바코드 없음'} · #${s.id}'),
-              onTap: () => setState(() { _selectedId = s.id; _draft = Map.of(s.parsed); }),
+              onTap: () => setState(() {
+                _selectedId = s.id; _draft = Map.of(s.parsed); _selectedImagePath = s.imagePath;
+              }),
             );
           },
         ),
@@ -50,6 +53,10 @@ class _SubmissionQueueScreenState extends ConsumerState<SubmissionQueueScreen> {
               final preview = OcrResult.fromParsed(_draft!).product;
               final interp = Interpretation.of(preview, ref0);
               return ListView(padding: const EdgeInsets.all(16), children: [
+                if (_selectedImagePath != null && _selectedImagePath!.isNotEmpty) ...[
+                  _SubmissionPhotos(imagePath: _selectedImagePath!),
+                  const SizedBox(height: 12),
+                ],
                 _GradePreview(interp: interp),
                 const SizedBox(height: 12),
                 ParsedForm(key: ValueKey(_selectedId), parsed: _draft!, onChanged: (m) => setState(() => _draft = m)),
@@ -77,7 +84,7 @@ class _SubmissionQueueScreenState extends ConsumerState<SubmissionQueueScreen> {
       await svc.updateParsed(id, _draft!);
       await svc.promote(id);
       ref.invalidate(pendingSubmissionsProvider);
-      setState(() { _selectedId = null; _draft = null; });
+      setState(() { _selectedId = null; _draft = null; _selectedImagePath = null; });
       if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('승격 완료')));
     } catch (e) {
       if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('$e')));
@@ -92,7 +99,7 @@ class _SubmissionQueueScreenState extends ConsumerState<SubmissionQueueScreen> {
     try {
       await ref.read(adminServiceProvider).reject(id);
       ref.invalidate(pendingSubmissionsProvider);
-      setState(() { _selectedId = null; _draft = null; });
+      setState(() { _selectedId = null; _draft = null; _selectedImagePath = null; });
     } catch (e) {
       if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('$e')));
     } finally {
@@ -119,6 +126,68 @@ class _GradePreview extends StatelessWidget {
         const SizedBox(width: 16),
         Expanded(child: Text('함정: ${interp.trapCodes.join(", ")}', overflow: TextOverflow.ellipsis)),
       ]),
+    );
+  }
+}
+
+/// 제보 원본 사진 3장(전체샷·원재료·영양성분) 썸네일. 탭하면 확대.
+class _SubmissionPhotos extends ConsumerWidget {
+  const _SubmissionPhotos({required this.imagePath});
+  final String imagePath;
+
+  static const _slots = [
+    ['full', '전체샷'],
+    ['ingredients', '원재료'],
+    ['nutrition', '영양성분'],
+  ];
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final urls = ref.watch(signedUrlsProvider(imagePath));
+    return urls.when(
+      loading: () => const SizedBox(height: 120, child: Center(child: CircularProgressIndicator())),
+      error: (e, _) => Text('사진 로드 실패: $e', style: const TextStyle(color: CubedColors.caution)),
+      data: (m) => Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          for (final slot in _slots)
+            Expanded(
+              child: Padding(
+                padding: const EdgeInsets.only(right: 8),
+                child: Column(
+                  children: [
+                    Text(slot[1], style: const TextStyle(fontSize: 12, color: CubedColors.inkSoft)),
+                    const SizedBox(height: 4),
+                    if (m[slot[0]] != null)
+                      GestureDetector(
+                        onTap: () => showDialog<void>(
+                          context: context,
+                          builder: (_) => Dialog(
+                            child: InteractiveViewer(child: Image.network(m[slot[0]]!)),
+                          ),
+                        ),
+                        child: ClipRRect(
+                          borderRadius: BorderRadius.circular(8),
+                          child: Image.network(m[slot[0]]!,
+                              height: 120, width: double.infinity, fit: BoxFit.cover),
+                        ),
+                      )
+                    else
+                      Container(
+                        height: 120,
+                        alignment: Alignment.center,
+                        decoration: BoxDecoration(
+                          color: CubedColors.bg,
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: const Text('없음', style: TextStyle(color: CubedColors.inkSoft)),
+                      ),
+                  ],
+                ),
+              ),
+            ),
+        ],
+      ),
     );
   }
 }

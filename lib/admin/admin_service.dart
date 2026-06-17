@@ -52,4 +52,14 @@ class AdminService {
       _call('update_product', {'product_id': productId, 'fields': fields});
   Future<void> setVerified(String productId, bool verified) =>
       _call('set_verified', {'product_id': productId, 'verified': verified});
+
+  /// 제보 원본 사진 3장의 서명 URL(full/ingredients/nutrition). 비공개 버킷이라 서버 경유.
+  Future<Map<String, String?>> signedUrls(String imagePath) async {
+    final m = await _call('signed_urls', {'image_path': imagePath});
+    final urls = Map<String, dynamic>.from((m['urls'] as Map?) ?? const {});
+    return urls.map((k, v) => MapEntry(k, v as String?));
+  }
+
+  Future<void> updateProductSweeteners(String productId, List<Map<String, dynamic>> sweeteners) =>
+      _call('update_product_sweeteners', {'product_id': productId, 'sweeteners': sweeteners});
 }

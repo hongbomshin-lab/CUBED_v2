@@ -28,3 +28,8 @@ final pendingSubmissionsProvider = FutureProvider.autoDispose(
 final productSearchProvider = FutureProvider.autoDispose.family<List<Map<String, dynamic>>, String>(
   (ref, q) => ref.watch(adminServiceProvider).listProducts(q: q),
 );
+
+/// 제보 image_path → {full,ingredients,nutrition} 서명 URL.
+final signedUrlsProvider = FutureProvider.autoDispose.family<Map<String, String?>, String>(
+  (ref, imagePath) => ref.watch(adminServiceProvider).signedUrls(imagePath),
+);
