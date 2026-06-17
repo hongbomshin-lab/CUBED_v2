@@ -8,7 +8,11 @@ import 'admin_gate.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await Supabase.initialize(url: Env.supabaseUrl, anonKey: Env.supabaseAnonKey);
+  await Supabase.initialize(
+    url: Env.supabaseUrl,
+    // ignore: deprecated_member_use
+    anonKey: Env.supabaseAnonKey,
+  );
   runApp(const ProviderScope(child: AdminApp()));
 }
 

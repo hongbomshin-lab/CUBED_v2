@@ -5,6 +5,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../core/theme.dart';
 import 'admin_providers.dart';
 import 'submission_queue_screen.dart';
+import 'product_browser_screen.dart';
 
 class AdminGate extends ConsumerWidget {
   const AdminGate({super.key});
