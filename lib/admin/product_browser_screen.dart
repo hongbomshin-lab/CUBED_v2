@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../core/env.dart';
 import '../core/rulebook.dart';
 import '../core/theme.dart';
 import '../domain/interpretation.dart';
@@ -20,6 +21,7 @@ class _ProductBrowserScreenState extends ConsumerState<ProductBrowserScreen> {
   String _q = '';
   String? _selectedId;
   Map<String, dynamic>? _draft;
+  String? _selectedImageFile;
   bool _verified = false;
   bool _busy = false;
 
@@ -51,6 +53,7 @@ class _ProductBrowserScreenState extends ConsumerState<ProductBrowserScreen> {
     setState(() {
       _selectedId = p['product_id'] as String;
       _draft = _toParsed(p);
+      _selectedImageFile = p['image_file'] as String?;
       _verified = (p['verified'] as bool?) ?? false;
     });
   }
@@ -150,6 +153,24 @@ class _ProductBrowserScreenState extends ConsumerState<ProductBrowserScreen> {
                       ),
                     ]),
                     const SizedBox(height: 12),
+                    if (_selectedImageFile != null && _selectedImageFile!.isNotEmpty) ...[
+                      Center(
+                        child: ClipRRect(
+                          borderRadius: BorderRadius.circular(12),
+                          child: Image.network(
+                            '${Env.imageBaseUrl}/${_selectedImageFile!}',
+                            height: 200,
+                            fit: BoxFit.contain,
+                            errorBuilder: (_, __, ___) => const SizedBox(
+                              height: 60,
+                              child: Center(child: Text('이미지 불러오기 실패',
+                                  style: TextStyle(color: CubedColors.inkSoft))),
+                            ),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                    ],
                     ParsedForm(
                       key: ValueKey(_selectedId),
                       parsed: _draft!,
