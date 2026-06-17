@@ -79,7 +79,73 @@ async function reject(db: SupabaseClient, b: Record<string, unknown>) {
   return json({ ok: true }, 200);
 }
 
-// ── promote / 제품 액션은 Task 3에서 추가 ──
+// ── 승격 ─────────────────────────────────────────────
+async function promote(db: SupabaseClient, b: Record<string, unknown>) {
+  const id = b.submission_id as number;
+  if (!id) return json({ error: "submission_id 필요" }, 400);
+  const { data: sub, error } = await db.from("user_submissions")
+    .select("id,barcode,parsed,image_path,status").eq("id", id).single();
+  if (error || !sub) return json({ error: "submission 없음" }, 404);
+  if (sub.status === "approved") return json({ error: "이미 승격됨" }, 400);
+
+  const barcode = sub.barcode as string | null;
+  const pid = (barcode && /^[0-9]{8,14}$/.test(barcode))
+    ? `ugc_${barcode}`
+    : `ugc_${crypto.randomUUID().replace(/-/g, "").slice(0, 12)}`;
+  const imageFile = `${pid}.jpg`;
+
+  // 전체샷 복사(비치명적): submission-images/{path}/full.jpg → product-images/{pid}.jpg
+  try {
+    const { data: blob } = await db.storage.from("submission-images").download(`${sub.image_path}/full.jpg`);
+    if (blob) {
+      const bytes = new Uint8Array(await blob.arrayBuffer());
+      await db.storage.from("product-images").upload(imageFile, bytes, { contentType: "image/jpeg", upsert: true });
+    }
+  } catch (imgErr) {
+    console.error("promote 이미지 복사 실패(비치명적):", String(imgErr));
+  }
+
+  // DB 쓰기(트랜잭션). 실패 시 명확한 에러.
+  const { data: newPid, error: rpcErr } = await db.rpc("promote_submission", {
+    p_submission_id: id, p_product_id: pid, p_image_file: imageFile,
+  });
+  if (rpcErr) return json({ error: `승격 실패: ${rpcErr.message}` }, 400);
+  return json({ product_id: newPid }, 200);
+}
+
+// ── 제품 ─────────────────────────────────────────────
+const PRODUCT_COLS =
+  "product_id,name,brand,category,serving_size,unit,kcal,carb,sugar,protein,fat," +
+  "sodium_mg,fiber,sugar_alcohol,rare_sugar_g,ingredients_raw,sweetener_count," +
+  "barcode,image_file,source_type,verified,notes," +
+  "product_sweeteners(slug,amount_g,sort_order)";
+
+async function listProducts(db: SupabaseClient, b: Record<string, unknown>) {
+  const q = ((b.q as string) ?? "").trim();
+  let query = db.from("products").select(PRODUCT_COLS).order("created_at", { ascending: false }).limit(50);
+  if (q) query = query.ilike("name", `%${q}%`);
+  const { data, error } = await query;
+  if (error) throw error;
+  return json({ products: data }, 200);
+}
+
+async function updateProduct(db: SupabaseClient, b: Record<string, unknown>) {
+  const id = b.product_id as string;
+  const fields = b.fields as Record<string, unknown>;
+  if (!id || typeof fields !== "object") return json({ error: "product_id, fields 필요" }, 400);
+  const { error } = await db.from("products").update(fields).eq("product_id", id);
+  if (error) throw error;
+  return json({ ok: true }, 200);
+}
+
+async function setVerified(db: SupabaseClient, b: Record<string, unknown>) {
+  const id = b.product_id as string;
+  const verified = !!b.verified;
+  if (!id) return json({ error: "product_id 필요" }, 400);
+  const { error } = await db.from("products").update({ verified }).eq("product_id", id);
+  if (error) throw error;
+  return json({ ok: true }, 200);
+}
 
 function json(body: unknown, status: number): Response {
   return new Response(JSON.stringify(body), { status, headers: { ...CORS, "content-type": "application/json" } });
