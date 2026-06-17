@@ -93,20 +93,4 @@ class ProductRepository {
         .limit(limit);
     return rows.map((m) => Product.fromMap(m)).toList();
   }
-
-  /// OCR 제보 (미등록 제품) — user_submissions insert
-  Future<void> submitOcr({
-    String? barcode,
-    String? ocrText,
-    Map<String, dynamic>? parsed,
-    String? imagePath,
-  }) async {
-    await _db.from('user_submissions').insert({
-      'barcode': barcode,
-      'ocr_text': ocrText,
-      'parsed': parsed,
-      'image_path': imagePath,
-      'status': 'pending',
-    });
-  }
 }

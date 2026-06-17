@@ -11,28 +11,10 @@ class OcrResult {
   final List<String> unknownSweeteners;
   final String? rawText;
   const OcrResult({required this.product, this.unknownSweeteners = const [], this.rawText});
-}
 
-class OcrService {
-  OcrService(this._db);
-  final SupabaseClient _db;
-
-  /// 이미지(base64)를 Edge Function 'ocr-parse'에 보내 구조화 영양정보로 변환.
-  /// Edge Function이 Claude API를 호출해 task_common 규칙대로 파싱한다.
-  Future<OcrResult> parseImage({
-    required String imageBase64,
-    String? barcode,
-  }) async {
-    final res = await _db.functions.invoke('ocr-parse', body: {
-      'image': imageBase64,
-      'barcode': barcode,
-    });
-    if (res.status != 200 || res.data == null) {
-      throw Exception('OCR 분석 실패 (status ${res.status})');
-    }
-    final data = res.data is String ? jsonDecode(res.data as String) : res.data as Map;
-    final m = Map<String, dynamic>.from(data as Map);
-
+  /// 파싱 결과 맵 → OcrResult (순수 변환; 네트워크 무관). ocr-parse/submit-product 응답 공용.
+  factory OcrResult.fromParsed(Map<String, dynamic> m, {String? barcode}) {
+    double d(dynamic v) => (v as num?)?.toDouble() ?? 0;
     final swList = ((m['sweeteners'] as List?) ?? const [])
         .asMap()
         .entries
@@ -42,8 +24,6 @@ class OcrService {
               sortOrder: e.key,
             ))
         .toList();
-
-    double d(dynamic v) => (v as num?)?.toDouble() ?? 0;
     final product = Product(
       productId: 'ocr-temp',
       name: (m['name'] as String?) ?? '촬영한 제품',
@@ -68,11 +48,40 @@ class OcrService {
       notes: m['notes'] as String?,
       sweeteners: swList,
     );
-
     return OcrResult(
       product: product,
       unknownSweeteners: ((m['unknown_sweeteners'] as List?) ?? const []).cast<String>(),
       rawText: m['ingredients_raw'] as String?,
     );
+  }
+}
+
+class OcrService {
+  OcrService(this._db);
+  final SupabaseClient _db;
+
+  /// 3장(전체샷·원재료·영양성분, base64) + 바코드 → submit-product 호출.
+  /// Edge Function이 Gemini 멀티이미지로 파싱하고 제보를 저장한 뒤 파싱 결과를 돌려준다.
+  Future<OcrResult> parseAndSubmit({
+    required String fullB64,
+    required String ingredientsB64,
+    required String nutritionB64,
+    String? barcode,
+  }) async {
+    final res = await _db.functions.invoke('submit-product', body: {
+      'images': {
+        'full': fullB64,
+        'ingredients': ingredientsB64,
+        'nutrition': nutritionB64,
+      },
+      'barcode': barcode,
+    });
+    if (res.status != 200 || res.data == null) {
+      throw Exception('분석 실패 (status ${res.status})');
+    }
+    final data = res.data is String ? jsonDecode(res.data as String) : res.data;
+    final m = Map<String, dynamic>.from(data as Map);
+    if (m['error'] != null) throw Exception('분석 실패: ${m['error']}');
+    return OcrResult.fromParsed(m, barcode: barcode);
   }
 }

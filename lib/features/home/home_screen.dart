@@ -5,7 +5,7 @@ import '../../core/theme.dart';
 import '../../providers/providers.dart';
 import '../auth/login_screen.dart';
 import '../chat/chat_screen.dart';
-import '../ocr/ocr_screen.dart';
+import '../capture/capture_screen.dart';
 import '../scan/scan_screen.dart';
 import '../search/search_screen.dart';
 
@@ -65,7 +65,7 @@ class HomeScreen extends ConsumerWidget {
                     title: '사진으로 찾기',
                     subtitle: 'OCR 인식',
                     onTap: () => Navigator.of(context).push(
-                      MaterialPageRoute(builder: (_) => const OcrScreen()),
+                      MaterialPageRoute(builder: (_) => const CaptureScreen()),
                     ),
                   ),
                 ),
