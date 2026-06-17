@@ -31,6 +31,24 @@
 
   <title>CUBED 관리자 콘솔</title>
   <link rel="manifest" href="manifest.json">
+
+  <!--
+    passkeys_web(supabase 인증이 끌어오는 transitive 의존성)는 전역 `PasskeyAuthenticator`(corbado
+    bundle.js)가 없으면 부팅 중 window.close()+throw로 앱 렌더를 막는다. 이 앱은 passkeys를 쓰지
+    않으므로(이메일/비밀번호 로그인) 외부 SDK 대신 안전한 no-op 전역 스텁을 둔다.
+    추후 passkey 로그인을 도입하면 이 스텁을 실제 bundle.js로 교체하면 된다.
+  -->
+  <script>
+    window.PasskeyAuthenticator = {
+      init: function () {},
+      register: function () { return Promise.reject('passkeys not supported'); },
+      login: function () { return Promise.reject('passkeys not supported'); },
+      cancelCurrentAuthenticatorOperation: function () {},
+      isUserVerifyingPlatformAuthenticatorAvailable: function () { return Promise.resolve(false); },
+      isConditionalMediationAvailable: function () { return Promise.resolve(false); },
+      hasPasskeySupport: function () { return false; }
+    };
+  </script>
 </head>
 <body>
   <!--
