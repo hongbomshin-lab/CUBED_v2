@@ -1,3 +1,5 @@
+import 'dart:typed_data';
+
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'models/store.dart';
@@ -52,6 +54,28 @@ class StoreRepository {
         .ilike('name', '%$q%')
         .limit(limit);
     return rows.map((m) => Store.fromMap(m)).toList();
+  }
+
+  /// 메뉴판 사진(압축본)을 Storage `menu-boards` 버킷에 업로드하고 public URL 반환.
+  /// 경로: {folder}/{userId}/{ms}.jpg — 승인/반려 시 정리하기 쉽도록 유저별로 분리.
+  /// [folder]는 기존 매장이면 storeId, 신규 매장 제보면 'new-store' 등.
+  Future<String> uploadMenuBoardPhoto({
+    required String folder,
+    required String userId,
+    required Uint8List bytes,
+    required int millis,
+  }) async {
+    const bucket = 'menu-boards';
+    final path = '$folder/$userId/$millis.jpg';
+    await _db.storage.from(bucket).uploadBinary(
+          path,
+          bytes,
+          fileOptions: const FileOptions(
+            contentType: 'image/jpeg',
+            upsert: true,
+          ),
+        );
+    return _db.storage.from(bucket).getPublicUrl(path);
   }
 
   /// 메뉴판 제보 등록. 사진 URL 필수 + 메모 선택. 승인 시 store_photos 자동 등록.

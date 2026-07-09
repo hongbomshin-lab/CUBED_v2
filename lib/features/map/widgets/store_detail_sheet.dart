@@ -358,7 +358,8 @@ class _StoreDetailSheetState extends ConsumerState<StoreDetailSheet>
 
                 // 액션 버튼
                 Padding(
-                  padding: const EdgeInsets.fromLTRB(20, 16, 20, 32),
+                  padding: EdgeInsets.fromLTRB(
+                      20, 16, 20, 32 + MediaQuery.viewPaddingOf(context).bottom),
                   child: Row(children: [
                     Expanded(
                       child: OutlinedButton.icon(

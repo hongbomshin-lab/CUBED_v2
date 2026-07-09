@@ -96,7 +96,9 @@ class _ReviewSheetState extends ConsumerState<ReviewSheet> {
   Widget build(BuildContext context) {
     return SingleChildScrollView(
       padding: EdgeInsets.only(
-        bottom: MediaQuery.of(context).viewInsets.bottom + 24,
+        bottom: MediaQuery.of(context).viewInsets.bottom +
+            MediaQuery.of(context).viewPadding.bottom +
+            24,
         left: 24,
         right: 24,
         top: 8,
