@@ -1,11 +1,12 @@
 import 'package:flutter/material.dart';
 
 import '../../core/theme.dart';
+import '../account/account_screen.dart';
 import '../home/home_screen.dart';
 import '../hotdeals/hot_deals_screen.dart';
 import '../map/map_screen.dart';
 
-/// 앱 최상위 셸 — 하단 3탭(제품분석 / 저당맵 / 핫딜).
+/// 앱 최상위 셸 — 하단 4탭(제품분석 / 저당맵 / 핫딜 / 마이).
 /// IndexedStack으로 탭 전환 시 상태(지도 위치 등) 보존.
 class MainShell extends StatefulWidget {
   const MainShell({super.key});
@@ -21,6 +22,7 @@ class _MainShellState extends State<MainShell> {
     HomeScreen(),
     MapScreen(),
     HotDealsScreen(),
+    AccountScreen(),
   ];
 
   @override
@@ -52,6 +54,12 @@ class _MainShellState extends State<MainShell> {
             selectedIcon: Icon(Icons.local_fire_department_rounded,
                 color: CubedColors.brand),
             label: '핫딜',
+          ),
+          NavigationDestination(
+            icon: Icon(Icons.person_outline_rounded),
+            selectedIcon:
+                Icon(Icons.person_rounded, color: CubedColors.brand),
+            label: '마이',
           ),
         ],
       ),

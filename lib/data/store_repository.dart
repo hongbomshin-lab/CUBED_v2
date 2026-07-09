@@ -2,6 +2,7 @@ import 'dart:typed_data';
 
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import 'models/my_review.dart';
 import 'models/store.dart';
 import 'models/store_review.dart';
 
@@ -103,6 +104,18 @@ class StoreRepository {
         .order('created_at', ascending: false)
         .limit(limit);
     return rows.map((m) => StoreReview.fromMap(m)).toList();
+  }
+
+  /// 내가 작성한 리뷰 전체 (최신순) — 매장명 포함. 마이페이지용.
+  Future<List<MyReview>> myReviews(String userId, {int limit = 100}) async {
+    final rows = await _db
+        .from('store_reviews')
+        .select('id, store_id, is_recommended, content, created_at, stores(name)')
+        .eq('user_id', userId)
+        .eq('is_active', true)
+        .order('created_at', ascending: false)
+        .limit(limit);
+    return rows.map((m) => MyReview.fromMap(m)).toList();
   }
 
   /// 내가 이 매장에 쓴 리뷰 (없으면 null) — 작성/수정 화면 프리필용.
