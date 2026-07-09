@@ -12,6 +12,19 @@ import '../../auth/login_screen.dart';
 import '../../report/menu_board_report_sheet.dart';
 import '../../review/review_sheet.dart';
 
+/// 매장 상세 바텀시트를 표준 스타일로 띄운다. (지도 마커·즐겨찾기 목록 공용)
+Future<void> showStoreDetailSheet(BuildContext context, Store store) {
+  return showModalBottomSheet(
+    context: context,
+    isScrollControlled: true,
+    backgroundColor: CubedColors.surface,
+    shape: const RoundedRectangleBorder(
+      borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+    ),
+    builder: (_) => StoreDetailSheet(store: store),
+  );
+}
+
 /// 마커 탭 시 표시하는 매장 상세 바텀시트.
 class StoreDetailSheet extends ConsumerStatefulWidget {
   const StoreDetailSheet({super.key, required this.store});
@@ -118,6 +131,28 @@ class _StoreDetailSheetState extends ConsumerState<StoreDetailSheet>
     return null;
   }
 
+  Future<void> _toggleFavorite(bool currentlyFav) async {
+    final user = ref.read(currentUserProvider);
+    if (user == null) {
+      await Navigator.of(context).push(
+        MaterialPageRoute(builder: (_) => const LoginScreen()),
+      );
+      return;
+    }
+    final repo = ref.read(storeRepositoryProvider);
+    try {
+      if (currentlyFav) {
+        await repo.removeFavorite(user.id, s.id);
+      } else {
+        await repo.addFavorite(user.id, s.id);
+      }
+      ref.invalidate(favoriteIdsProvider);
+      ref.invalidate(favoriteStoresProvider);
+    } catch (_) {
+      _toast('즐겨찾기 처리에 실패했어요');
+    }
+  }
+
   Future<void> _onWriteReview() async {
     final user = ref.read(currentUserProvider);
     if (user == null) {
@@ -208,7 +243,7 @@ class _StoreDetailSheetState extends ConsumerState<StoreDetailSheet>
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      // 매장명 + 유형 뱃지
+                      // 매장명 + 유형 뱃지 + 즐겨찾기
                       Row(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
@@ -219,6 +254,15 @@ class _StoreDetailSheetState extends ConsumerState<StoreDetailSheet>
                           ),
                           const SizedBox(width: 8),
                           _TypeBadge(type: s.type),
+                          const SizedBox(width: 4),
+                          _FavoriteButton(
+                            isFavorite: ref
+                                    .watch(favoriteIdsProvider)
+                                    .valueOrNull
+                                    ?.contains(s.id) ??
+                                false,
+                            onTap: _toggleFavorite,
+                          ),
                         ],
                       ),
                       const SizedBox(height: 10),
@@ -532,6 +576,26 @@ class _ReviewTile extends StatelessWidget {
       ),
     );
   }
+}
+
+class _FavoriteButton extends StatelessWidget {
+  const _FavoriteButton({required this.isFavorite, required this.onTap});
+  final bool isFavorite;
+  final ValueChanged<bool> onTap;
+
+  @override
+  Widget build(BuildContext context) => IconButton(
+        visualDensity: VisualDensity.compact,
+        padding: EdgeInsets.zero,
+        constraints: const BoxConstraints(minWidth: 36, minHeight: 36),
+        onPressed: () => onTap(isFavorite),
+        icon: Icon(
+          isFavorite ? Icons.favorite_rounded : Icons.favorite_border_rounded,
+          color: isFavorite ? CubedColors.caution : CubedColors.inkSoft,
+          size: 24,
+        ),
+        tooltip: isFavorite ? '즐겨찾기 해제' : '즐겨찾기',
+      );
 }
 
 class _TypeBadge extends StatelessWidget {

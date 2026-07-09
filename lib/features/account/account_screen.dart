@@ -4,6 +4,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/theme.dart';
 import '../../providers/providers.dart';
 import '../auth/login_screen.dart';
+import 'favorite_stores_screen.dart';
+import 'my_comments_screen.dart';
 import 'my_reviews_screen.dart';
 
 /// 마이페이지 — 프로필 + 즐겨찾기/내 리뷰 진입 + 로그아웃.
@@ -102,6 +104,8 @@ class _LoggedIn extends ConsumerWidget {
     final name = auth.displayName();
     final email = user?.email ?? '';
     final reviewCount = ref.watch(myReviewsProvider).valueOrNull?.length;
+    final commentCount = ref.watch(myCommentsProvider).valueOrNull?.length;
+    final favCount = ref.watch(favoriteStoresProvider).valueOrNull?.length;
 
     return ListView(
       children: [
@@ -145,9 +149,11 @@ class _LoggedIn extends ConsumerWidget {
         // 메뉴
         _MenuTile(
           icon: Icons.favorite_border_rounded,
-          label: '매장 즐겨찾기',
-          trailing: '준비 중',
-          onTap: () => _toast(context, '즐겨찾기는 곧 제공됩니다'),
+          label: '즐겨찾기 매장',
+          trailing: favCount == null ? null : '$favCount',
+          onTap: () => Navigator.of(context).push(
+            MaterialPageRoute(builder: (_) => const FavoriteStoresScreen()),
+          ),
         ),
         _MenuTile(
           icon: Icons.rate_review_outlined,
@@ -155,6 +161,14 @@ class _LoggedIn extends ConsumerWidget {
           trailing: reviewCount == null ? null : '$reviewCount',
           onTap: () => Navigator.of(context).push(
             MaterialPageRoute(builder: (_) => const MyReviewsScreen()),
+          ),
+        ),
+        _MenuTile(
+          icon: Icons.chat_bubble_outline_rounded,
+          label: '작성한 댓글',
+          trailing: commentCount == null ? null : '$commentCount',
+          onTap: () => Navigator.of(context).push(
+            MaterialPageRoute(builder: (_) => const MyCommentsScreen()),
           ),
         ),
         const SizedBox(height: 12),

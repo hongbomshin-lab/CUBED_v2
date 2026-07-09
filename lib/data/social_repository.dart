@@ -1,6 +1,7 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'models/comment.dart';
+import 'models/my_comment.dart';
 
 /// 좋아요·코멘트 데이터 접근. 익명 인증(auth.uid()) 기반 소유권.
 class SocialRepository {
@@ -75,6 +76,17 @@ class SocialRepository {
 
   Future<void> deleteComment(int id) async {
     await _db.from('product_comments').delete().eq('id', id);
+  }
+
+  /// 내가 작성한 댓글 전체 (최신순) — 제품명 포함. 마이페이지용.
+  Future<List<MyComment>> myComments(String userId, {int limit = 100}) async {
+    final rows = await _db
+        .from('product_comments')
+        .select('id, product_id, body, created_at, products(name, brand)')
+        .eq('user_id', userId)
+        .order('created_at', ascending: false)
+        .limit(limit);
+    return rows.map((m) => MyComment.fromMap(m)).toList();
   }
 
   bool isMine(Comment c) => c.userId == _uid;

@@ -197,15 +197,7 @@ class _MapScreenState extends ConsumerState<MapScreen> {
   }
 
   void _onMarkerTap(Store s) {
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: CubedColors.surface,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-      ),
-      builder: (_) => StoreDetailSheet(store: s),
-    );
+    showStoreDetailSheet(context, s);
   }
 
   void _toggleFilter(StoreType? type) {
