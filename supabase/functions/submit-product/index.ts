@@ -44,18 +44,22 @@ Deno.serve(async (req: Request) => {
       const db = createClient(SUPABASE_URL, SERVICE_ROLE);
       const folder = crypto.randomUUID();
       const bucket = db.storage.from("submission-images");
-      await Promise.all([
+      // supabase-js는 API 오류 시 throw하지 않고 { error }를 반환 — 명시 확인 후 throw
+      const uploads = await Promise.all([
         bucket.upload(`${folder}/full.jpg`, b64ToBytes(images.full), { contentType: "image/jpeg" }),
         bucket.upload(`${folder}/ingredients.jpg`, b64ToBytes(images.ingredients), { contentType: "image/jpeg" }),
         bucket.upload(`${folder}/nutrition.jpg`, b64ToBytes(images.nutrition), { contentType: "image/jpeg" }),
       ]);
-      await db.from("user_submissions").insert({
+      const uploadErr = uploads.find((u) => u.error)?.error;
+      if (uploadErr) throw uploadErr;
+      const { error: insertErr } = await db.from("user_submissions").insert({
         barcode: barcode ?? null,
         image_path: folder,
         parsed,
         ocr_text: (parsed as { ingredients_raw?: string }).ingredients_raw ?? null,
         status: "pending",
       });
+      if (insertErr) throw insertErr;
       imagePath = folder;
     } catch (persistErr) {
       console.error("submit-product persist 실패(비치명적):", String(persistErr));
