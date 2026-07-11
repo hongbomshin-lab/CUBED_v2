@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../core/feature_flags.dart';
 import '../../core/theme.dart';
 import '../../providers/providers.dart';
 import '../auth/login_screen.dart';
@@ -45,17 +46,19 @@ class HomeScreen extends ConsumerWidget {
                 style: TextStyle(color: CubedColors.inkSoft, fontSize: 15)),
             const SizedBox(height: 24),
 
-            // 메인 CTA — 바코드 스캔
-            _BigAction(
-              icon: Icons.qr_code_scanner_rounded,
-              title: '바코드 스캔',
-              subtitle: '제품 바코드를 비추면 혈당 영향·함정을 분석해요',
-              color: CubedColors.brand,
-              onTap: () => Navigator.of(context).push(
-                MaterialPageRoute(builder: (_) => const ScanScreen()),
+            // 메인 CTA — 바코드 스캔 (FeatureFlags.barcodeScan 으로 노출 제어)
+            if (FeatureFlags.barcodeScan) ...[
+              _BigAction(
+                icon: Icons.qr_code_scanner_rounded,
+                title: '바코드 스캔',
+                subtitle: '제품 바코드를 비추면 혈당 영향·함정을 분석해요',
+                color: CubedColors.brand,
+                onTap: () => Navigator.of(context).push(
+                  MaterialPageRoute(builder: (_) => const ScanScreen()),
+                ),
               ),
-            ),
-            const SizedBox(height: 12),
+              const SizedBox(height: 12),
+            ],
 
             Row(
               children: [
