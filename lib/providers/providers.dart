@@ -113,11 +113,13 @@ final foodLogRepositoryProvider = Provider<FoodLogRepository>(
   (ref) => FoodLogRepository(ref.watch(supabaseProvider)),
 );
 
-/// 월별 먹은 기록 (달력). key는 DateTime(year, month, 1)로 정규화해 넘길 것.
-final monthLogsProvider =
-    FutureProvider.family<List<FoodLog>, DateTime>((ref, month) async {
+/// 월별 먹은 기록 (달력). 키는 (year, month) 레코드 — 정규화를 타입으로 강제.
+final monthLogsProvider = FutureProvider.family<List<FoodLog>,
+    ({int year, int month})>((ref, key) async {
   ref.watch(authStateProvider); // 로그인/로그아웃 시 갱신
-  return ref.watch(foodLogRepositoryProvider).logsForMonth(month);
+  return ref
+      .watch(foodLogRepositoryProvider)
+      .logsForMonth(DateTime(key.year, key.month, 1));
 });
 
 /// 오늘 이 제품을 기록했는지 (결과 화면 토글 버튼 상태)
