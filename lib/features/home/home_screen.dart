@@ -7,6 +7,7 @@ import '../../providers/providers.dart';
 import '../auth/login_screen.dart';
 import '../chat/chat_screen.dart';
 import '../capture/capture_screen.dart';
+import '../diary/diary_screen.dart';
 import '../scan/scan_screen.dart';
 import '../search/search_screen.dart';
 
@@ -88,9 +89,23 @@ class HomeScreen extends ConsumerWidget {
             const SizedBox(height: 12),
 
             // AI 도우미 진입 — 제품·혈당·당류를 대화로 질문
-            _ChatAction(
+            _BannerAction(
+              icon: Icons.forum_rounded,
+              title: 'AI에게 물어보기',
+              subtitle: '제품·혈당·당류를 대화로 물어보세요',
               onTap: () => Navigator.of(context).push(
                 MaterialPageRoute(builder: (_) => const ChatScreen()),
+              ),
+            ),
+            const SizedBox(height: 12),
+
+            // 먹은 기록 달력 진입
+            _BannerAction(
+              icon: Icons.calendar_month_rounded,
+              title: '내가 먹은 기록',
+              subtitle: '날짜별로 먹은 제품을 돌아봐요',
+              onTap: () => Navigator.of(context).push(
+                MaterialPageRoute(builder: (_) => const DiaryScreen()),
               ),
             ),
 
@@ -300,8 +315,15 @@ class _SmallAction extends StatelessWidget {
   }
 }
 
-class _ChatAction extends StatelessWidget {
-  const _ChatAction({required this.onTap});
+class _BannerAction extends StatelessWidget {
+  const _BannerAction({
+    required this.icon,
+    required this.title,
+    required this.subtitle,
+    required this.onTap,
+  });
+  final IconData icon;
+  final String title, subtitle;
   final VoidCallback onTap;
 
   @override
@@ -325,22 +347,25 @@ class _ChatAction extends StatelessWidget {
                 color: CubedColors.brand.withValues(alpha: 0.15),
                 borderRadius: BorderRadius.circular(14),
               ),
-              child: const Icon(Icons.forum_rounded, color: CubedColors.brand, size: 24),
+              child: Icon(icon, color: CubedColors.brand, size: 24),
             ),
             const SizedBox(width: 14),
-            const Expanded(
+            Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text('AI에게 물어보기',
-                      style: TextStyle(fontWeight: FontWeight.w800, fontSize: 15)),
-                  SizedBox(height: 2),
-                  Text('제품·혈당·당류를 대화로 물어보세요',
-                      style: TextStyle(color: CubedColors.inkSoft, fontSize: 12)),
+                  Text(title,
+                      style: const TextStyle(
+                          fontWeight: FontWeight.w800, fontSize: 15)),
+                  const SizedBox(height: 2),
+                  Text(subtitle,
+                      style: const TextStyle(
+                          color: CubedColors.inkSoft, fontSize: 12)),
                 ],
               ),
             ),
-            const Icon(Icons.arrow_forward_ios_rounded, color: CubedColors.brand, size: 14),
+            const Icon(Icons.arrow_forward_ios_rounded,
+                color: CubedColors.brand, size: 14),
           ],
         ),
       ),

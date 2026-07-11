@@ -46,7 +46,10 @@ class CaptureScreen extends ConsumerWidget {
       );
       if (!context.mounted) return;
       Navigator.of(context).pushReplacement(
-        MaterialPageRoute(builder: (_) => ResultScreen(product: result.product)),
+        MaterialPageRoute(
+            builder: (_) => ResultScreen(
+                product: result.product,
+                submissionImagePath: result.imagePath)),
       );
     } catch (e) {
       ctrl.setError('$e');

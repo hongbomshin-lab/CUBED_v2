@@ -10,7 +10,12 @@ class OcrResult {
   final Product product;
   final List<String> unknownSweeteners;
   final String? rawText;
-  const OcrResult({required this.product, this.unknownSweeteners = const [], this.rawText});
+  final String? imagePath; // submission-images 폴더 uuid (서버 저장 실패 시 null)
+  const OcrResult(
+      {required this.product,
+      this.unknownSweeteners = const [],
+      this.rawText,
+      this.imagePath});
 
   /// 파싱 결과 맵 → OcrResult (순수 변환; 네트워크 무관). ocr-parse/submit-product 응답 공용.
   factory OcrResult.fromParsed(Map<String, dynamic> m, {String? barcode}) {
@@ -52,6 +57,7 @@ class OcrResult {
       product: product,
       unknownSweeteners: ((m['unknown_sweeteners'] as List?) ?? const []).cast<String>(),
       rawText: m['ingredients_raw'] as String?,
+      imagePath: m['image_path'] as String?,
     );
   }
 }

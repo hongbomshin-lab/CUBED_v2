@@ -39,4 +39,17 @@ void main() {
     expect(r.product.kcal, 0);
     expect(r.product.sweeteners, isEmpty);
   });
+
+  test('fromParsed: image_path → imagePath', () {
+    final r = OcrResult.fromParsed({
+      'category': '과자/스낵', 'unit': 'g', 'sweeteners': [],
+      'image_path': 'abc-123-folder',
+    });
+    expect(r.imagePath, 'abc-123-folder');
+  });
+
+  test('fromParsed: image_path 없으면 imagePath null', () {
+    final r = OcrResult.fromParsed({'category': '과자/스낵', 'unit': 'g', 'sweeteners': []});
+    expect(r.imagePath, isNull);
+  });
 }
