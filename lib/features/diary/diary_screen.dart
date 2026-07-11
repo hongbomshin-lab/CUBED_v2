@@ -52,7 +52,9 @@ class _DiaryScreenState extends ConsumerState<DiaryScreen> {
       }
       return;
     }
-    container.invalidate(monthLogsProvider(_monthKey));
+    // 기록이 속한 달을 무효화 — await 중 달력을 넘겼어도 정확한 달을 갱신
+    container.invalidate(monthLogsProvider(
+        (year: log.eatenOn.year, month: log.eatenOn.month)));
   }
 
   @override
