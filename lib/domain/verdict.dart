@@ -33,7 +33,8 @@ class Verdict {
     if (!zero) {
       return Verdict(
         kind: VerdictKind.generic, grade: it.grade,
-        labelText: '', realityText: '', whyBullets: _bullets(it),
+        // 폴백(등급 설명) 없음 — 배지가 같은 문장을 이미 보여준다
+        labelText: '', realityText: '', whyBullets: _bullets(it, withFallback: false),
       );
     }
     final busted = it.hasTrap || it.grade != Grade.low;
@@ -62,7 +63,9 @@ class Verdict {
 
   /// 함정 라인 기반 + 단일 성분 warn 규칙 승격(priority 내림차순).
   /// 같은 성분을 두 번 말하지 않는다. [includeInfo]가 false면 ℹ️ 참고 라인 제외.
-  static List<String> _bullets(Interpretation it, {bool includeInfo = true}) {
+  /// [withFallback]이 false면 빈 결과에 등급 설명을 채우지 않는다(배지 문장과 중복 방지).
+  static List<String> _bullets(Interpretation it,
+      {bool includeInfo = true, bool withFallback = true}) {
     final out = <String>[];
     final usedSlugs = <String>{};
     for (final line in it.trapLines) {
@@ -85,7 +88,7 @@ class Verdict {
     for (final e in warns) {
       out.add(e.value.message);
     }
-    if (out.isEmpty) out.add(gradeText[it.grade]!.desc);
+    if (withFallback && out.isEmpty) out.add(gradeText[it.grade]!.desc);
     return out.take(3).toList();
   }
 }

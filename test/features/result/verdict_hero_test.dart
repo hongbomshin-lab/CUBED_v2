@@ -58,4 +58,10 @@ void main() {
     expect(find.text('무설탕·제로'), findsNothing);
     expect(find.text('혈당 주의'), findsOneWidget);
   });
+
+  testWidgets('함정 없는 일반 제품: 등급 설명이 한 번만 보인다', (tester) async {
+    final p = product(sugar: 1, carb: 5, kcal: 20, serving: 100, category: '과자');
+    await tester.pumpWidget(host(Interpretation.of(p, refData())));
+    expect(find.text('혈당을 거의 올리지 않아요.'), findsOneWidget);
+  });
 }

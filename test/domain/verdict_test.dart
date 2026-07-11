@@ -112,6 +112,13 @@ void main() {
     expect(v.whyBullets.where((b) => b.contains('높은 편')), isEmpty);
   });
 
+  test('generic + 함정 없음 → 폴백 불릿 없음 (배지 설명과 중복 방지)', () {
+    final p = product(sugar: 1, carb: 5, kcal: 20, serving: 100, category: '과자');
+    final v = Verdict.of(interp(p, const []));
+    expect(v.kind, VerdictKind.generic);
+    expect(v.whyBullets, isEmpty);
+  });
+
   test('warn 노트 승격은 priority 내림차순', () {
     const highNote = ComboRule(
         comboKey: 'erythritol', headline: '높음', message: '높은 우선순위 노트.',
