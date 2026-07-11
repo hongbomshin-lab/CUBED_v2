@@ -20,6 +20,10 @@ class DiaryScreen extends ConsumerStatefulWidget {
 class _DiaryScreenState extends ConsumerState<DiaryScreen> {
   late DateTime _focused;
   late DateTime _selected;
+  late final DateTime _lastDay;
+
+  /// 낙관적 삭제 — provider 재조회 전 즉시 숨겨 Dismissible 재출현(assert)을 방지
+  final Set<String> _removedIds = {};
 
   @override
   void initState() {
@@ -27,10 +31,29 @@ class _DiaryScreenState extends ConsumerState<DiaryScreen> {
     final now = DateTime.now();
     _focused = now;
     _selected = DateTime(now.year, now.month, now.day);
+    _lastDay = now.add(const Duration(days: 366));
   }
 
   ({int year, int month}) get _monthKey =>
       (year: _focused.year, month: _focused.month);
+
+  Future<void> _remove(FoodLog log) async {
+    // 위젯이 await 중 dispose돼도 무효화가 동작하도록 컨테이너를 미리 캡처
+    // (eaten_today_button.dart와 동일 패턴)
+    final container = ProviderScope.containerOf(context, listen: false);
+    setState(() => _removedIds.add(log.id)); // 낙관적 숨김
+    try {
+      await ref.read(foodLogRepositoryProvider).removeLog(log.id);
+    } catch (e) {
+      if (mounted) {
+        setState(() => _removedIds.remove(log.id)); // 롤백
+        ScaffoldMessenger.of(context)
+            .showSnackBar(SnackBar(content: Text('삭제 실패: $e')));
+      }
+      return;
+    }
+    container.invalidate(monthLogsProvider(_monthKey));
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -40,6 +63,7 @@ class _DiaryScreenState extends ConsumerState<DiaryScreen> {
     final logs = ref.watch(monthLogsProvider(_monthKey));
     final byDay = <String, List<FoodLog>>{};
     for (final log in logs.valueOrNull ?? const <FoodLog>[]) {
+      if (_removedIds.contains(log.id)) continue;
       byDay.putIfAbsent(FoodLog.dateKey(log.eatenOn), () => []).add(log);
     }
     final dayLogs = byDay[FoodLog.dateKey(_selected)] ?? const <FoodLog>[];
@@ -50,7 +74,7 @@ class _DiaryScreenState extends ConsumerState<DiaryScreen> {
         children: [
           TableCalendar<FoodLog>(
             firstDay: DateTime(2026, 1, 1),
-            lastDay: DateTime.now().add(const Duration(days: 366)),
+            lastDay: _lastDay,
             focusedDay: _focused,
             selectedDayPredicate: (d) => isSameDay(d, _selected),
             eventLoader: (d) => byDay[FoodLog.dateKey(d)] ?? const [],
@@ -113,8 +137,7 @@ class _DiaryScreenState extends ConsumerState<DiaryScreen> {
                           const Divider(height: 1, color: CubedColors.line),
                       itemBuilder: (_, i) => _LogTile(
                         log: dayLogs[i],
-                        onRemoved: () =>
-                            ref.invalidate(monthLogsProvider(_monthKey)),
+                        onDelete: () => _remove(dayLogs[i]),
                       ),
                     ),
             ),
@@ -125,13 +148,13 @@ class _DiaryScreenState extends ConsumerState<DiaryScreen> {
   }
 }
 
-class _LogTile extends ConsumerWidget {
-  const _LogTile({required this.log, required this.onRemoved});
+class _LogTile extends StatelessWidget {
+  const _LogTile({required this.log, required this.onDelete});
   final FoodLog log;
-  final VoidCallback onRemoved;
+  final Future<void> Function() onDelete;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  Widget build(BuildContext context) {
     return Dismissible(
       key: ValueKey(log.id),
       direction: DismissDirection.endToStart,
@@ -142,10 +165,7 @@ class _LogTile extends ConsumerWidget {
         child: const Icon(Icons.delete_outline_rounded,
             color: CubedColors.caution),
       ),
-      onDismissed: (_) async {
-        await ref.read(foodLogRepositoryProvider).removeLog(log.id);
-        onRemoved();
-      },
+      onDismissed: (_) => onDelete(),
       child: ListTile(
         contentPadding: const EdgeInsets.symmetric(vertical: 6),
         leading: _LogThumb(log: log),
