@@ -1,0 +1,14 @@
+import 'package:flutter_test/flutter_test.dart';
+import 'package:cubed_app/features/result/widgets/portion_slider.dart';
+
+void main() {
+  test('1배: 그대로', () {
+    expect(portionSummary(factor: 1, netCarb: 4, kcal: 120), '순탄수 4g · 120kcal');
+  });
+  test('1.5배: 소수 1자리 반올림', () {
+    expect(portionSummary(factor: 1.5, netCarb: 4.1, kcal: 120), '순탄수 6.2g · 180kcal');
+  });
+  test('0.5배', () {
+    expect(portionSummary(factor: 0.5, netCarb: 4, kcal: 121), '순탄수 2g · 61kcal');
+  });
+}
