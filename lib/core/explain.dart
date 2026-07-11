@@ -47,7 +47,8 @@ class TrapLine {
   final TrapTier tier;
   final String emoji;
   final String text;
-  const TrapLine(this.tier, this.emoji, this.text);
+  final String code; // 룰북 함정 코드 ('당알코올 함정' 등) — 표시층 중복 제거 키
+  const TrapLine(this.tier, this.emoji, this.text, this.code);
 }
 
 String _unitWord(ExplainInput i) {
@@ -63,16 +64,19 @@ List<TrapLine> trapLines(ExplainInput i) {
   final out = <TrapLine>[];
   final name = i.topSweetenerName ?? '혈당 올리는 당알코올';
   if (i.traps.contains('당알코올 함정')) {
-    out.add(TrapLine(TrapTier.trap, '🚩', '무설탕이지만 $name 때문에 혈당이 오를 수 있어요.'));
+    out.add(TrapLine(TrapTier.trap, '🚩',
+        '무설탕이지만 $name 때문에 혈당이 오를 수 있어요.', '당알코올 함정'));
   }
   if (i.traps.contains('칼로리 함정')) {
-    out.add(TrapLine(TrapTier.trap, '🚩', '당 0g이지만 열량은 있어요 — ${_unitWord(i)} ${_n(i.kcal)}kcal.'));
+    out.add(TrapLine(TrapTier.trap, '🚩',
+        '당 0g이지만 열량은 있어요 — ${_unitWord(i)} ${_n(i.kcal)}kcal.', '칼로리 함정'));
   }
   if (i.traps.contains('당류 함정')) {
-    out.add(TrapLine(TrapTier.info, 'ℹ️', '당류가 ${_n(i.sugar)}g으로 높은 편이에요.'));
+    out.add(TrapLine(TrapTier.info, 'ℹ️', '당류가 ${_n(i.sugar)}g으로 높은 편이에요.', '당류 함정'));
   }
   if (i.traps.contains('탄수 함정')) {
-    out.add(TrapLine(TrapTier.info, 'ℹ️', '당은 낮지만 100${i.unit}당 순탄수 ${_n(i.per100NetCarb)}g — 탄수는 있어요.'));
+    out.add(TrapLine(TrapTier.info, 'ℹ️',
+        '당은 낮지만 100${i.unit}당 순탄수 ${_n(i.per100NetCarb)}g — 탄수는 있어요.', '탄수 함정'));
   }
   return out;
 }

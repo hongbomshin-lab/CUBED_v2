@@ -13,6 +13,8 @@ class SweetenerChip {
   final Grade glycemic;
   final double? amountG;
   final bool isRisky; // 혈당 올리는 당알코올
+  final String? note; // sweeteners.note (바텀시트 보조 설명)
+  final String cariogenic; // 억제 | 중립 | 유발
   const SweetenerChip({
     required this.slug,
     required this.name,
@@ -20,6 +22,8 @@ class SweetenerChip {
     required this.glycemic,
     this.amountG,
     required this.isRisky,
+    this.note,
+    required this.cariogenic,
   });
 }
 
@@ -35,7 +39,8 @@ class Interpretation {
   final List<TrapLine> trapLines;
   final String reason;
   final List<SweetenerChip> chips;
-  final ComboRule? combo; // 매칭된 맞춤 조합 메시지
+  final ComboRule? recipeCombo; // 다중(2+ slug) 조합 — "단맛 레시피" 한 줄
+  final Map<String, ComboRule> slugNotes; // 단일 slug 규칙 — 칩 바텀시트/불릿 승격용
   final String? topSweetenerName;
 
   const Interpretation({
@@ -48,7 +53,8 @@ class Interpretation {
     required this.trapLines,
     required this.reason,
     required this.chips,
-    required this.combo,
+    required this.recipeCombo,
+    required this.slugNotes,
     required this.topSweetenerName,
   });
 
@@ -117,6 +123,8 @@ class Interpretation {
         glycemic: sw?.glycemicImpact ?? Grade.low,
         amountG: ps.amountG,
         isRisky: riskySugarAlcohol.contains(ps.slug),
+        note: sw?.note,
+        cariogenic: sw?.cariogenicImpact ?? '중립',
       );
     }).toList();
 
@@ -130,16 +138,18 @@ class Interpretation {
       trapLines: ex.trapLines(input),
       reason: ex.reasonLine(input),
       chips: chips,
-      combo: _matchCombo(slugs, ref.comboRules),
+      recipeCombo: _matchRecipe(slugs, ref.comboRules),
+      slugNotes: _slugNotes(slugs, ref.comboRules),
       topSweetenerName: topName,
     );
   }
 
-  /// combo_key의 slug들이 제품 감미료 집합의 부분집합이면 매칭. priority 최고 우선.
-  static ComboRule? _matchCombo(List<String> slugs, List<ComboRule> rules) {
+  /// 2개 이상 slug 조합 규칙 중 부분집합 매칭 최우선 1개 — "단맛 레시피" 한 줄용.
+  static ComboRule? _matchRecipe(List<String> slugs, List<ComboRule> rules) {
     final set = slugs.toSet();
     ComboRule? best;
     for (final r in rules) {
+      if (r.keySlugs.length < 2) continue;
       if (r.keySlugs.every(set.contains)) {
         if (best == null ||
             r.priority > best.priority ||
@@ -149,6 +159,18 @@ class Interpretation {
       }
     }
     return best;
+  }
+
+  /// 단일 slug 규칙: 제품에 든 감미료만 slug -> rule 매핑.
+  static Map<String, ComboRule> _slugNotes(List<String> slugs, List<ComboRule> rules) {
+    final set = slugs.toSet();
+    final out = <String, ComboRule>{};
+    for (final r in rules) {
+      if (r.keySlugs.length != 1) continue;
+      final s = r.keySlugs.first;
+      if (set.contains(s)) out[s] = r;
+    }
+    return out;
   }
 }
 

@@ -61,9 +61,9 @@ class _Body extends ConsumerWidget {
         ],
 
         // 대체당 조합 맞춤 메시지 (킬러 피처)
-        if (it.combo != null) ...[
+        if (it.recipeCombo != null) ...[
           const SizedBox(height: 16),
-          _ComboCard(combo: it.combo!),
+          _ComboCard(combo: it.recipeCombo!),
         ],
 
         // 대체당 칩
