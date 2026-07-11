@@ -40,6 +40,8 @@ class EatenTodayButton extends ConsumerWidget {
         );
         return;
       }
+      // 위젯이 await 중 dispose돼도 무효화가 동작하도록 컨테이너를 미리 캡처
+      final container = ProviderScope.containerOf(context, listen: false);
       try {
         final added = await ref.read(foodLogRepositoryProvider).toggleToday(
               productId: _productId,
@@ -67,13 +69,16 @@ class EatenTodayButton extends ConsumerWidget {
               .showSnackBar(SnackBar(content: Text('기록 실패: $e')));
         }
       } finally {
-        ref.invalidate(todayLogProvider(key));
-        ref.invalidate(monthLogsProvider); // 달력 전체 갱신
+        container.invalidate(todayLogProvider(key));
+        container.invalidate(monthLogsProvider); // 달력 전체 갱신
       }
     }
 
     final label = logged ? '오늘 먹었어요 ✓' : '오늘 이거 먹었어요';
     final icon = logged ? Icons.check_circle_rounded : Icons.restaurant_rounded;
+    final iconWidget = Icon(icon, size: 20);
+    final labelWidget = Text(label,
+        style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 15));
 
     return SizedBox(
       width: double.infinity,
@@ -84,10 +89,8 @@ class EatenTodayButton extends ConsumerWidget {
                 padding: const EdgeInsets.symmetric(vertical: 14),
               ),
               onPressed: busy ? null : onTap,
-              icon: Icon(icon, size: 20),
-              label: Text(label,
-                  style: const TextStyle(
-                      fontWeight: FontWeight.w800, fontSize: 15)),
+              icon: iconWidget,
+              label: labelWidget,
             )
           : OutlinedButton.icon(
               style: OutlinedButton.styleFrom(
@@ -96,10 +99,8 @@ class EatenTodayButton extends ConsumerWidget {
                 padding: const EdgeInsets.symmetric(vertical: 14),
               ),
               onPressed: busy ? null : onTap,
-              icon: Icon(icon, size: 20),
-              label: Text(label,
-                  style: const TextStyle(
-                      fontWeight: FontWeight.w800, fontSize: 15)),
+              icon: iconWidget,
+              label: labelWidget,
             ),
     );
   }
