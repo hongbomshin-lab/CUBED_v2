@@ -70,9 +70,7 @@ class _Body extends ConsumerWidget {
         const SizedBox(height: 20),
         _SectionTitle('포함된 대체당', trailing: '${it.chips.length}종'),
         const SizedBox(height: 10),
-        SweetenerChips(chips: it.chips),
-        const SizedBox(height: 8),
-        const _ChipLegend(),
+        SweetenerChips(chips: it.chips, notes: it.slugNotes),
 
         // 영양성분
         const SizedBox(height: 22),
@@ -329,25 +327,6 @@ class _SectionTitle extends StatelessWidget {
           Text(trailing!, style: const TextStyle(color: CubedColors.inkSoft, fontSize: 13)),
       ],
     );
-  }
-}
-
-class _ChipLegend extends StatelessWidget {
-  const _ChipLegend();
-  @override
-  Widget build(BuildContext context) {
-    Widget dot(Color c, String t) => Row(mainAxisSize: MainAxisSize.min, children: [
-          Container(width: 8, height: 8, decoration: BoxDecoration(color: c, shape: BoxShape.circle)),
-          const SizedBox(width: 4),
-          Text(t, style: const TextStyle(fontSize: 11, color: CubedColors.inkSoft)),
-        ]);
-    return Wrap(spacing: 14, runSpacing: 6, children: [
-      dot(CubedColors.natural, '천연'),
-      dot(CubedColors.artificial, '인공'),
-      dot(CubedColors.sugarAlcohol, '당알코올'),
-      dot(CubedColors.etc, '기타'),
-      const Text('🩸 혈당 올림', style: TextStyle(fontSize: 11, color: CubedColors.inkSoft)),
-    ]);
   }
 }
 
