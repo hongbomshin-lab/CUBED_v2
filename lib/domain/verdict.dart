@@ -1,6 +1,8 @@
 // lib/domain/verdict.dart
 /// 판정 표현층 — Interpretation을 "답 한 줄 + 이유 불릿(중복 제거)"로 압축한다.
 /// 수치를 새로 만들지 않는다(절대 원칙). 룰북 코드가 유일한 중복 제거 키.
+library;
+
 import '../core/explain.dart';
 import '../core/rulebook.dart';
 import 'interpretation.dart';
