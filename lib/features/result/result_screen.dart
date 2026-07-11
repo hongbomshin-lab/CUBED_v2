@@ -7,6 +7,7 @@ import '../../core/theme.dart';
 import '../../data/models/product.dart';
 import '../../domain/interpretation.dart';
 import '../../providers/providers.dart';
+import '../diary/eaten_today_button.dart';
 import 'widgets/grade_hero.dart';
 import 'widgets/social_section.dart';
 import 'widgets/sweetener_chips.dart';
@@ -46,6 +47,12 @@ class _Body extends ConsumerWidget {
         _ProductHeader(it: it),
         const SizedBox(height: 16),
         GradeHero(it: it),
+        const SizedBox(height: 12),
+        EatenTodayButton(
+          product: p,
+          grade: it.grade,
+          submissionImagePath: submissionImagePath,
+        ),
 
         // 함정 카드
         if (it.trapLines.isNotEmpty) ...[
