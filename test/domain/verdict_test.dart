@@ -27,6 +27,7 @@ ReferenceData refData(List<ComboRule> rules) => ReferenceData(
       sweeteners: {
         'maltitol': sw('maltitol', '말티톨', '당알코올', Grade.caution),
         'erythritol': sw('erythritol', '에리스리톨', '당알코올', Grade.low),
+        'xylitol': sw('xylitol', '자일리톨', '당알코올', Grade.mid),
         'sucralose': sw('sucralose', '수크랄로스', '인공', Grade.low),
         'maltodextrin': sw('maltodextrin', '말토덱스트린', '기타', Grade.caution),
       },
@@ -88,5 +89,44 @@ void main() {
     final v = Verdict.of(interp(p, const [maltitolNote, maltodextrinNote]));
     expect(v.whyBullets, contains(maltodextrinNote.message));
     expect(v.whyBullets.length, lessThanOrEqualTo(3));
+  });
+
+  test('위험 당알코올 2종이면 최악 등급 성분의 노트로 대체 (성분표 순서 아님)', () {
+    // xylitol(mid)이 성분표 앞, maltitol(caution)이 뒤 — 대체는 말티톨 노트여야 함
+    final p = product(carb: 20, fiber: 1, sa: 15, kcal: 120, serving: 30,
+        category: '과자', sweeteners: const [
+          ProductSweetener(slug: 'xylitol', sortOrder: 0),
+          ProductSweetener(slug: 'maltitol', sortOrder: 1),
+        ]);
+    const xylitolNote = ComboRule(
+        comboKey: 'xylitol', headline: '자일리톨', message: '자일리톨 설명.',
+        tone: 'warn', priority: 70);
+    final v = Verdict.of(interp(p, const [maltitolNote, xylitolNote]));
+    expect(v.whyBullets.first, maltitolNote.message);
+  });
+
+  test('진짜 제로는 당류 함정 참고 불릿을 싣지 않는다 (초소형 용량)', () {
+    final p = product(sugar: 0.45, carb: 0.5, serving: 8, category: '과자');
+    final v = Verdict.of(interp(p, const []));
+    expect(v.kind, VerdictKind.zeroTrue);
+    expect(v.whyBullets.where((b) => b.contains('높은 편')), isEmpty);
+  });
+
+  test('warn 노트 승격은 priority 내림차순', () {
+    const highNote = ComboRule(
+        comboKey: 'erythritol', headline: '높음', message: '높은 우선순위 노트.',
+        tone: 'warn', priority: 95);
+    final p = product(carb: 25, sa: 15, kcal: 200, serving: 30, category: '과자',
+        sweeteners: const [
+          ProductSweetener(slug: 'maltodextrin', sortOrder: 0),
+          ProductSweetener(slug: 'erythritol', sortOrder: 1),
+        ]);
+    // maltodextrinNote(85) 먼저 로드돼도 highNote(95)가 앞서야 함
+    final v = Verdict.of(interp(p, const [maltodextrinNote, highNote]));
+    final hi = v.whyBullets.indexOf(highNote.message);
+    final lo = v.whyBullets.indexOf(maltodextrinNote.message);
+    expect(hi, isNot(-1));
+    expect(lo, isNot(-1));
+    expect(hi, lessThan(lo));
   });
 }

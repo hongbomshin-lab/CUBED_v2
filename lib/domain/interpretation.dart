@@ -42,6 +42,7 @@ class Interpretation {
   final ComboRule? recipeCombo; // 다중(2+ slug) 조합 — "단맛 레시피" 한 줄
   final Map<String, ComboRule> slugNotes; // 단일 slug 규칙 — 칩 바텀시트/불릿 승격용
   final String? topSweetenerName;
+  final String? topSweetenerSlug; // topSweetenerName과 같은 성분의 slug — 표시층 노트 매칭용
 
   const Interpretation({
     required this.product,
@@ -56,6 +57,7 @@ class Interpretation {
     required this.recipeCombo,
     required this.slugNotes,
     required this.topSweetenerName,
+    this.topSweetenerSlug,
   });
 
   bool get hasTrap => trapLines.any((t) => t.tier == TrapTier.trap);
@@ -89,8 +91,9 @@ class Interpretation {
       slugs: slugs,
     );
 
-    // 등급이 가장 높은(혈당 위험 큰) 감미료 표시명 — class='기타' 제외
+    // 등급이 가장 높은(혈당 위험 큰) 감미료 표시명·slug — class='기타' 제외
     String? topName;
+    String? topSlug;
     var worst = -1;
     for (final ps in p.sweeteners) {
       final sw = ref.sweeteners[ps.slug];
@@ -99,6 +102,7 @@ class Interpretation {
       if (r > worst) {
         worst = r;
         topName = sw.standardName;
+        topSlug = ps.slug;
       }
     }
 
@@ -141,6 +145,7 @@ class Interpretation {
       recipeCombo: _matchRecipe(slugs, ref.comboRules),
       slugNotes: _slugNotes(slugs, ref.comboRules),
       topSweetenerName: topName,
+      topSweetenerSlug: topSlug,
     );
   }
 

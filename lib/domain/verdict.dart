@@ -47,7 +47,8 @@ class Verdict {
     return Verdict(
       kind: VerdictKind.zeroTrue, grade: it.grade,
       labelText: '무설탕·제로', realityText: '진짜예요',
-      whyBullets: _bullets(it),
+      // "진짜예요"와 모순되는 ℹ️ 참고 불릿(당류/탄수 함정)은 싣지 않는다
+      whyBullets: _bullets(it, includeInfo: false),
     );
   }
 
@@ -59,26 +60,30 @@ class Verdict {
     return '열량은 있어요'; // 남는 경우: 칼로리 함정만
   }
 
-  /// 함정 라인 기반 + 단일 성분 warn 규칙 승격. 같은 성분을 두 번 말하지 않는다.
-  static List<String> _bullets(Interpretation it) {
+  /// 함정 라인 기반 + 단일 성분 warn 규칙 승격(priority 내림차순).
+  /// 같은 성분을 두 번 말하지 않는다. [includeInfo]가 false면 ℹ️ 참고 라인 제외.
+  static List<String> _bullets(Interpretation it, {bool includeInfo = true}) {
     final out = <String>[];
     final usedSlugs = <String>{};
     for (final line in it.trapLines) {
+      if (!includeInfo && line.tier == TrapTier.info) continue;
       if (line.code == '당알코올 함정') {
-        final risky = it.chips.where((c) => c.isRisky);
-        final note = risky.isEmpty ? null : it.slugNotes[risky.first.slug];
-        if (note != null) {
+        final slug = it.topSweetenerSlug;
+        final note = slug == null ? null : it.slugNotes[slug];
+        if (slug != null && note != null) {
           out.add(note.message); // 함정 문장 대신 더 풍부한 성분 카피
-          usedSlugs.add(risky.first.slug);
+          usedSlugs.add(slug);
           continue;
         }
       }
       out.add(line.text);
     }
-    for (final e in it.slugNotes.entries) {
-      if (e.value.tone == 'warn' && !usedSlugs.contains(e.key)) {
-        out.add(e.value.message);
-      }
+    final warns = it.slugNotes.entries
+        .where((e) => e.value.tone == 'warn' && !usedSlugs.contains(e.key))
+        .toList()
+      ..sort((a, b) => b.value.priority.compareTo(a.value.priority));
+    for (final e in warns) {
+      out.add(e.value.message);
     }
     if (out.isEmpty) out.add(gradeText[it.grade]!.desc);
     return out.take(3).toList();
