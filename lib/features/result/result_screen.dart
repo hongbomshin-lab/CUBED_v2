@@ -3,14 +3,17 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/explain.dart';
 import '../../core/product_thumb.dart';
+import '../../core/rulebook.dart';
 import '../../core/theme.dart';
 import '../../data/models/product.dart';
 import '../../domain/interpretation.dart';
 import '../../providers/providers.dart';
+import '../chat/chat_screen.dart';
 import '../diary/eaten_today_button.dart';
-import 'widgets/grade_hero.dart';
+import 'widgets/portion_slider.dart';
 import 'widgets/social_section.dart';
 import 'widgets/sweetener_chips.dart';
+import 'widgets/verdict_hero.dart';
 
 class ResultScreen extends ConsumerWidget {
   const ResultScreen({super.key, required this.product, this.submissionImagePath});
@@ -46,7 +49,28 @@ class _Body extends ConsumerWidget {
       children: [
         _ProductHeader(it: it),
         const SizedBox(height: 16),
-        GradeHero(it: it),
+
+        // ── 1층: 답 + 이유 (VerdictHero가 판정 스트립·불릿·핵심 수치 통합)
+        VerdictHero(it: it),
+
+        // 단맛 레시피 한 줄 (다중 조합 규칙 매칭 시)
+        if (it.recipeCombo != null) ...[
+          const SizedBox(height: 10),
+          _RecipeLine(combo: it.recipeCombo!),
+        ],
+
+        // ── 2층: 행동 — 주의 등급이면 대안을 먼저
+        if (it.grade == Grade.caution) ...[
+          const SizedBox(height: 24),
+          const _SectionTitle('대신 이건 어때요?'),
+          const SizedBox(height: 4),
+          const Text('같은 칸에서 혈당 부담이 더 낮은 제품',
+              style: TextStyle(color: CubedColors.inkSoft, fontSize: 13)),
+          const SizedBox(height: 12),
+          _Alternatives(product: p),
+        ],
+
+        // 먹은 기록 토글 (푸드 다이어리)
         const SizedBox(height: 12),
         EatenTodayButton(
           product: p,
@@ -54,40 +78,32 @@ class _Body extends ConsumerWidget {
           submissionImagePath: submissionImagePath,
         ),
 
-        // 함정 카드
-        if (it.trapLines.isNotEmpty) ...[
-          const SizedBox(height: 16),
-          ...it.trapLines.map((t) => _TrapCard(line: t)),
-        ],
-
-        // 대체당 조합 맞춤 메시지 (킬러 피처)
-        if (it.recipeCombo != null) ...[
-          const SizedBox(height: 16),
-          _ComboCard(combo: it.recipeCombo!),
-        ],
-
-        // 대체당 칩
+        // 대체당 칩 (탭하면 성분 설명)
         const SizedBox(height: 20),
-        _SectionTitle('포함된 대체당', trailing: '${it.chips.length}종'),
+        _SectionTitle('포함된 대체당', trailing: '${it.chips.length}종 · 탭해서 보기'),
         const SizedBox(height: 10),
         SweetenerChips(chips: it.chips, notes: it.slugNotes),
 
-        // 영양성분
-        const SizedBox(height: 22),
-        const _SectionTitle('영양성분', trailing: '1회분 기준'),
-        const SizedBox(height: 10),
-        _NutritionGrid(p: p),
+        // ── 3층: 근거 (접힘) — 영양성분·양 슬라이더·계산 근거
+        const SizedBox(height: 20),
+        _NumbersSection(it: it),
 
-        // 대안 추천 (킬러 피처)
-        const SizedBox(height: 24),
-        const _SectionTitle('대신 이건 어때요?'),
-        const SizedBox(height: 4),
-        const Text('같은 칸에서 혈당 부담이 더 낮은 제품',
-            style: TextStyle(color: CubedColors.inkSoft, fontSize: 13)),
-        const SizedBox(height: 12),
-        _Alternatives(product: p),
+        // 낮음/중간 등급이면 대안은 여기
+        if (it.grade != Grade.caution) ...[
+          const SizedBox(height: 24),
+          const _SectionTitle('대신 이건 어때요?'),
+          const SizedBox(height: 4),
+          const Text('같은 칸에서 혈당 부담이 더 낮은 제품',
+              style: TextStyle(color: CubedColors.inkSoft, fontSize: 13)),
+          const SizedBox(height: 12),
+          _Alternatives(product: p),
+        ],
 
-        // 좋아요 + 코멘트
+        // AI에게 이 제품 질문
+        const SizedBox(height: 20),
+        _AskAiButton(product: p),
+
+        // ── 4층: 커뮤니티
         const SizedBox(height: 28),
         const Divider(height: 1, color: CubedColors.line),
         const SizedBox(height: 20),
@@ -98,9 +114,6 @@ class _Body extends ConsumerWidget {
           const SizedBox(height: 24),
           _DraftNotice(notes: p.notes),
         ],
-        const SizedBox(height: 12),
-        Text(it.reason,
-            style: const TextStyle(color: CubedColors.inkSoft, fontSize: 12, height: 1.5)),
       ],
     );
   }
@@ -144,33 +157,29 @@ class _ProductHeader extends StatelessWidget {
   }
 }
 
-class _TrapCard extends StatelessWidget {
-  const _TrapCard({required this.line});
-  final TrapLine line;
+/// 다중 조합 규칙 → "단맛 레시피" 한 줄 아이덴티티
+class _RecipeLine extends StatelessWidget {
+  const _RecipeLine({required this.combo});
+  final ComboRule combo;
   @override
   Widget build(BuildContext context) {
-    final isTrap = line.tier == TrapTier.trap;
-    final c = isTrap ? CubedColors.caution : CubedColors.inkSoft;
     return Container(
-      margin: const EdgeInsets.only(bottom: 10),
-      padding: const EdgeInsets.all(14),
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 11),
       decoration: BoxDecoration(
-        color: isTrap ? c.withValues(alpha: 0.07) : CubedColors.bg,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: isTrap ? c.withValues(alpha: 0.25) : CubedColors.line),
+        color: CubedColors.brand.withValues(alpha: 0.07),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: CubedColors.brand.withValues(alpha: 0.25)),
       ),
       child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(line.emoji, style: const TextStyle(fontSize: 18)),
-          const SizedBox(width: 10),
+          const Icon(Icons.auto_awesome_rounded, size: 16, color: CubedColors.brand),
+          const SizedBox(width: 8),
+          const Text('단맛 레시피: ',
+              style: TextStyle(color: CubedColors.inkSoft, fontSize: 13)),
           Expanded(
-            child: Text(line.text,
-                style: TextStyle(
-                    fontSize: 14,
-                    height: 1.4,
-                    fontWeight: isTrap ? FontWeight.w700 : FontWeight.w500,
-                    color: isTrap ? CubedColors.ink : CubedColors.inkSoft)),
+            child: Text(combo.headline,
+                style: const TextStyle(
+                    color: CubedColors.brand, fontWeight: FontWeight.w800, fontSize: 14)),
           ),
         ],
       ),
@@ -178,35 +187,64 @@ class _TrapCard extends StatelessWidget {
   }
 }
 
-class _ComboCard extends StatelessWidget {
-  const _ComboCard({required this.combo});
-  final ComboRule combo;
+/// 접히는 근거 층: 양 슬라이더 + 영양성분 그리드 + 계산 근거 문장
+class _NumbersSection extends StatelessWidget {
+  const _NumbersSection({required this.it});
+  final Interpretation it;
   @override
   Widget build(BuildContext context) {
-    final (c, icon) = switch (combo.tone) {
-      'warn' => (CubedColors.caution, Icons.science_rounded),
-      'fun' => (CubedColors.brand, Icons.auto_awesome_rounded),
-      _ => (CubedColors.artificial, Icons.lightbulb_rounded),
-    };
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: c.withValues(alpha: 0.07),
-        borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: c.withValues(alpha: 0.3)),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+    return Theme(
+      data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
+      child: ExpansionTile(
+        // maintainState 필수: 접었다 펴도 PortionSlider의 배수 선택이 유지된다.
+        maintainState: true,
+        tilePadding: EdgeInsets.zero,
+        childrenPadding: EdgeInsets.zero,
+        title: const Text('숫자로 보기',
+            style: TextStyle(fontWeight: FontWeight.w800, fontSize: 17)),
+        subtitle: const Text('영양성분 · 양 조절 · 계산 근거',
+            style: TextStyle(color: CubedColors.inkSoft, fontSize: 12)),
         children: [
-          Row(children: [
-            Icon(icon, color: c, size: 20),
-            const SizedBox(width: 8),
-            Expanded(child: Text(combo.headline, style: TextStyle(color: c, fontWeight: FontWeight.w800, fontSize: 15))),
-          ]),
+          PortionSlider(
+              netCarb: it.netCarb, kcal: it.product.kcal, unitDesc: it.product.unitDesc),
+          const SizedBox(height: 12),
+          _NutritionGrid(p: it.product),
+          const SizedBox(height: 10),
+          Align(
+            alignment: Alignment.centerLeft,
+            child: Text(it.reason,
+                style: const TextStyle(
+                    color: CubedColors.inkSoft, fontSize: 12, height: 1.5)),
+          ),
           const SizedBox(height: 8),
-          Text(combo.message, style: const TextStyle(fontSize: 14, height: 1.5)),
         ],
       ),
+    );
+  }
+}
+
+/// AI 채팅 딥링크 — 제품명을 들고 질문과 함께 진입
+class _AskAiButton extends StatelessWidget {
+  const _AskAiButton({required this.product});
+  final Product product;
+  @override
+  Widget build(BuildContext context) {
+    return OutlinedButton.icon(
+      style: OutlinedButton.styleFrom(
+        foregroundColor: CubedColors.brand,
+        side: BorderSide(color: CubedColors.brand.withValues(alpha: 0.4)),
+        padding: const EdgeInsets.symmetric(vertical: 14),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+      ),
+      onPressed: () => Navigator.of(context).push(
+        MaterialPageRoute(
+          builder: (_) => ChatScreen(
+              initialPrompt: '${product.name}, 혈당 관리 중인데 먹어도 괜찮아?'),
+        ),
+      ),
+      icon: const Icon(Icons.forum_rounded, size: 18),
+      label: const Text('AI에게 이 제품 물어보기',
+          style: TextStyle(fontWeight: FontWeight.w800, fontSize: 14)),
     );
   }
 }
