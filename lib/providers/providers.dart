@@ -3,7 +3,9 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../core/location_cache.dart';
 import '../data/auth_repository.dart';
+import '../data/food_log_repository.dart';
 import '../data/models/comment.dart';
+import '../data/models/food_log.dart';
 import '../data/models/product.dart';
 import '../data/models/store_review.dart';
 import '../data/product_repository.dart';
@@ -104,4 +106,25 @@ final searchProvider =
     FutureProvider.family<List<Product>, String>((ref, q) async {
   if (q.trim().isEmpty) return const [];
   return ref.watch(repositoryProvider).searchByName(q.trim());
+});
+
+/// 먹은 기록 데이터 접근
+final foodLogRepositoryProvider = Provider<FoodLogRepository>(
+  (ref) => FoodLogRepository(ref.watch(supabaseProvider)),
+);
+
+/// 월별 먹은 기록 (달력). key는 DateTime(year, month, 1)로 정규화해 넘길 것.
+final monthLogsProvider =
+    FutureProvider.family<List<FoodLog>, DateTime>((ref, month) async {
+  ref.watch(authStateProvider); // 로그인/로그아웃 시 갱신
+  return ref.watch(foodLogRepositoryProvider).logsForMonth(month);
+});
+
+/// 오늘 이 제품을 기록했는지 (결과 화면 토글 버튼 상태)
+final todayLogProvider = FutureProvider.family<FoodLog?,
+    ({String? productId, String name})>((ref, key) async {
+  ref.watch(authStateProvider);
+  return ref
+      .watch(foodLogRepositoryProvider)
+      .todayLogFor(productId: key.productId, name: key.name);
 });
