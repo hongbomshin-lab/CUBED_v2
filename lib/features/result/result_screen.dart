@@ -12,8 +12,11 @@ import 'widgets/social_section.dart';
 import 'widgets/sweetener_chips.dart';
 
 class ResultScreen extends ConsumerWidget {
-  const ResultScreen({super.key, required this.product});
+  const ResultScreen({super.key, required this.product, this.submissionImagePath});
   final Product product;
+
+  /// 촬영(OCR) 제품의 submission-images 폴더 uuid — 먹은기록 썸네일용
+  final String? submissionImagePath;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -23,15 +26,16 @@ class ResultScreen extends ConsumerWidget {
       body: interp.when(
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (e, _) => Center(child: Text('해석 오류: $e')),
-        data: (it) => _Body(it: it),
+        data: (it) => _Body(it: it, submissionImagePath: submissionImagePath),
       ),
     );
   }
 }
 
 class _Body extends ConsumerWidget {
-  const _Body({required this.it});
+  const _Body({required this.it, this.submissionImagePath});
   final Interpretation it;
+  final String? submissionImagePath;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
