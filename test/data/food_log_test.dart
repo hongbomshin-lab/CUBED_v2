@@ -16,6 +16,9 @@ void main() {
     expect(log.id, 'uuid-1');
     expect(log.eatenOn, DateTime(2026, 7, 11));
     expect(log.productId, '0TKKSWYBWCTQH');
+    expect(log.name, '1500저당바더블초코');
+    expect(log.brand, '서주');
+    expect(log.category, '아이스크림/빙과');
     expect(log.grade, 'mid');
     expect(log.imagePath, isNull);
   });
@@ -37,6 +40,8 @@ void main() {
     expect(m['user_id'], 'u1');
     expect(m['eaten_on'], '2026-07-11');
     expect(m['product_id'], isNull);
+    expect(m['name'], '촬영한 제품');
+    expect(m['grade'], 'low');
     expect(m['image_path'], 'folder-uuid');
   });
 
