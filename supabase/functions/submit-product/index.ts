@@ -38,6 +38,8 @@ Deno.serve(async (req: Request) => {
     const parsed = await parseNutrition(imgs, GEMINI_API_KEY);
 
     // 제보 영속화(비치명적). 실패해도 파싱 결과는 돌려준다.
+    // 성공 시 폴더 uuid를 image_path로 반환 → 앱의 먹은기록 썸네일 재사용 (스펙 §7)
+    let imagePath: string | null = null;
     try {
       const db = createClient(SUPABASE_URL, SERVICE_ROLE);
       const folder = crypto.randomUUID();
@@ -54,11 +56,12 @@ Deno.serve(async (req: Request) => {
         ocr_text: (parsed as { ingredients_raw?: string }).ingredients_raw ?? null,
         status: "pending",
       });
+      imagePath = folder;
     } catch (persistErr) {
       console.error("submit-product persist 실패(비치명적):", String(persistErr));
     }
 
-    return json(parsed, 200);
+    return json({ ...parsed, image_path: imagePath }, 200);
   } catch (e) {
     return json({ error: String(e) }, 500);
   }
