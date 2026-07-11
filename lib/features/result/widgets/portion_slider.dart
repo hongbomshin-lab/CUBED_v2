@@ -53,8 +53,12 @@ class _PortionSliderState extends State<PortionSlider> {
             children: [
               const Text('이만큼 먹으면?',
                   style: TextStyle(fontWeight: FontWeight.w700, fontSize: 14)),
-              Text('${widget.unitDesc} × $f',
-                  style: const TextStyle(color: CubedColors.inkSoft, fontSize: 12)),
+              Flexible(
+                child: Text('${widget.unitDesc} × $f',
+                    overflow: TextOverflow.ellipsis,
+                    textAlign: TextAlign.right,
+                    style: const TextStyle(color: CubedColors.inkSoft, fontSize: 12)),
+              ),
             ],
           ),
           const SizedBox(height: 4),
