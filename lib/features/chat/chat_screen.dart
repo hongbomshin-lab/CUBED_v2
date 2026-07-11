@@ -8,7 +8,10 @@ import 'chat_controller.dart';
 /// CUBED AI 도우미 채팅 화면.
 /// 제품 룰북 요약을 주입받은 Gemini가 데이터에 있는 제품만 근거로 답한다. (대화는 메모리만)
 class ChatScreen extends ConsumerStatefulWidget {
-  const ChatScreen({super.key});
+  const ChatScreen({super.key, this.initialPrompt});
+
+  /// 결과 화면 등에서 진입 시 자동으로 보낼 첫 질문 (null이면 기존과 동일)
+  final String? initialPrompt;
 
   @override
   ConsumerState<ChatScreen> createState() => _ChatScreenState();
@@ -17,6 +20,15 @@ class ChatScreen extends ConsumerStatefulWidget {
 class _ChatScreenState extends ConsumerState<ChatScreen> {
   final _input = TextEditingController();
   final _scroll = ScrollController();
+
+  @override
+  void initState() {
+    super.initState();
+    final p = widget.initialPrompt;
+    if (p != null && p.trim().isNotEmpty) {
+      WidgetsBinding.instance.addPostFrameCallback((_) => _send(p));
+    }
+  }
 
   @override
   void dispose() {
