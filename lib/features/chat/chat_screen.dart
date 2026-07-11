@@ -26,7 +26,10 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
     super.initState();
     final p = widget.initialPrompt;
     if (p != null && p.trim().isNotEmpty) {
-      WidgetsBinding.instance.addPostFrameCallback((_) => _send(p));
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+        _send(p);
+      });
     }
   }
 
