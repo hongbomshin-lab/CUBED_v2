@@ -41,6 +41,23 @@ void main() {
     expect(find.textContaining('양 조절이 필요해요'), findsOneWidget); // 폴백 문장
   });
 
+  testWidgets('긴 노트 텍스트도 오버플로 없이 시트가 열린다', (tester) async {
+    final longNote = '아주 긴 설명. ' * 120;
+    await tester.pumpWidget(host(SweetenerChips(
+      chips: [
+        SweetenerChip(
+          slug: 'maltitol', name: '말티톨', klass: '당알코올', glycemic: Grade.caution,
+          amountG: null, isRisky: true, note: longNote, cariogenic: '중립',
+        ),
+      ],
+      notes: const {},
+    )));
+    await tester.tap(find.text('말티톨'));
+    await tester.pumpAndSettle();
+    expect(tester.takeException(), isNull); // 오버플로 예외 없음
+    expect(find.textContaining('아주 긴 설명.'), findsOneWidget);
+  });
+
   testWidgets('빈 목록 안내 문구', (tester) async {
     await tester.pumpWidget(host(const SweetenerChips(chips: [], notes: {})));
     expect(find.text('표시된 대체당이 없어요.'), findsOneWidget);
