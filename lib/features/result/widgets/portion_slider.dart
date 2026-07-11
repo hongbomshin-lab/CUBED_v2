@@ -4,18 +4,17 @@ import '../../../core/theme.dart';
 
 /// 배수 → 표시 문자열 (순수 함수, 테스트 대상). kcal은 정수 반올림, 순탄수는 소수 1자리.
 ///
-/// 슬라이더의 factor는 항상 0.5 단위(1, 1.5, 2 ...)이므로 factor*2는 정수다.
-/// netCarb*factor를 곧바로 double로 곱하면 4.1*1.5=6.1499999999999995 같은
-/// 부동소수점 오차로 반올림이 한 자리 어긋날 수 있어, 정수 연산(10분의 1 단위)으로
-/// 계산해 오차를 없앤다.
+/// 순탄수는 룰북이 소수 2자리로 주므로 백분위 정수 공간에서 계산해 이중 반올림을 피한다.
+/// factor는 슬라이더 특성상 항상 0.5의 배수 → factor*2는 정확한 정수.
+/// (netCarb*factor를 곧바로 double로 곱하면 4.1*1.5=6.1499999999999995 같은
+/// 부동소수점 오차로 반올림이 한 자리 어긋날 수 있다.)
 String portionSummary({required double factor, required double netCarb, required double kcal}) {
-  final netCarbTenths = (netCarb * 10).round();
+  final ncHundredths = (netCarb * 100).round();
   final factorHalves = (factor * 2).round();
-  final ncTenths = (netCarbTenths * factorHalves / 2).round();
+  final ncTenths = (ncHundredths * factorHalves / 20).round();
+  final nc = ncTenths / 10;
   final k = (kcal * factor).round();
-  final ncText = ncTenths % 10 == 0
-      ? (ncTenths ~/ 10).toString()
-      : (ncTenths / 10).toStringAsFixed(1);
+  final ncText = nc == nc.roundToDouble() ? nc.toInt().toString() : nc.toStringAsFixed(1);
   return '순탄수 ${ncText}g · ${k}kcal';
 }
 

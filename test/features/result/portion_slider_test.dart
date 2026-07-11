@@ -11,4 +11,10 @@ void main() {
   test('0.5배', () {
     expect(portionSummary(factor: 0.5, netCarb: 4, kcal: 121), '순탄수 2g · 61kcal');
   });
+  test('소수 2자리 순탄수 × 1.5배: 이중 반올림 없이 정확', () {
+    expect(portionSummary(factor: 1.5, netCarb: 4.16, kcal: 100), '순탄수 6.2g · 150kcal');
+  });
+  test('소수 2자리 순탄수 × 3배: 경계값 100', () {
+    expect(portionSummary(factor: 3, netCarb: 33.33, kcal: 50), '순탄수 100g · 150kcal');
+  });
 }
