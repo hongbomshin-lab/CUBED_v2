@@ -81,25 +81,6 @@ List<TrapLine> trapLines(ExplainInput i) {
   return out;
 }
 
-/// 한 줄 헤드라인 (가장 강한 신호 우선)
-String headline(ExplainInput i) {
-  final w = _unitWord(i);
-  if (i.traps.contains('당알코올 함정')) {
-    return '🚩 무설탕이지만 혈당 주의 — ${i.topSweetenerName ?? '당알코올'} 함유';
-  }
-  if (i.traps.contains('칼로리 함정')) {
-    return '🚩 당 0g이지만 열량 있음 — $w ${_n(i.kcal)}kcal';
-  }
-  if (i.grade == Grade.caution) {
-    return '🔴 혈당 주의 — $w 순탄수 ${_n(i.netCarb)}g';
-  }
-  if (i.traps.contains('당류 함정')) {
-    return '당류 높음 — $w 당 ${_n(i.sugar)}g';
-  }
-  final g = gradeText[i.grade]!;
-  return '${g.emoji} $w 순탄수 ${_n(i.netCarb)}g · ${g.badge}';
-}
-
 /// 등급 근거 한 줄
 String reasonLine(ExplainInput i) {
   final sw = i.topSweetenerName != null ? '${i.topSweetenerName}(감미료)' : '감미료 없음';

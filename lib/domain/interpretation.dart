@@ -35,7 +35,6 @@ class Interpretation {
   final double netCarb;
   final double per100NetCarb;
   final List<String> trapCodes;
-  final String headline;
   final List<TrapLine> trapLines;
   final String reason;
   final List<SweetenerChip> chips;
@@ -50,7 +49,6 @@ class Interpretation {
     required this.netCarb,
     required this.per100NetCarb,
     required this.trapCodes,
-    required this.headline,
     required this.trapLines,
     required this.reason,
     required this.chips,
@@ -138,7 +136,6 @@ class Interpretation {
       netCarb: nc,
       per100NetCarb: p100,
       trapCodes: trapCodes,
-      headline: ex.headline(input),
       trapLines: ex.trapLines(input),
       reason: ex.reasonLine(input),
       chips: chips,
