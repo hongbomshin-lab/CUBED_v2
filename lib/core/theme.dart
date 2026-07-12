@@ -16,23 +16,10 @@ class CubedColors {
   static const mid = Color(0xFFF59E0B);
   static const caution = Color(0xFFEF4444);
 
-  // 감미료 class 색
-  static const natural = Color(0xFF16A34A); // 천연
-  static const artificial = Color(0xFF6366F1); // 인공
-  static const sugarAlcohol = Color(0xFFF59E0B); // 당알코올
-  static const etc = Color(0xFF94A3B8); // 기타
-
   static Color grade(Grade g) => switch (g) {
         Grade.low => low,
         Grade.mid => mid,
         Grade.caution => caution,
-      };
-
-  static Color klass(String k) => switch (k) {
-        '천연' => natural,
-        '인공' => artificial,
-        '당알코올' => sugarAlcohol,
-        _ => etc,
       };
 }
 
