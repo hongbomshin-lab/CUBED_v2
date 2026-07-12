@@ -62,12 +62,7 @@ class _Body extends ConsumerWidget {
         // ── 2층: 행동 — 주의 등급이면 대안을 먼저
         if (it.grade == Grade.caution) ...[
           const SizedBox(height: 24),
-          const _SectionTitle('대신 이건 어때요?'),
-          const SizedBox(height: 4),
-          const Text('같은 칸에서 혈당 부담이 더 낮은 제품',
-              style: TextStyle(color: CubedColors.inkSoft, fontSize: 13)),
-          const SizedBox(height: 12),
-          _Alternatives(product: p),
+          _AlternativesSection(product: p),
         ],
 
         // 먹은 기록 토글 (푸드 다이어리)
@@ -91,12 +86,7 @@ class _Body extends ConsumerWidget {
         // 낮음/중간 등급이면 대안은 여기
         if (it.grade != Grade.caution) ...[
           const SizedBox(height: 24),
-          const _SectionTitle('대신 이건 어때요?'),
-          const SizedBox(height: 4),
-          const Text('같은 칸에서 혈당 부담이 더 낮은 제품',
-              style: TextStyle(color: CubedColors.inkSoft, fontSize: 13)),
-          const SizedBox(height: 12),
-          _Alternatives(product: p),
+          _AlternativesSection(product: p),
         ],
 
         // AI에게 이 제품 질문
@@ -157,31 +147,70 @@ class _ProductHeader extends StatelessWidget {
   }
 }
 
-/// 다중 조합 규칙 → "단맛 레시피" 한 줄 아이덴티티
+/// 다중 조합 규칙 → "단맛 레시피" 한 줄 아이덴티티. 탭하면 조합 설명 시트.
 class _RecipeLine extends StatelessWidget {
   const _RecipeLine({required this.combo});
   final ComboRule combo;
+
+  void _showSheet(BuildContext context) {
+    showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      builder: (_) => SafeArea(
+        child: SingleChildScrollView(
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(24, 20, 24, 28),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(children: [
+                  const Icon(Icons.auto_awesome_rounded, size: 18, color: CubedColors.brand),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(combo.headline,
+                        style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w800)),
+                  ),
+                ]),
+                const SizedBox(height: 12),
+                Text(combo.message, style: const TextStyle(fontSize: 15, height: 1.55)),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 11),
-      decoration: BoxDecoration(
-        color: CubedColors.brand.withValues(alpha: 0.07),
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: CubedColors.brand.withValues(alpha: 0.25)),
-      ),
-      child: Row(
-        children: [
-          const Icon(Icons.auto_awesome_rounded, size: 16, color: CubedColors.brand),
-          const SizedBox(width: 8),
-          const Text('단맛 레시피: ',
-              style: TextStyle(color: CubedColors.inkSoft, fontSize: 13)),
-          Expanded(
-            child: Text(combo.headline,
-                style: const TextStyle(
-                    color: CubedColors.brand, fontWeight: FontWeight.w800, fontSize: 14)),
-          ),
-        ],
+    return InkWell(
+      onTap: () => _showSheet(context),
+      borderRadius: BorderRadius.circular(14),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 11),
+        decoration: BoxDecoration(
+          color: CubedColors.brand.withValues(alpha: 0.07),
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(color: CubedColors.brand.withValues(alpha: 0.25)),
+        ),
+        child: Row(
+          children: [
+            const Icon(Icons.auto_awesome_rounded, size: 16, color: CubedColors.brand),
+            const SizedBox(width: 8),
+            const Text('단맛 레시피: ',
+                style: TextStyle(color: CubedColors.inkSoft, fontSize: 13)),
+            Expanded(
+              child: Text(combo.headline,
+                  style: const TextStyle(
+                      color: CubedColors.brand, fontWeight: FontWeight.w800, fontSize: 14)),
+            ),
+            const Icon(Icons.chevron_right_rounded, size: 16, color: CubedColors.inkSoft),
+          ],
+        ),
       ),
     );
   }
@@ -291,6 +320,26 @@ class _NutritionGrid extends StatelessWidget {
           );
         }).toList(),
       ),
+    );
+  }
+}
+
+/// "대신 이건 어때요?" 섹션 — 주의 등급이면 판정 직후, 그 외엔 근거 아래 배치
+class _AlternativesSection extends StatelessWidget {
+  const _AlternativesSection({required this.product});
+  final Product product;
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const _SectionTitle('대신 이건 어때요?'),
+        const SizedBox(height: 4),
+        const Text('같은 칸에서 혈당 부담이 더 낮은 제품',
+            style: TextStyle(color: CubedColors.inkSoft, fontSize: 13)),
+        const SizedBox(height: 12),
+        _Alternatives(product: product),
+      ],
     );
   }
 }
