@@ -1,9 +1,7 @@
 // CUBED OCR 파싱 Edge Function (Deno) — 공유 파싱 모듈 사용.
 // 단일 image(하위호환) 또는 images:{full,ingredients,nutrition} 멀티이미지 지원.
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
-import { parseNutrition, type ParseImage } from "../_shared/parse.ts";
-
-const GEMINI_API_KEY = Deno.env.get("GEMINI_API_KEY");
+import { parseImages, type ParseImage } from "../_shared/parse.ts";
 
 const CORS = {
   "Access-Control-Allow-Origin": "*",
@@ -12,12 +10,11 @@ const CORS = {
 
 Deno.serve(async (req: Request) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: CORS });
-  if (!GEMINI_API_KEY) return json({ error: "GEMINI_API_KEY 미설정" }, 500);
   try {
     const { image, images, media_type } = await req.json();
     const imgs = toParseImages(image, images, media_type);
     if (imgs.length === 0) return json({ error: "image 또는 images 필요" }, 400);
-    const parsed = await parseNutrition(imgs, GEMINI_API_KEY);
+    const parsed = await parseImages(imgs);
     return json(parsed, 200);
   } catch (e) {
     return json({ error: String(e) }, 500);

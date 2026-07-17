@@ -1,15 +1,18 @@
-// CUBED 채팅 Edge Function (Deno) — Gemini 3.1 Flash Lite
+// CUBED 채팅 Edge Function (Deno) — CLOVA Studio HCX-005 (OpenAI 호환 엔드포인트)
 // 사용자 질문 + CUBED_v2의 제품 룰북 요약(혈당등급·순탄수·0g함정·대체당)을 주입해 답변 생성.
-// 웹(app/api/chat/route.ts)의 "전체 주입" 방식을 Flutter용으로 옮긴 것. 비스트리밍(완성 답변 1회 반환).
+// "전체 주입" 방식. 비스트리밍(완성 답변 1회 반환).
+// ⚠️ 전 제품을 시스템 프롬프트에 주입 → 제품 수가 늘면 prompt 토큰도 커진다(현재 408개 ≈ 4만 토큰).
+//    한도에 닿으면 관련 제품만 주입하는 검색형으로 전환 필요.
 //
-// 배포: supabase functions deploy chat  (또는 MCP deploy_edge_function, project-ref aqhfddvvxnakgkdtirem)
-// 비밀키: ocr-parse와 동일한 GEMINI_API_KEY 시크릿 재사용(앱·코드엔 절대 넣지 않음).
+// 배포: supabase functions deploy chat  (project-ref aqhfddvvxnakgkdtirem)
+// 비밀키: 이미지 분석과 동일한 CLOVA_API_KEY 시크릿 재사용(앱·코드엔 절대 넣지 않음).
 
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
-const CHAT_MODEL = Deno.env.get("CHAT_MODEL") ?? "gemini-3.1-flash-lite";
-const GEMINI_API_KEY = Deno.env.get("GEMINI_API_KEY");
+const CHAT_MODEL = Deno.env.get("CHAT_MODEL") ?? "HCX-005";
+const CLOVA_API_KEY = Deno.env.get("CLOVA_API_KEY");
+const CLOVA_URL = "https://clovastudio.stream.ntruss.com/v1/openai/chat/completions";
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL") ?? "";
 const SUPABASE_ANON_KEY = Deno.env.get("SUPABASE_ANON_KEY") ?? "";
 
@@ -167,7 +170,7 @@ interface InMsg { role?: string; content?: string }
 
 Deno.serve(async (req: Request) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: CORS });
-  if (!GEMINI_API_KEY) return json({ error: "GEMINI_API_KEY 미설정" }, 500);
+  if (!CLOVA_API_KEY) return json({ error: "CLOVA_API_KEY 미설정" }, 500);
 
   try {
     const body = await req.json().catch(() => ({}));
@@ -177,35 +180,35 @@ Deno.serve(async (req: Request) => {
     const summary = await buildSummary();
     const systemInstruction = `${SYSTEM_PROMPT}\n\n[제품데이터]\n${JSON.stringify(summary)}`;
 
-    // 멀티턴 history → Gemini contents (반드시 user 턴으로 시작)
-    const contents = messages
-      .map((m) => ({
-        role: m.role === "assistant" ? "model" : "user",
-        parts: [{ text: String(m.content ?? "") }],
-      }));
-    while (contents.length && contents[0].role !== "user") contents.shift();
-    if (contents.length === 0) return json({ error: "user 메시지 필요" }, 400);
+    // 멀티턴 history → OpenAI 메시지 (system 다음 첫 턴은 user 로 시작)
+    const turns = messages.map((m) => ({
+      role: m.role === "assistant" ? "assistant" : "user",
+      content: String(m.content ?? ""),
+    }));
+    while (turns.length && turns[0].role !== "user") turns.shift();
+    if (turns.length === 0) return json({ error: "user 메시지 필요" }, 400);
 
-    const url =
-      `https://generativelanguage.googleapis.com/v1beta/models/${CHAT_MODEL}:generateContent`;
-    const res = await fetch(url, {
+    const res = await fetch(CLOVA_URL, {
       method: "POST",
-      headers: { "x-goog-api-key": GEMINI_API_KEY, "content-type": "application/json" },
+      headers: {
+        Authorization: `Bearer ${CLOVA_API_KEY}`,
+        "content-type": "application/json",
+        "X-NCP-CLOVASTUDIO-REQUEST-ID": crypto.randomUUID(),
+      },
       body: JSON.stringify({
-        system_instruction: { parts: [{ text: systemInstruction }] },
-        contents,
+        model: CHAT_MODEL,
+        messages: [{ role: "system", content: systemInstruction }, ...turns],
+        max_tokens: 1024,
+        temperature: 0.5,
       }),
     });
 
     if (!res.ok) {
       const t = await res.text();
-      return json({ error: `Gemini API ${res.status}`, detail: t.slice(0, 500) }, 502);
+      return json({ error: `CLOVA API ${res.status}`, detail: t.slice(0, 500) }, 502);
     }
     const data = await res.json();
-    const reply: string = (data?.candidates?.[0]?.content?.parts ?? [])
-      .map((part: { text?: string }) => part.text ?? "")
-      .join("")
-      .trim();
+    const reply: string = (data?.choices?.[0]?.message?.content ?? "").trim();
     return json({ reply: reply || "죄송해요, 답변을 생성하지 못했어요." }, 200);
   } catch (e) {
     return json({ error: String(e) }, 500);
