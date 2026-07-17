@@ -29,16 +29,20 @@
      `<key>NSCameraUsageDescription</key><string>바코드 스캔과 영양성분 촬영에 사용됩니다</string>`
 
 ## Edge Functions 배포
-두 함수 모두 **GEMINI_API_KEY** 시크릿을 공유한다(앱·코드엔 키 없음; RLS 보호되는 anon 키로 호출).
+시크릿은 앱·코드엔 없고 **Edge Functions Secrets에만** 둔다(RLS 보호되는 anon 키로 호출).
 ```
 # Supabase CLI (또는 대시보드 / MCP)
-supabase functions deploy ocr-parse --project-ref aqhfddvvxnakgkdtirem
-supabase functions deploy chat      --project-ref aqhfddvvxnakgkdtirem
+supabase functions deploy ocr-parse      --project-ref aqhfddvvxnakgkdtirem
+supabase functions deploy submit-product --project-ref aqhfddvvxnakgkdtirem
+supabase functions deploy chat           --project-ref aqhfddvvxnakgkdtirem
 # 시크릿 (대시보드 Edge Functions → Secrets 권장)
-supabase secrets set GEMINI_API_KEY=... --project-ref aqhfddvvxnakgkdtirem
+supabase secrets set CLOVA_API_KEY=nv-... --project-ref aqhfddvvxnakgkdtirem   # 이미지 분석 + chat 공용(현행)
+# GEMINI_API_KEY 는 gemini 폴백을 다시 쓸 때만 필요(현재 미설정)
 ```
-- `ocr-parse` (`supabase/functions/ocr-parse/`): 영양성분표 사진 → 구조화 영양정보.
-- `chat` (`supabase/functions/chat/`): 전 제품 룰북 요약 주입 → AI 답변. 모델 교체는 `supabase secrets set CHAT_MODEL=...`.
+- 세 함수 모두 **CLOVA_API_KEY** 시크릿을 공유한다(앱·코드엔 키 없음).
+- `ocr-parse`·`submit-product`: 제품 사진 → 구조화 영양정보. 파싱 엔진은 `_shared/parse.ts`가 공유.
+  - **프로바이더 전환**: 시크릿 `OCR_PROVIDER`로 선택 — 미설정/`clova`(기본)=CLOVA HCX-005 단일콜, `gemini`=Gemini 멀티이미지. Gemini로 롤백하려면 `GEMINI_API_KEY`를 다시 넣고 `supabase secrets set OCR_PROVIDER=gemini`.
+- `chat` (`supabase/functions/chat/`): 전 제품 룰북 요약 주입 → AI 답변(CLOVA HCX-005). 모델 교체는 `supabase secrets set CHAT_MODEL=...`. ⚠️ 전 제품을 프롬프트에 주입하므로 제품 수가 늘면 토큰이 커진다(408개 ≈ 4만 토큰).
 
 ## 연결 정보
 - Supabase 프로젝트: `CUBED_v2` (ref `aqhfddvvxnakgkdtirem`) — `lib/core/env.dart`

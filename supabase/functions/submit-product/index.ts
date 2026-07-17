@@ -3,9 +3,8 @@
 // 처리: Gemini 파싱 → submission-images 업로드 → user_submissions insert → 파싱 반환.
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { createClient } from "jsr:@supabase/supabase-js@2";
-import { parseNutrition, type ParseImage } from "../_shared/parse.ts";
+import { parseImages, type ParseImage } from "../_shared/parse.ts";
 
-const GEMINI_API_KEY = Deno.env.get("GEMINI_API_KEY");
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SERVICE_ROLE = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 
@@ -23,7 +22,6 @@ function b64ToBytes(b64: string): Uint8Array {
 
 Deno.serve(async (req: Request) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: CORS });
-  if (!GEMINI_API_KEY) return json({ error: "GEMINI_API_KEY 미설정" }, 500);
   try {
     const { images, barcode } = await req.json();
     if (!images?.full || !images?.ingredients || !images?.nutrition) {
@@ -35,7 +33,7 @@ Deno.serve(async (req: Request) => {
       { role: "ingredients", base64: images.ingredients },
       { role: "nutrition", base64: images.nutrition },
     ];
-    const parsed = await parseNutrition(imgs, GEMINI_API_KEY);
+    const parsed = await parseImages(imgs);
 
     // 제보 영속화(비치명적). 실패해도 파싱 결과는 돌려준다.
     // 성공 시 폴더 uuid를 image_path로 반환 → 앱의 먹은기록 썸네일 재사용 (스펙 §7)
