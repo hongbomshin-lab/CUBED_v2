@@ -1,3 +1,6 @@
+import 'dart:io' show Platform;
+
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -42,6 +45,29 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
         setState(() {
           _busy = false;
           _error = '카카오 로그인 실패: $e';
+        });
+      }
+    }
+  }
+
+  Future<void> _apple() async {
+    setState(() {
+      _busy = true;
+      _error = null;
+    });
+    try {
+      // 네이티브 Apple 로그인 시트 → 세션 수립 시 currentUser 리스너가 화면을 닫는다.
+      await ref.read(authRepositoryProvider).signInWithApple();
+      if (mounted) setState(() => _busy = false);
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _busy = false;
+          // 사용자가 시트를 닫은 경우는 에러 표시 없이 조용히 복귀
+          final msg = e.toString();
+          _error = msg.contains('canceled') || msg.contains('cancelled')
+              ? null
+              : 'Apple 로그인 실패: $e';
         });
       }
     }
@@ -130,6 +156,25 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                   style: TextStyle(fontWeight: FontWeight.w800, fontSize: 15)),
             ),
           ),
+          // Apple 로그인 — App Store 4.8: 서드파티 로그인 제공 시 필수 (iOS에서만 노출)
+          if (!kIsWeb && Platform.isIOS) ...[
+            const SizedBox(height: 10),
+            SizedBox(
+              width: double.infinity,
+              child: FilledButton.icon(
+                style: FilledButton.styleFrom(
+                  backgroundColor: Colors.black,
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(vertical: 15),
+                  elevation: 0,
+                ),
+                onPressed: _busy ? null : _apple,
+                icon: const Icon(Icons.apple, size: 20),
+                label: const Text('Apple로 시작하기',
+                    style: TextStyle(fontWeight: FontWeight.w800, fontSize: 15)),
+              ),
+            ),
+          ],
           const SizedBox(height: 18),
           const Row(children: [
             Expanded(child: Divider(color: CubedColors.line)),

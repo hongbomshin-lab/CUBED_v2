@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../../core/feature_flags.dart';
 import '../../core/theme.dart';
@@ -116,12 +117,42 @@ class HomeScreen extends ConsumerWidget {
             const _Bullet('🔴', '‘무설탕’인데 혈당 올리는 당알코올 함정을 잡아내요'),
             const _Bullet('🟢', '대체당 조합에 맞춘 맞춤 메시지를 보여줘요'),
             const _Bullet('🔁', '주의 제품엔 같은 칸의 더 나은 대안을 추천해요'),
+
+            // 스토어 정책: 건강 정보 면책 + 개인정보처리방침 링크
+            const SizedBox(height: 28),
+            const Text(
+              'CUBED의 혈당 영향 등급과 AI 답변은 참고용 정보이며 의학적 조언이 아닙니다. '
+              '질환이 있는 경우 전문가와 상담하세요.',
+              style: TextStyle(color: CubedColors.inkSoft, fontSize: 11, height: 1.5),
+            ),
+            Align(
+              alignment: Alignment.centerLeft,
+              child: TextButton(
+                style: TextButton.styleFrom(
+                  padding: EdgeInsets.zero,
+                  minimumSize: const Size(0, 32),
+                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                ),
+                onPressed: () => launchUrl(Uri.parse(kPrivacyPolicyUrl),
+                    mode: LaunchMode.externalApplication),
+                child: const Text('개인정보처리방침',
+                    style: TextStyle(
+                        color: CubedColors.inkSoft,
+                        fontSize: 11,
+                        decoration: TextDecoration.underline)),
+              ),
+            ),
           ],
         ),
       ),
     );
   }
 }
+
+/// 개인정보처리방침 공개 URL (docs/privacy-policy.md → GitHub Pages 호스팅).
+/// 스토어 등록 시 Play Console·App Store Connect에도 동일 URL을 입력한다.
+const kPrivacyPolicyUrl =
+    'https://hongbomshin-lab.github.io/CUBED_v2/privacy-policy';
 
 class _AccountChip extends ConsumerWidget {
   const _AccountChip();
@@ -155,6 +186,13 @@ class _AccountChip extends ConsumerWidget {
                   if (context.mounted) Navigator.of(context).pop();
                 },
               ),
+              // 스토어 정책상 앱 내 계정 삭제 필수 (Apple 5.1.1(v)·Google Play)
+              ListTile(
+                leading: const Icon(Icons.person_off_rounded, color: CubedColors.caution),
+                title: const Text('회원 탈퇴',
+                    style: TextStyle(color: CubedColors.caution)),
+                onTap: () => _confirmDeleteAccount(context, ref),
+              ),
               const SizedBox(height: 8),
             ]),
           ),
@@ -187,6 +225,43 @@ class _AccountChip extends ConsumerWidget {
                   color: loggedIn ? CubedColors.brand : CubedColors.inkSoft)),
         ]),
       ),
+    );
+  }
+}
+
+/// 회원 탈퇴 확인 → Edge Function 호출 → 계정·데이터 삭제.
+Future<void> _confirmDeleteAccount(BuildContext context, WidgetRef ref) async {
+  final confirmed = await showDialog<bool>(
+    context: context,
+    builder: (ctx) => AlertDialog(
+      title: const Text('회원 탈퇴'),
+      content: const Text(
+          '계정과 함께 먹은 기록·좋아요 등 모든 데이터가 삭제되며 되돌릴 수 없어요.\n정말 탈퇴하시겠어요?'),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.of(ctx).pop(false),
+          child: const Text('취소'),
+        ),
+        TextButton(
+          onPressed: () => Navigator.of(ctx).pop(true),
+          child: const Text('탈퇴하기', style: TextStyle(color: CubedColors.caution)),
+        ),
+      ],
+    ),
+  );
+  if (confirmed != true || !context.mounted) return;
+
+  final messenger = ScaffoldMessenger.of(context);
+  final navigator = Navigator.of(context);
+  try {
+    await ref.read(authRepositoryProvider).deleteAccount();
+    if (context.mounted) navigator.pop(); // 계정 시트 닫기
+    messenger.showSnackBar(
+      const SnackBar(content: Text('탈퇴가 완료되었습니다. 그동안 이용해주셔서 감사합니다.')),
+    );
+  } catch (e) {
+    messenger.showSnackBar(
+      SnackBar(content: Text('탈퇴 처리에 실패했어요: $e')),
     );
   }
 }
