@@ -343,7 +343,7 @@ class _ModeToggle extends StatelessWidget {
         ),
         child: Row(children: [
           _seg('매장 지도', Icons.map_rounded, _MapMode.store),
-          _seg('메뉴 당류', Icons.local_cafe_rounded, _MapMode.menu),
+          _seg('메뉴 정보', Icons.local_cafe_rounded, _MapMode.menu),
         ]),
       ),
     );
