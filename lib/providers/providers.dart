@@ -44,7 +44,7 @@ final franchiseSearchProvider = FutureProvider.autoDispose
     .family<List<FranchiseMenu>, FranchiseQuery>((ref, query) async {
   return ref.watch(franchiseRepositoryProvider).search(
         query: query.query,
-        brands: query.brands,
+        brand: query.brand,
         sort: query.sort,
       );
 });

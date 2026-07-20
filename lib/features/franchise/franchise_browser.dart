@@ -24,7 +24,7 @@ class _FranchiseBrowserState extends ConsumerState<FranchiseBrowser> {
   Timer? _debounce;
 
   String _query = '';
-  final Set<String> _brands = {};
+  String? _brand; // null = 전체. 단일 선택.
   FranchiseSort _sort = FranchiseSort.sugarAsc;
 
   @override
@@ -48,22 +48,17 @@ class _FranchiseBrowserState extends ConsumerState<FranchiseBrowser> {
     setState(() => _query = '');
   }
 
-  void _toggleBrand(String? brand) {
+  void _selectBrand(String? brand) {
     setState(() {
-      if (brand == null) {
-        _brands.clear();
-      } else if (_brands.contains(brand)) {
-        _brands.remove(brand);
-      } else {
-        _brands.add(brand);
-      }
+      // 같은 브랜드 다시 탭하면 전체로. 다른 브랜드 탭하면 그 브랜드만.
+      _brand = (brand == null || brand == _brand) ? null : brand;
     });
   }
 
   @override
   Widget build(BuildContext context) {
     final async = ref.watch(franchiseSearchProvider(
-      FranchiseQuery(query: _query, brands: _brands, sort: _sort),
+      FranchiseQuery(query: _query, brand: _brand, sort: _sort),
     ));
 
     return Column(
@@ -73,7 +68,7 @@ class _FranchiseBrowserState extends ConsumerState<FranchiseBrowser> {
           onChanged: _onSearchChanged,
           onClear: _clearSearch,
         ),
-        _BrandFilterBar(selected: _brands, onTap: _toggleBrand),
+        _BrandFilterBar(selected: _brand, onTap: _selectBrand),
         _SortBar(
           sort: _sort,
           onChanged: (s) => setState(() => _sort = s),
@@ -167,10 +162,10 @@ class _SearchBar extends StatelessWidget {
   }
 }
 
-/// 브랜드 필터 칩 (전체 + 6개 브랜드).
+/// 브랜드 필터 칩 (전체 + 6개 브랜드). 단일 선택.
 class _BrandFilterBar extends StatelessWidget {
   const _BrandFilterBar({required this.selected, required this.onTap});
-  final Set<String> selected;
+  final String? selected;
   final void Function(String?) onTap;
 
   @override
@@ -185,13 +180,13 @@ class _BrandFilterBar extends StatelessWidget {
         children: [
           _Chip(
             label: '전체',
-            selected: selected.isEmpty,
+            selected: selected == null,
             onTap: () => onTap(null),
           ),
           for (final b in FranchiseRepository.brands)
             _Chip(
               label: b,
-              selected: selected.contains(b),
+              selected: selected == b,
               onTap: () => onTap(b),
             ),
         ],
