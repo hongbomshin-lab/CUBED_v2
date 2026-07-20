@@ -10,8 +10,8 @@ import '../../providers/providers.dart';
 import 'franchise_detail_sheet.dart';
 import 'franchise_ui.dart';
 
-/// 프랜차이즈 메뉴 당류정보 브라우저 — 검색 + 브랜드 필터 + 정렬 + 목록.
-/// 저당맵 탭의 '메뉴 당류' 모드 본문으로 쓰인다.
+/// 프랜차이즈 메뉴 정보 브라우저 — 검색 + 브랜드 필터 + 정렬 + 목록.
+/// 저당맵 탭의 '메뉴 정보' 모드 본문으로 쓰인다.
 class FranchiseBrowser extends ConsumerStatefulWidget {
   const FranchiseBrowser({super.key});
 
@@ -357,6 +357,11 @@ class _MenuCard extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.baseline,
                     textBaseline: TextBaseline.alphabetic,
                     children: [
+                      Text('당 ',
+                          style: TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w700,
+                              color: color)),
                       Text(
                         fmtNum(rep.sugarG),
                         style: TextStyle(
@@ -365,7 +370,7 @@ class _MenuCard extends StatelessWidget {
                             color: color,
                             height: 1),
                       ),
-                      Text('g 당',
+                      Text('g',
                           style: TextStyle(
                               fontSize: 12,
                               fontWeight: FontWeight.w700,
