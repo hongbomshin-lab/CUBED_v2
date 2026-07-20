@@ -3,7 +3,9 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../core/location_cache.dart';
 import '../data/auth_repository.dart';
+import '../data/franchise_repository.dart';
 import '../data/models/comment.dart';
+import '../data/models/franchise_drink.dart';
 import '../data/models/product.dart';
 import '../data/models/store_review.dart';
 import '../data/product_repository.dart';
@@ -31,6 +33,21 @@ final socialRepositoryProvider = Provider<SocialRepository>(
 final storeRepositoryProvider = Provider<StoreRepository>(
   (ref) => StoreRepository(ref.watch(supabaseProvider)),
 );
+
+/// 프랜차이즈 음료 당류/영양 데이터 접근
+final franchiseRepositoryProvider = Provider<FranchiseRepository>(
+  (ref) => FranchiseRepository(ref.watch(supabaseProvider)),
+);
+
+/// 프랜차이즈 검색 결과 (검색어·브랜드·정렬 조합별). 같은 메뉴는 그룹으로 묶음.
+final franchiseSearchProvider = FutureProvider.autoDispose
+    .family<List<FranchiseMenu>, FranchiseQuery>((ref, query) async {
+  return ref.watch(franchiseRepositoryProvider).search(
+        query: query.query,
+        brands: query.brands,
+        sort: query.sort,
+      );
+});
 
 /// 저당맵: 권한 허용 후 확보한 사용자 현재 위치(없으면 null).
 /// 지도 중심·거리 계산의 기준점으로 사용.
