@@ -6,7 +6,10 @@ import '../data/auth_repository.dart';
 import '../data/franchise_repository.dart';
 import '../data/models/comment.dart';
 import '../data/models/franchise_drink.dart';
+import '../data/models/my_comment.dart';
+import '../data/models/my_review.dart';
 import '../data/models/product.dart';
+import '../data/models/store.dart';
 import '../data/models/store_review.dart';
 import '../data/product_repository.dart';
 import '../data/social_repository.dart';
@@ -73,6 +76,34 @@ final authStateProvider = StreamProvider<AuthState>((ref) {
 final currentUserProvider = Provider<User?>((ref) {
   ref.watch(authStateProvider); // 인증 변화 시 재평가
   return ref.watch(supabaseProvider).auth.currentUser;
+});
+
+/// 마이페이지: 내가 작성한 리뷰 목록 (로그인 필요, 없으면 빈 목록).
+final myReviewsProvider = FutureProvider<List<MyReview>>((ref) async {
+  final user = ref.watch(currentUserProvider);
+  if (user == null) return const [];
+  return ref.watch(storeRepositoryProvider).myReviews(user.id);
+});
+
+/// 마이페이지: 내가 작성한 댓글 목록 (로그인 필요, 없으면 빈 목록).
+final myCommentsProvider = FutureProvider<List<MyComment>>((ref) async {
+  final user = ref.watch(currentUserProvider);
+  if (user == null) return const [];
+  return ref.watch(socialRepositoryProvider).myComments(user.id);
+});
+
+/// 즐겨찾기한 store_id 집합 (하트 상태용). 로그인 안 하면 빈 집합.
+final favoriteIdsProvider = FutureProvider<Set<String>>((ref) async {
+  final user = ref.watch(currentUserProvider);
+  if (user == null) return const {};
+  return ref.watch(storeRepositoryProvider).favoriteStoreIds(user.id);
+});
+
+/// 즐겨찾기한 매장 목록 (마이페이지 목록 화면용).
+final favoriteStoresProvider = FutureProvider<List<Store>>((ref) async {
+  final user = ref.watch(currentUserProvider);
+  if (user == null) return const [];
+  return ref.watch(storeRepositoryProvider).favoriteStores(user.id);
 });
 
 /// 제품 좋아요 상태 (수 + 내 좋아요)

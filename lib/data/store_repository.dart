@@ -2,6 +2,7 @@ import 'dart:typed_data';
 
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import 'models/my_review.dart';
 import 'models/store.dart';
 import 'models/store_review.dart';
 
@@ -103,6 +104,58 @@ class StoreRepository {
         .order('created_at', ascending: false)
         .limit(limit);
     return rows.map((m) => StoreReview.fromMap(m)).toList();
+  }
+
+  /// 내가 즐겨찾기한 store_id 집합 (하트 상태 표시용).
+  Future<Set<String>> favoriteStoreIds(String userId) async {
+    final rows = await _db
+        .from('store_favorites')
+        .select('store_id')
+        .eq('user_id', userId);
+    return rows.map((m) => m['store_id'] as String).toSet();
+  }
+
+  /// 내가 즐겨찾기한 매장 목록 (최신순) — 매장 상세 표시용.
+  Future<List<Store>> favoriteStores(String userId) async {
+    final rows = await _db
+        .from('store_favorites')
+        .select('stores(*, store_photos(image_url, is_primary, photo_type))')
+        .eq('user_id', userId)
+        .order('created_at', ascending: false);
+    return rows
+        .map((m) => m['stores'])
+        .whereType<Map<String, dynamic>>()
+        .map((s) => Store.fromMap(s))
+        .toList();
+  }
+
+  /// 즐겨찾기 추가 (이미 있으면 무시).
+  Future<void> addFavorite(String userId, String storeId) async {
+    await _db.from('store_favorites').upsert(
+      {'user_id': userId, 'store_id': storeId},
+      onConflict: 'user_id,store_id',
+      ignoreDuplicates: true,
+    );
+  }
+
+  /// 즐겨찾기 삭제.
+  Future<void> removeFavorite(String userId, String storeId) async {
+    await _db
+        .from('store_favorites')
+        .delete()
+        .match({'user_id': userId, 'store_id': storeId});
+  }
+
+  /// 내가 작성한 리뷰 전체 (최신순) — 매장명 포함. 마이페이지용.
+  Future<List<MyReview>> myReviews(String userId, {int limit = 100}) async {
+    final rows = await _db
+        .from('store_reviews')
+        .select('id, store_id, is_recommended, content, created_at, stores(name)')
+        .eq('user_id', userId)
+        .eq('is_active', true)
+        .order('created_at', ascending: false)
+        .limit(limit);
+    return rows.map((m) => MyReview.fromMap(m)).toList();
   }
 
   /// 내가 이 매장에 쓴 리뷰 (없으면 null) — 작성/수정 화면 프리필용.
