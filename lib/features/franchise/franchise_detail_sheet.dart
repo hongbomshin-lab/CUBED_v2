@@ -4,9 +4,9 @@ import '../../core/theme.dart';
 import '../../data/models/franchise_drink.dart';
 import 'franchise_ui.dart';
 
-/// 프랜차이즈 음료 상세 바텀시트.
+/// 프랜차이즈 음료 상세 바텀시트. 같은 메뉴의 온도/사이즈 변형을 탭으로 전환.
 Future<void> showFranchiseDetailSheet(
-    BuildContext context, FranchiseDrink drink) {
+    BuildContext context, FranchiseMenu menu) {
   return showModalBottomSheet(
     context: context,
     isScrollControlled: true,
@@ -14,24 +14,50 @@ Future<void> showFranchiseDetailSheet(
     shape: const RoundedRectangleBorder(
       borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
     ),
-    builder: (_) => _FranchiseDetailSheet(drink: drink),
+    builder: (_) => _FranchiseDetailSheet(menu: menu),
   );
 }
 
-class _FranchiseDetailSheet extends StatelessWidget {
-  const _FranchiseDetailSheet({required this.drink});
-  final FranchiseDrink drink;
+class _FranchiseDetailSheet extends StatefulWidget {
+  const _FranchiseDetailSheet({required this.menu});
+  final FranchiseMenu menu;
+
+  @override
+  State<_FranchiseDetailSheet> createState() => _FranchiseDetailSheetState();
+}
+
+class _FranchiseDetailSheetState extends State<_FranchiseDetailSheet> {
+  late String? _temp;
+  late String? _size;
+
+  FranchiseMenu get menu => widget.menu;
+
+  @override
+  void initState() {
+    super.initState();
+    _temp = menu.representative.temperature;
+    _size = menu.representative.size;
+  }
+
+  /// 현재 선택(온도·사이즈)에 맞는 변형. 없으면 대표.
+  FranchiseDrink get _selected {
+    final temps = menu.temperatures;
+    final sizes = menu.sizes;
+    for (final v in menu.variants) {
+      final tempOk = temps.isEmpty || v.temperature == _temp;
+      final sizeOk = sizes.isEmpty || v.size == _size;
+      if (tempOk && sizeOk) return v;
+    }
+    return menu.representative;
+  }
 
   @override
   Widget build(BuildContext context) {
-    final color = sugarColor(drink.sugarG);
-    final cubes = drink.sugarCubes ??
-        (drink.sugarG == null ? null : drink.sugarG! / 3.3);
-
-    final sizeLine = [
-      if (drink.size != null) drink.size!,
-      if (drink.volumeMl != null) '${drink.volumeMl}ml',
-    ].join('  ·  ');
+    final d = _selected;
+    final color = sugarColor(d.sugarG);
+    final cubes = d.sugarCubes ?? (d.sugarG == null ? null : d.sugarG! / 3.3);
+    final temps = menu.temperatures;
+    final sizes = menu.sizes;
 
     return SafeArea(
       top: false,
@@ -59,21 +85,42 @@ class _FranchiseDetailSheet extends StatelessWidget {
             ),
 
             // 브랜드 + 메뉴명
-            Text(drink.brand,
+            Text(menu.brand,
                 style: const TextStyle(
                     fontSize: 13,
                     fontWeight: FontWeight.w700,
                     color: CubedColors.inkSoft)),
             const SizedBox(height: 4),
-            Text(drink.nameClean,
+            Text(menu.displayName,
                 style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w800)),
-            if (sizeLine.isNotEmpty) ...[
+            if (d.volumeMl != null) ...[
               const SizedBox(height: 4),
-              Text(sizeLine,
+              Text('${d.volumeMl}ml',
                   style: const TextStyle(
                       fontSize: 13, color: CubedColors.inkSoft)),
             ],
-            const SizedBox(height: 20),
+            const SizedBox(height: 16),
+
+            // 온도 탭
+            if (temps.length > 1)
+              _Segment(
+                options: [
+                  for (final t in temps) (value: t, label: t == 'ICE' ? '아이스' : '핫'),
+                ],
+                selected: _temp,
+                onChanged: (v) => setState(() => _temp = v),
+              ),
+            if (temps.length > 1 && sizes.length > 1)
+              const SizedBox(height: 8),
+            // 사이즈 탭
+            if (sizes.length > 1)
+              _Segment(
+                options: [for (final s in sizes) (value: s, label: s)],
+                selected: _size,
+                onChanged: (v) => setState(() => _size = v),
+              ),
+            if (temps.length > 1 || sizes.length > 1)
+              const SizedBox(height: 16),
 
             // 당류 대표 표시(주인공) + 각설탕 환산
             Container(
@@ -97,7 +144,7 @@ class _FranchiseDetailSheet extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.baseline,
                     textBaseline: TextBaseline.alphabetic,
                     children: [
-                      Text(fmtNum(drink.sugarG),
+                      Text(fmtNum(d.sugarG),
                           style: TextStyle(
                               fontSize: 44,
                               fontWeight: FontWeight.w900,
@@ -124,12 +171,12 @@ class _FranchiseDetailSheet extends StatelessWidget {
               Expanded(
                 child: _StatBox(
                   label: '칼로리',
-                  value: drink.calories == null
+                  value: d.calories == null
                       ? '-'
-                      : '${fmtNum(drink.calories)} kcal',
+                      : '${fmtNum(d.calories)} kcal',
                 ),
               ),
-              if (drink.hasZeroOption) ...[
+              if (d.hasZeroOption) ...[
                 const SizedBox(width: 10),
                 const Expanded(
                   child: _StatBox(label: '제로 옵션', value: '있음'),
@@ -137,20 +184,79 @@ class _FranchiseDetailSheet extends StatelessWidget {
               ],
             ]),
 
-            if (drink.altSweetener != null) ...[
+            if (d.altSweetener != null) ...[
               const SizedBox(height: 12),
               _InfoLine(
                 icon: Icons.eco_rounded,
                 label: '대체 감미료',
-                value: drink.altSweetener!,
+                value: d.altSweetener!,
               ),
             ],
 
             const SizedBox(height: 20),
             // 나머지 영양성분 (기본 접힘)
-            _NutritionExpand(drink: drink),
+            _NutritionExpand(drink: d),
           ],
         ),
+      ),
+    );
+  }
+}
+
+/// 값 선택 세그먼트 (온도/사이즈 공용).
+class _Segment extends StatelessWidget {
+  const _Segment({
+    required this.options,
+    required this.selected,
+    required this.onChanged,
+  });
+  final List<({String value, String label})> options;
+  final String? selected;
+  final ValueChanged<String> onChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      height: 40,
+      padding: const EdgeInsets.all(3),
+      decoration: BoxDecoration(
+        color: CubedColors.bg,
+        borderRadius: BorderRadius.circular(20),
+      ),
+      child: Row(
+        children: [
+          for (final o in options)
+            Expanded(
+              child: GestureDetector(
+                onTap: () => onChanged(o.value),
+                child: Container(
+                  alignment: Alignment.center,
+                  decoration: BoxDecoration(
+                    color: o.value == selected
+                        ? CubedColors.surface
+                        : Colors.transparent,
+                    borderRadius: BorderRadius.circular(17),
+                    boxShadow: o.value == selected
+                        ? [
+                            BoxShadow(
+                                color: Colors.black.withValues(alpha: 0.06),
+                                blurRadius: 4)
+                          ]
+                        : null,
+                  ),
+                  child: Text(o.label,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w800,
+                          color: o.value == selected
+                              ? CubedColors.ink
+                              : CubedColors.inkSoft)),
+                ),
+              ),
+            ),
+        ],
       ),
     );
   }
@@ -166,15 +272,16 @@ class _CubeRow extends StatelessWidget {
     final full = cubes.floor().clamp(0, 12);
     return Column(
       children: [
-        Wrap(
-          spacing: 3,
-          runSpacing: 3,
-          alignment: WrapAlignment.center,
-          children: [
-            for (var i = 0; i < full; i++)
-              Icon(Icons.crop_square_rounded, size: 16, color: color),
-          ],
-        ),
+        if (full > 0)
+          Wrap(
+            spacing: 3,
+            runSpacing: 3,
+            alignment: WrapAlignment.center,
+            children: [
+              for (var i = 0; i < full; i++)
+                Icon(Icons.crop_square_rounded, size: 16, color: color),
+            ],
+          ),
         const SizedBox(height: 4),
         Text('각설탕 약 ${cubes.toStringAsFixed(1)}개',
             style: TextStyle(

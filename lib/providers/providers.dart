@@ -39,9 +39,9 @@ final franchiseRepositoryProvider = Provider<FranchiseRepository>(
   (ref) => FranchiseRepository(ref.watch(supabaseProvider)),
 );
 
-/// 프랜차이즈 검색 결과 (검색어·브랜드·정렬 조합별). 대표 1개 dedup 적용.
+/// 프랜차이즈 검색 결과 (검색어·브랜드·정렬 조합별). 같은 메뉴는 그룹으로 묶음.
 final franchiseSearchProvider = FutureProvider.autoDispose
-    .family<List<FranchiseDrink>, FranchiseQuery>((ref, query) async {
+    .family<List<FranchiseMenu>, FranchiseQuery>((ref, query) async {
   return ref.watch(franchiseRepositoryProvider).search(
         query: query.query,
         brands: query.brands,

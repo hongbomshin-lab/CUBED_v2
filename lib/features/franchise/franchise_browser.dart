@@ -97,8 +97,8 @@ class _FranchiseBrowserState extends ConsumerState<FranchiseBrowser> {
                 padding: const EdgeInsets.fromLTRB(12, 6, 12, 24),
                 itemCount: drinks.length,
                 separatorBuilder: (_, __) => const SizedBox(height: 8),
-                itemBuilder: (_, i) => _DrinkCard(
-                  drink: drinks[i],
+                itemBuilder: (_, i) => _MenuCard(
+                  menu: drinks[i],
                   onTap: () => showFranchiseDetailSheet(context, drinks[i]),
                 ),
               );
@@ -289,15 +289,23 @@ class _SortBar extends StatelessWidget {
   }
 }
 
-/// 목록 카드 — 메뉴명(강조) + 브랜드 + 당류(크게, 색상) + 칼로리(보조).
-class _DrinkCard extends StatelessWidget {
-  const _DrinkCard({required this.drink, required this.onTap});
-  final FranchiseDrink drink;
+/// 목록 카드 — 메뉴명(강조) + 브랜드(+변형 힌트) + 당류(크게, 색상) + 칼로리(보조).
+class _MenuCard extends StatelessWidget {
+  const _MenuCard({required this.menu, required this.onTap});
+  final FranchiseMenu menu;
   final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
-    final color = sugarColor(drink.sugarG);
+    final rep = menu.representative;
+    final color = sugarColor(rep.sugarG);
+
+    // 변형 힌트: 온도(아이스/핫) + 사이즈 개수.
+    final hints = <String>[
+      for (final t in menu.temperatures) t == 'ICE' ? '아이스' : '핫',
+      if (menu.sizes.length > 1) '사이즈 ${menu.sizes.length}',
+    ];
+
     return Material(
       color: CubedColors.surface,
       borderRadius: BorderRadius.circular(14),
@@ -313,7 +321,7 @@ class _DrinkCard extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      drink.nameClean,
+                      menu.displayName,
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
                       style: const TextStyle(
@@ -321,16 +329,23 @@ class _DrinkCard extends StatelessWidget {
                     ),
                     const SizedBox(height: 4),
                     Row(children: [
-                      Text(drink.brand,
+                      Text(menu.brand,
                           style: const TextStyle(
                               fontSize: 12,
                               fontWeight: FontWeight.w700,
                               color: CubedColors.inkSoft)),
-                      if (drink.size != null) ...[
-                        const Text('  ·  ',
-                            style: TextStyle(
-                                fontSize: 12, color: CubedColors.line)),
-                        Text(drink.size!,
+                      if (hints.isNotEmpty) ...[
+                        const SizedBox(width: 6),
+                        Flexible(
+                          child: Text('· ${hints.join(' · ')}',
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: const TextStyle(
+                                  fontSize: 12, color: CubedColors.inkSoft)),
+                        ),
+                      ] else if (rep.size != null) ...[
+                        const SizedBox(width: 6),
+                        Text('· ${rep.size}',
                             style: const TextStyle(
                                 fontSize: 12, color: CubedColors.inkSoft)),
                       ],
@@ -348,7 +363,7 @@ class _DrinkCard extends StatelessWidget {
                     textBaseline: TextBaseline.alphabetic,
                     children: [
                       Text(
-                        fmtNum(drink.sugarG),
+                        fmtNum(rep.sugarG),
                         style: TextStyle(
                             fontSize: 22,
                             fontWeight: FontWeight.w900,
@@ -364,9 +379,9 @@ class _DrinkCard extends StatelessWidget {
                   ),
                   const SizedBox(height: 3),
                   Text(
-                    drink.calories == null
+                    rep.calories == null
                         ? '칼로리 -'
-                        : '${fmtNum(drink.calories)} kcal',
+                        : '${fmtNum(rep.calories)} kcal',
                     style: const TextStyle(
                         fontSize: 12, color: CubedColors.inkSoft),
                   ),

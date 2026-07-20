@@ -44,52 +44,78 @@ class FranchiseRepository {
     '투썸플레이스',
   ];
 
-  /// 검색 + 브랜드 필터 + 정렬. 같은 (브랜드, name_clean)은 대표 1개만 반환.
-  /// - [query] name_clean·name 부분일치(대소문자 무시). 공백은 토큰 AND로 처리.
-  /// - 대표 선택: 가장 작은 용량(기본 사이즈) 기준.
-  Future<List<FranchiseDrink>> search({
+  /// 검색 + 브랜드 필터 + 정렬. 같은 메뉴(브랜드+기본명)는 하나로 묶어 반환.
+  /// - [query] name_clean·name·brand 부분일치(대소문자 무시). 공백은 토큰 AND.
+  /// - 대표 변형: 가장 작은 용량(기본 사이즈) 기준. 정렬은 대표 기준.
+  Future<List<FranchiseMenu>> search({
     String query = '',
     Set<String> brands = const {},
     FranchiseSort sort = FranchiseSort.sugarAsc,
   }) async {
-    var q = _db.from('franchise_drinks').select();
-
-    if (brands.isNotEmpty) {
-      q = q.inFilter('brand', brands.toList());
-    }
-    // 공백으로 나눈 각 토큰이 name_clean 또는 name에 포함(토큰 간 AND).
-    for (final tok in query.trim().split(RegExp(r'\s+'))) {
-      if (tok.isEmpty) continue;
-      final esc = tok.replaceAll('%', r'\%').replaceAll('_', r'\_');
-      q = q.or('name_clean.ilike.%$esc%,name.ilike.%$esc%');
-    }
-
-    final rows = await q.limit(3000);
-    final drinks = rows
-        .map((m) => FranchiseDrink.fromMap(m))
+    final tokens = query
+        .trim()
+        .split(RegExp(r'\s+'))
+        .where((t) => t.isNotEmpty)
         .toList();
 
-    return _sorted(_representatives(drinks), sort);
-  }
-
-  /// (브랜드, name_clean)별 대표 1개 — 가장 작은 용량(없으면 첫 항목).
-  List<FranchiseDrink> _representatives(List<FranchiseDrink> all) {
-    final byKey = <String, FranchiseDrink>{};
-    for (final d in all) {
-      final key = '${d.brand}|${d.nameClean}';
-      final cur = byKey[key];
-      if (cur == null) {
-        byKey[key] = d;
-      } else {
-        final a = d.volumeMl ?? 1 << 30;
-        final b = cur.volumeMl ?? 1 << 30;
-        if (a < b) byKey[key] = d;
+    // PostgREST 기본 max-rows(1000) 때문에 range로 전체를 페이지 단위로 수집.
+    const page = 1000;
+    final drinks = <FranchiseDrink>[];
+    for (var from = 0;; from += page) {
+      var q = _db.from('franchise_drinks').select();
+      if (brands.isNotEmpty) {
+        q = q.inFilter('brand', brands.toList());
       }
+      // 각 토큰이 name_clean·name·brand 중 하나에 포함(토큰 간 AND).
+      for (final tok in tokens) {
+        final esc = tok.replaceAll('%', r'\%').replaceAll('_', r'\_');
+        q = q.or('name_clean.ilike.%$esc%,name.ilike.%$esc%,brand.ilike.%$esc%');
+      }
+      final rows = await q.range(from, from + page - 1);
+      drinks.addAll(rows.map((m) => FranchiseDrink.fromMap(m)));
+      if (rows.length < page) break;
     }
-    return byKey.values.toList();
+
+    return _sorted(_grouped(drinks), sort);
   }
 
-  List<FranchiseDrink> _sorted(List<FranchiseDrink> list, FranchiseSort sort) {
+  /// (브랜드, 기본명)별로 변형을 묶어 FranchiseMenu 생성.
+  List<FranchiseMenu> _grouped(List<FranchiseDrink> all) {
+    final byKey = <String, List<FranchiseDrink>>{};
+    for (final d in all) {
+      (byKey['${d.brand}|${d.baseName}'] ??= []).add(d);
+    }
+
+    final menus = <FranchiseMenu>[];
+    for (final variants in byKey.values) {
+      // 대표: 가장 작은 용량 → 온도는 ICE 우선(가장 많이 찾음).
+      variants.sort((a, b) {
+        final va = a.volumeMl ?? 1 << 30;
+        final vb = b.volumeMl ?? 1 << 30;
+        if (va != vb) return va.compareTo(vb);
+        return _tempRank(a.temperature).compareTo(_tempRank(b.temperature));
+      });
+      final rep = variants.first;
+      // 변형이 하나뿐이면 원래 이름 유지(아이스만 있는 메뉴를 오표기하지 않도록).
+      final display = variants.length == 1 ? rep.nameClean : rep.baseName;
+      menus.add(FranchiseMenu(
+        brand: rep.brand,
+        category: rep.category,
+        displayName: display,
+        representative: rep,
+        variants: variants,
+      ));
+    }
+    return menus;
+  }
+
+  static int _tempRank(String? t) => switch (t) {
+        'ICE' => 0,
+        'HOT' => 1,
+        _ => 2,
+      };
+
+  List<FranchiseMenu> _sorted(List<FranchiseMenu> list, FranchiseSort sort) {
     // null 값은 항상 뒤로.
     int cmpNullable(double? a, double? b, {bool desc = false}) {
       if (a == null && b == null) return 0;
@@ -101,11 +127,15 @@ class FranchiseRepository {
     final sorted = [...list];
     switch (sort) {
       case FranchiseSort.sugarAsc:
-        sorted.sort((a, b) => cmpNullable(a.sugarG, b.sugarG));
+        sorted.sort((a, b) =>
+            cmpNullable(a.representative.sugarG, b.representative.sugarG));
       case FranchiseSort.sugarDesc:
-        sorted.sort((a, b) => cmpNullable(a.sugarG, b.sugarG, desc: true));
+        sorted.sort((a, b) => cmpNullable(
+            a.representative.sugarG, b.representative.sugarG,
+            desc: true));
       case FranchiseSort.calories:
-        sorted.sort((a, b) => cmpNullable(a.calories, b.calories));
+        sorted.sort((a, b) =>
+            cmpNullable(a.representative.calories, b.representative.calories));
     }
     return sorted;
   }
