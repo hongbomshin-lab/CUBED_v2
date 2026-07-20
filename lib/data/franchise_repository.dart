@@ -2,14 +2,15 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'models/franchise_drink.dart';
 
-/// 프랜차이즈 검색 파라미터 — provider family 키(값 동등성 필요).
+/// 프랜차이즈 검색 파라미터 — provider family 키(불변·값 동등성).
+/// [brand] null이면 전체. 단일 브랜드 선택.
 class FranchiseQuery {
   final String query;
-  final Set<String> brands;
+  final String? brand;
   final FranchiseSort sort;
   const FranchiseQuery({
     this.query = '',
-    this.brands = const {},
+    this.brand,
     this.sort = FranchiseSort.sugarAsc,
   });
 
@@ -17,16 +18,11 @@ class FranchiseQuery {
   bool operator ==(Object other) =>
       other is FranchiseQuery &&
       other.query == query &&
-      other.sort == sort &&
-      other.brands.length == brands.length &&
-      other.brands.containsAll(brands);
+      other.brand == brand &&
+      other.sort == sort;
 
   @override
-  int get hashCode => Object.hash(
-        query,
-        sort,
-        Object.hashAllUnordered(brands),
-      );
+  int get hashCode => Object.hash(query, brand, sort);
 }
 
 /// 프랜차이즈 음료 당류/영양 데이터 접근 (franchise_drinks).
@@ -45,11 +41,13 @@ class FranchiseRepository {
   ];
 
   /// 검색 + 브랜드 필터 + 정렬. 같은 메뉴(브랜드+기본명)는 하나로 묶어 반환.
-  /// - [query] name_clean·name·brand 부분일치(대소문자 무시). 공백은 토큰 AND.
+  /// - [brand] 지정 시 해당 브랜드로 한정하고 그 안에서 [query] 재검색.
+  /// - [query] name_clean·name 부분일치(대소문자 무시). 공백은 토큰 AND.
+  ///   (브랜드는 [brand]로 이미 한정하므로 검색어 대상에서 제외)
   /// - 대표 변형: 가장 작은 용량(기본 사이즈) 기준. 정렬은 대표 기준.
   Future<List<FranchiseMenu>> search({
     String query = '',
-    Set<String> brands = const {},
+    String? brand,
     FranchiseSort sort = FranchiseSort.sugarAsc,
   }) async {
     final tokens = query
@@ -58,18 +56,23 @@ class FranchiseRepository {
         .where((t) => t.isNotEmpty)
         .toList();
 
+    // 브랜드 미선택 시에만 검색어를 brand에도 매칭(브랜드명으로 검색 가능).
+    final searchCols = brand == null
+        ? ['name_clean', 'name', 'brand']
+        : ['name_clean', 'name'];
+
     // PostgREST 기본 max-rows(1000) 때문에 range로 전체를 페이지 단위로 수집.
     const page = 1000;
     final drinks = <FranchiseDrink>[];
     for (var from = 0;; from += page) {
       var q = _db.from('franchise_drinks').select();
-      if (brands.isNotEmpty) {
-        q = q.inFilter('brand', brands.toList());
+      if (brand != null) {
+        q = q.eq('brand', brand);
       }
-      // 각 토큰이 name_clean·name·brand 중 하나에 포함(토큰 간 AND).
+      // 각 토큰이 검색 대상 컬럼 중 하나에 포함(토큰 간 AND).
       for (final tok in tokens) {
         final esc = tok.replaceAll('%', r'\%').replaceAll('_', r'\_');
-        q = q.or('name_clean.ilike.%$esc%,name.ilike.%$esc%,brand.ilike.%$esc%');
+        q = q.or(searchCols.map((c) => '$c.ilike.%$esc%').join(','));
       }
       final rows = await q.range(from, from + page - 1);
       drinks.addAll(rows.map((m) => FranchiseDrink.fromMap(m)));
