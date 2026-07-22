@@ -49,7 +49,7 @@ class _LoginScreenState extends ConsumerState<_LoginScreen> {
           child: Padding(
             padding: const EdgeInsets.all(24),
             child: Column(mainAxisSize: MainAxisSize.min, children: [
-              const Text('CUBED 관리자', style: TextStyle(fontSize: 22, fontWeight: FontWeight.w800)),
+              const Text('ZERO DOT 관리자', style: TextStyle(fontSize: 22, fontWeight: FontWeight.w800)),
               const SizedBox(height: 20),
               TextField(controller: _email, decoration: const InputDecoration(labelText: '이메일')),
               const SizedBox(height: 12),
@@ -78,7 +78,7 @@ class AdminHome extends ConsumerWidget {
       length: 2,
       child: Scaffold(
         appBar: AppBar(
-          title: const Text('CUBED 검수 콘솔'),
+          title: const Text('ZERO DOT 검수 콘솔'),
           bottom: const TabBar(tabs: [Tab(text: '제보 큐'), Tab(text: '제품')]),
           actions: [
             TextButton(onPressed: () => ref.read(adminSupabaseProvider).auth.signOut(),

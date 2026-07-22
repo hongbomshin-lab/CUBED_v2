@@ -1,4 +1,4 @@
-// CUBED 룰북 엔진 단위 테스트 (rulebook.ts 검증 케이스 포팅)
+// ZERO DOT 룰북 엔진 단위 테스트 (rulebook.ts 검증 케이스 포팅)
 import 'package:flutter_test/flutter_test.dart';
 import 'package:cubed_app/core/rulebook.dart';
 

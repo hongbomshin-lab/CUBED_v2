@@ -1,4 +1,4 @@
-// CUBED 제보 Edge Function (Deno, service_role).
+// ZERO DOT 제보 Edge Function (Deno, service_role).
 // 입력: { images:{full,ingredients,nutrition}(base64), barcode? }
 // 처리: Gemini 파싱 → submission-images 업로드 → user_submissions insert → 파싱 반환.
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";

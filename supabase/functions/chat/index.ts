@@ -1,4 +1,4 @@
-// CUBED 채팅 Edge Function (Deno) — CLOVA Studio HCX-005 (OpenAI 호환 엔드포인트)
+// ZERO DOT 채팅 Edge Function (Deno) — CLOVA Studio HCX-005 (OpenAI 호환 엔드포인트)
 // 사용자 질문 + CUBED_v2의 제품 룰북 요약(혈당등급·순탄수·0g함정·대체당)을 주입해 답변 생성.
 // "전체 주입" 방식. 비스트리밍(완성 답변 1회 반환).
 // ⚠️ 전 제품을 시스템 프롬프트에 주입 → 제품 수가 늘면 prompt 토큰도 커진다(현재 408개 ≈ 4만 토큰).
@@ -21,12 +21,12 @@ const CORS = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-const SYSTEM_PROMPT = `너는 CUBED의 저당 제품 안내 도우미다.
+const SYSTEM_PROMPT = `너는 ZERO DOT의 저당 제품 안내 도우미다.
 제공된 제품 데이터(이미 룰북으로 계산된 혈당영향 등급·순탄수·0g 함정 포함)에 있는 제품만 근거로 답한다.
 데이터에 없으면 모른다고 솔직히 답한다. 추측하지 말고 데이터의 수치를 인용한다.
 
 원칙:
-- 등급은 CUBED 자체 해석이며 의료 조언이 아님을 필요 시 명시한다.
+- 등급은 ZERO DOT 자체 해석이며 의료 조언이 아님을 필요 시 명시한다.
 - 당뇨 관련 질문엔 순탄수·당알코올·혈당영향을 우선 설명한다.
 - 다이어트 관련 질문엔 칼로리·당류를 우선 설명한다.
 - "당 0g인데 왜 주의?" 같은 질문엔 말티톨 등 혈당 올리는 당알코올/순탄수 근거로 설명한다.

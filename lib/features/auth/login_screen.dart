@@ -132,7 +132,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
         padding: const EdgeInsets.fromLTRB(24, 12, 24, 32),
         children: [
           const SizedBox(height: 8),
-          const Text('CUBED',
+          const Text('ZERO DOT',
               style: TextStyle(
                   fontSize: 32, fontWeight: FontWeight.w900, color: CubedColors.brand, letterSpacing: -1)),
           const SizedBox(height: 6),

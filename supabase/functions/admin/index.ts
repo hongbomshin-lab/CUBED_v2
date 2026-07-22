@@ -1,4 +1,4 @@
-// CUBED 관리자 Edge Function (Deno, service_role). ADMIN_EMAILS 게이트.
+// ZERO DOT 관리자 Edge Function (Deno, service_role). ADMIN_EMAILS 게이트.
 // 액션: list_submissions, update_parsed, reject, promote, list_products, update_product, set_verified.
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { createClient, type SupabaseClient } from "jsr:@supabase/supabase-js@2";

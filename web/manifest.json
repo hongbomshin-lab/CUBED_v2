@@ -1,11 +1,11 @@
 {
-    "name": "CUBED 관리자 콘솔",
-    "short_name": "CUBED 관리자",
+    "name": "ZERO DOT 관리자 콘솔",
+    "short_name": "ZERO DOT 관리자",
     "start_url": ".",
     "display": "standalone",
     "background_color": "#12B886",
     "theme_color": "#12B886",
-    "description": "CUBED 제보 검수 관리자 콘솔",
+    "description": "ZERO DOT 제보 검수 관리자 콘솔",
     "orientation": "portrait-primary",
     "prefer_related_applications": false,
     "icons": [

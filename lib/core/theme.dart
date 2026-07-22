@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 
 import 'rulebook.dart';
 
-/// CUBED 디자인 토큰 — 깔끔하고 신뢰감 있는 미니멀 톤.
+/// ZERO DOT 디자인 토큰 — 깔끔하고 신뢰감 있는 미니멀 톤.
 class CubedColors {
   static const bg = Color(0xFFF7F8FA);
   static const surface = Colors.white;

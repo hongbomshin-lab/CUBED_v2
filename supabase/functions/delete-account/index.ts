@@ -1,4 +1,4 @@
-// CUBED 계정 삭제(회원 탈퇴) Edge Function (Deno)
+// ZERO DOT 계정 삭제(회원 탈퇴) Edge Function (Deno)
 // 스토어 정책 대응: 로그인 기능이 있는 앱은 앱 내 계정 삭제가 필수
 // (Apple 5.1.1(v), Google Play 계정 삭제 정책).
 //

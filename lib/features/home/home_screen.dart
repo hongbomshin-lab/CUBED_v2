@@ -27,7 +27,7 @@ class HomeScreen extends ConsumerWidget {
           children: [
             Row(
               children: [
-                Text('CUBED',
+                Text('ZERO DOT',
                     style: Theme.of(context).textTheme.headlineMedium?.copyWith(
                           fontWeight: FontWeight.w900,
                           color: CubedColors.brand,
@@ -121,7 +121,7 @@ class HomeScreen extends ConsumerWidget {
             // 스토어 정책: 건강 정보 면책 + 개인정보처리방침 링크
             const SizedBox(height: 28),
             const Text(
-              'CUBED의 혈당 영향 등급과 AI 답변은 참고용 정보이며 의학적 조언이 아닙니다. '
+              'ZERO DOT의 혈당 영향 등급과 AI 답변은 참고용 정보이며 의학적 조언이 아닙니다. '
               '질환이 있는 경우 전문가와 상담하세요.',
               style: TextStyle(color: CubedColors.inkSoft, fontSize: 11, height: 1.5),
             ),

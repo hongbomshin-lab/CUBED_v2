@@ -34,7 +34,7 @@ supabase functions deploy delete-account
 - URL이 다르면 `lib/features/home/home_screen.dart`의 `kPrivacyPolicyUrl` 수정 요청
 
 ### A-5. 앱 아이콘 제작
-- 1024×1024 PNG 1장 준비 (CUBED 브랜드 아이콘)
+- 1024×1024 PNG 1장 준비 (ZERO DOT 브랜드 아이콘)
 - 준비되면 Claude에게 전달 → `flutter_launcher_icons`로 전 해상도 자동 생성 + 스플래시 적용
 
 ## B. 개발자 계정 등록 (심사 대기시간이 기니 빨리 시작)

@@ -1,4 +1,4 @@
-/// CUBED 결과 표현 계층 (explain) — explain.ts 포팅.
+/// ZERO DOT 결과 표현 계층 (explain) — explain.ts 포팅.
 /// 룰북 계산값을 "일반 사용자 문장"으로 변환만 한다(수치 새로 만들지 않음).
 library;
 

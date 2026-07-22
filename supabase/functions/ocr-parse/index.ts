@@ -1,4 +1,4 @@
-// CUBED OCR 파싱 Edge Function (Deno) — 공유 파싱 모듈 사용.
+// ZERO DOT OCR 파싱 Edge Function (Deno) — 공유 파싱 모듈 사용.
 // 단일 image(하위호환) 또는 images:{full,ingredients,nutrition} 멀티이미지 지원.
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { parseImages, type ParseImage } from "../_shared/parse.ts";
