@@ -1,5 +1,5 @@
 name: cubed_app
-description: CUBED — 편의점 저당/제로 제품의 혈당 영향·0g 마케팅 함정을 직관적으로 보여주는 앱.
+description: ZERO DOT — 편의점 저당/제로 제품의 혈당 영향·0g 마케팅 함정을 직관적으로 보여주는 앱.
 publish_to: "none"
 version: 0.2.0+1
 
@@ -14,6 +14,9 @@ dependencies:
   flutter_riverpod: ^2.5.1
   # 백엔드
   supabase_flutter: ^2.5.6
+  # Apple 로그인 (App Store 4.8: 카카오 로그인 제공 시 필수)
+  sign_in_with_apple: ^6.1.4
+  crypto: ^3.0.5
   # 바코드 스캔
   mobile_scanner: ^5.1.1
   # OCR 사진 촬영/선택

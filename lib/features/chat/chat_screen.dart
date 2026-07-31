@@ -5,7 +5,7 @@ import '../../core/theme.dart';
 import '../../data/models/chat_message.dart';
 import 'chat_controller.dart';
 
-/// CUBED AI 도우미 채팅 화면.
+/// ZERO DOT AI 도우미 채팅 화면.
 /// 제품 룰북 요약을 주입받은 Gemini가 데이터에 있는 제품만 근거로 답한다. (대화는 메모리만)
 class ChatScreen extends ConsumerStatefulWidget {
   const ChatScreen({super.key, this.initialPrompt});
@@ -70,7 +70,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('CUBED 도우미'),
+        title: const Text('ZERO DOT 도우미'),
         bottom: const PreferredSize(
           preferredSize: Size.fromHeight(18),
           child: Padding(
@@ -253,7 +253,7 @@ class _InputBar extends StatelessWidget {
             ),
             const SizedBox(height: 6),
             const Text(
-              '이 답변은 의료 조언이 아닙니다 · 등급은 CUBED 자체 해석',
+              '이 답변은 의료 조언이 아닙니다 · 등급은 ZERO DOT 자체 해석',
               style: TextStyle(color: CubedColors.inkSoft, fontSize: 10.5),
             ),
           ],

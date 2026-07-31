@@ -20,7 +20,7 @@ class AdminApp extends StatelessWidget {
   const AdminApp({super.key});
   @override
   Widget build(BuildContext context) => MaterialApp(
-        title: 'CUBED Admin',
+        title: 'ZERO DOT Admin',
         debugShowCheckedModeBanner: false,
         theme: buildCubedTheme(),
         home: const AdminGate(),

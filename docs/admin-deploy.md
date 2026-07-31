@@ -1,4 +1,4 @@
-# CUBED 관리자 콘솔 — 배포·운영 노트
+# ZERO DOT 관리자 콘솔 — 배포·운영 노트
 
 Flutter Web 기반 관리자 검수 콘솔(`lib/admin/main_admin.dart`)의 빌드·배포·운영 가이드. 앱 본체와 별도 entrypoint로 완전 분리돼 있다.
 

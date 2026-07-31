@@ -1,4 +1,4 @@
-// CUBED 공유 파싱 모듈 — 멀티이미지 비전으로 영양성분/원재료 추출.
+// ZERO DOT 공유 파싱 모듈 — 멀티이미지 비전으로 영양성분/원재료 추출.
 // ocr-parse, submit-product 가 공유한다(단일 진실원천).
 // 프로바이더는 OCR_PROVIDER 환경변수로 전환: "clova"(기본) | "gemini".
 //   clova → CLOVA HCX-005 단일콜(CLOVA_API_KEY),  gemini → Gemini 멀티이미지(GEMINI_API_KEY).

@@ -27,7 +27,7 @@ class SweetenerChip {
   });
 }
 
-/// 한 제품에 대한 CUBED 해석 결과 (UI가 그대로 그리는 ViewModel).
+/// 한 제품에 대한 ZERO DOT 해석 결과 (UI가 그대로 그리는 ViewModel).
 /// 모든 값은 rulebook/explain으로 런타임 계산 — DB 미저장.
 class Interpretation {
   final Product product;

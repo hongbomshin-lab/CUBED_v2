@@ -16,7 +16,7 @@ class ChatState {
 const greetingMessage = ChatMessage(
   role: ChatRole.assistant,
   content:
-      '안녕하세요! CUBED 저당 제품 도우미예요.\n예: "혈당 부담 적은 음료 추천해줘", "당 0g인데 주의해야 할 과자 있어?"',
+      '안녕하세요! ZERO DOT 저당 제품 도우미예요.\n예: "혈당 부담 적은 음료 추천해줘", "당 0g인데 주의해야 할 과자 있어?"',
 );
 
 /// 예시 질문 칩 (인사만 있을 때 노출)
