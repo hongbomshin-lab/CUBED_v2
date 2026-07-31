@@ -7,10 +7,10 @@ import '../../core/theme.dart';
 import '../../providers/providers.dart';
 import '../auth/login_screen.dart';
 import '../chat/chat_screen.dart';
-import '../capture/capture_screen.dart';
 import '../diary/diary_screen.dart';
 import '../scan/scan_screen.dart';
 import '../search/search_screen.dart';
+import '../recognition/recognize_product_screen.dart';
 
 class HomeScreen extends ConsumerWidget {
   const HomeScreen({super.key});
@@ -68,9 +68,10 @@ class HomeScreen extends ConsumerWidget {
                   child: _SmallAction(
                     icon: Icons.center_focus_strong_rounded,
                     title: '사진으로 찾기',
-                    subtitle: 'OCR 인식',
+                    subtitle: '제품 앞면 1장',
                     onTap: () => Navigator.of(context).push(
-                      MaterialPageRoute(builder: (_) => const CaptureScreen()),
+                      MaterialPageRoute(
+                          builder: (_) => const RecognizeProductScreen()),
                     ),
                   ),
                 ),
@@ -123,7 +124,8 @@ class HomeScreen extends ConsumerWidget {
             const Text(
               'ZERO DOT의 혈당 영향 등급과 AI 답변은 참고용 정보이며 의학적 조언이 아닙니다. '
               '질환이 있는 경우 전문가와 상담하세요.',
-              style: TextStyle(color: CubedColors.inkSoft, fontSize: 11, height: 1.5),
+              style: TextStyle(
+                  color: CubedColors.inkSoft, fontSize: 11, height: 1.5),
             ),
             Align(
               alignment: Alignment.centerLeft,
@@ -174,8 +176,10 @@ class _AccountChip extends ConsumerWidget {
             child: Column(mainAxisSize: MainAxisSize.min, children: [
               const SizedBox(height: 12),
               ListTile(
-                leading: const Icon(Icons.person_rounded, color: CubedColors.brand),
-                title: Text(auth.displayName(), style: const TextStyle(fontWeight: FontWeight.w700)),
+                leading:
+                    const Icon(Icons.person_rounded, color: CubedColors.brand),
+                title: Text(auth.displayName(),
+                    style: const TextStyle(fontWeight: FontWeight.w700)),
                 subtitle: const Text('카카오 로그인됨'),
               ),
               ListTile(
@@ -188,7 +192,8 @@ class _AccountChip extends ConsumerWidget {
               ),
               // 스토어 정책상 앱 내 계정 삭제 필수 (Apple 5.1.1(v)·Google Play)
               ListTile(
-                leading: const Icon(Icons.person_off_rounded, color: CubedColors.caution),
+                leading: const Icon(Icons.person_off_rounded,
+                    color: CubedColors.caution),
                 title: const Text('회원 탈퇴',
                     style: TextStyle(color: CubedColors.caution)),
                 onTap: () => _confirmDeleteAccount(context, ref),
@@ -210,13 +215,16 @@ class _AccountChip extends ConsumerWidget {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
         decoration: BoxDecoration(
-          color: loggedIn ? CubedColors.brand.withValues(alpha: 0.1) : CubedColors.bg,
+          color: loggedIn
+              ? CubedColors.brand.withValues(alpha: 0.1)
+              : CubedColors.bg,
           borderRadius: BorderRadius.circular(20),
           border: Border.all(color: CubedColors.line),
         ),
         child: Row(mainAxisSize: MainAxisSize.min, children: [
           Icon(loggedIn ? Icons.person_rounded : Icons.login_rounded,
-              size: 14, color: loggedIn ? CubedColors.brand : CubedColors.inkSoft),
+              size: 14,
+              color: loggedIn ? CubedColors.brand : CubedColors.inkSoft),
           const SizedBox(width: 4),
           Text(loggedIn ? auth.displayName() : '로그인',
               style: TextStyle(
@@ -235,8 +243,8 @@ Future<void> _confirmDeleteAccount(BuildContext context, WidgetRef ref) async {
     context: context,
     builder: (ctx) => AlertDialog(
       title: const Text('회원 탈퇴'),
-      content: const Text(
-          '계정과 함께 먹은 기록·좋아요 등 모든 데이터가 삭제되며 되돌릴 수 없어요.\n정말 탈퇴하시겠어요?'),
+      content:
+          const Text('계정과 함께 먹은 기록·좋아요 등 모든 데이터가 삭제되며 되돌릴 수 없어요.\n정말 탈퇴하시겠어요?'),
       actions: [
         TextButton(
           onPressed: () => Navigator.of(ctx).pop(false),
@@ -244,7 +252,8 @@ Future<void> _confirmDeleteAccount(BuildContext context, WidgetRef ref) async {
         ),
         TextButton(
           onPressed: () => Navigator.of(ctx).pop(true),
-          child: const Text('탈퇴하기', style: TextStyle(color: CubedColors.caution)),
+          child:
+              const Text('탈퇴하기', style: TextStyle(color: CubedColors.caution)),
         ),
       ],
     ),
@@ -283,9 +292,14 @@ class _DataBadge extends StatelessWidget {
         borderRadius: BorderRadius.circular(20),
       ),
       child: Row(mainAxisSize: MainAxisSize.min, children: [
-        Container(width: 7, height: 7, decoration: BoxDecoration(color: c, shape: BoxShape.circle)),
+        Container(
+            width: 7,
+            height: 7,
+            decoration: BoxDecoration(color: c, shape: BoxShape.circle)),
         const SizedBox(width: 6),
-        Text(t, style: TextStyle(color: c, fontSize: 12, fontWeight: FontWeight.w700)),
+        Text(t,
+            style:
+                TextStyle(color: c, fontSize: 12, fontWeight: FontWeight.w700)),
       ]),
     );
   }
@@ -337,14 +351,19 @@ class _BigAction extends StatelessWidget {
                 children: [
                   Text(title,
                       style: const TextStyle(
-                          color: Colors.white, fontSize: 19, fontWeight: FontWeight.w800)),
+                          color: Colors.white,
+                          fontSize: 19,
+                          fontWeight: FontWeight.w800)),
                   const SizedBox(height: 4),
                   Text(subtitle,
-                      style: TextStyle(color: Colors.white.withValues(alpha: 0.9), fontSize: 13)),
+                      style: TextStyle(
+                          color: Colors.white.withValues(alpha: 0.9),
+                          fontSize: 13)),
                 ],
               ),
             ),
-            const Icon(Icons.arrow_forward_ios_rounded, color: Colors.white, size: 16),
+            const Icon(Icons.arrow_forward_ios_rounded,
+                color: Colors.white, size: 16),
           ],
         ),
       ),
@@ -380,9 +399,13 @@ class _SmallAction extends StatelessWidget {
           children: [
             Icon(icon, color: CubedColors.brand, size: 26),
             const SizedBox(height: 12),
-            Text(title, style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 15)),
+            Text(title,
+                style:
+                    const TextStyle(fontWeight: FontWeight.w800, fontSize: 15)),
             const SizedBox(height: 2),
-            Text(subtitle, style: const TextStyle(color: CubedColors.inkSoft, fontSize: 12)),
+            Text(subtitle,
+                style:
+                    const TextStyle(color: CubedColors.inkSoft, fontSize: 12)),
           ],
         ),
       ),
@@ -460,7 +483,9 @@ class _Bullet extends StatelessWidget {
         children: [
           Text(emoji, style: const TextStyle(fontSize: 16)),
           const SizedBox(width: 10),
-          Expanded(child: Text(text, style: const TextStyle(fontSize: 14, height: 1.4))),
+          Expanded(
+              child: Text(text,
+                  style: const TextStyle(fontSize: 14, height: 1.4))),
         ],
       ),
     );

@@ -10,13 +10,15 @@ import '../../domain/interpretation.dart';
 import '../../providers/providers.dart';
 import '../chat/chat_screen.dart';
 import '../diary/eaten_today_button.dart';
+import '../prices/price_comparison_section.dart';
 import 'widgets/portion_slider.dart';
 import 'widgets/social_section.dart';
 import 'widgets/sweetener_chips.dart';
 import 'widgets/verdict_hero.dart';
 
 class ResultScreen extends ConsumerWidget {
-  const ResultScreen({super.key, required this.product, this.submissionImagePath});
+  const ResultScreen(
+      {super.key, required this.product, this.submissionImagePath});
   final Product product;
 
   /// 촬영(OCR) 제품의 submission-images 폴더 uuid — 먹은기록 썸네일용
@@ -58,6 +60,8 @@ class _Body extends ConsumerWidget {
           const SizedBox(height: 10),
           _RecipeLine(combo: it.recipeCombo!),
         ],
+
+        PriceComparisonSection(productId: p.productId),
 
         // ── 2층: 행동 — 주의 등급이면 대안을 먼저
         if (it.grade == Grade.caution) ...[
@@ -125,19 +129,29 @@ class _ProductHeader extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               if (p.brand != null)
-                Text(p.brand!, style: const TextStyle(color: CubedColors.inkSoft, fontSize: 13, fontWeight: FontWeight.w600)),
+                Text(p.brand!,
+                    style: const TextStyle(
+                        color: CubedColors.inkSoft,
+                        fontSize: 13,
+                        fontWeight: FontWeight.w600)),
               const SizedBox(height: 2),
-              Text(p.name, style: const TextStyle(fontSize: 19, fontWeight: FontWeight.w800, height: 1.25)),
+              Text(p.name,
+                  style: const TextStyle(
+                      fontSize: 19, fontWeight: FontWeight.w800, height: 1.25)),
               const SizedBox(height: 6),
               if (p.category != null)
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
                   decoration: BoxDecoration(
                     color: CubedColors.brand.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: Text(p.category!,
-                      style: const TextStyle(color: CubedColors.brand, fontSize: 12, fontWeight: FontWeight.w700)),
+                      style: const TextStyle(
+                          color: CubedColors.brand,
+                          fontSize: 12,
+                          fontWeight: FontWeight.w700)),
                 ),
             ],
           ),
@@ -168,15 +182,18 @@ class _RecipeLine extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Row(children: [
-                  const Icon(Icons.auto_awesome_rounded, size: 18, color: CubedColors.brand),
+                  const Icon(Icons.auto_awesome_rounded,
+                      size: 18, color: CubedColors.brand),
                   const SizedBox(width: 8),
                   Expanded(
                     child: Text(combo.headline,
-                        style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w800)),
+                        style: const TextStyle(
+                            fontSize: 18, fontWeight: FontWeight.w800)),
                   ),
                 ]),
                 const SizedBox(height: 12),
-                Text(combo.message, style: const TextStyle(fontSize: 15, height: 1.55)),
+                Text(combo.message,
+                    style: const TextStyle(fontSize: 15, height: 1.55)),
               ],
             ),
           ),
@@ -199,16 +216,20 @@ class _RecipeLine extends StatelessWidget {
         ),
         child: Row(
           children: [
-            const Icon(Icons.auto_awesome_rounded, size: 16, color: CubedColors.brand),
+            const Icon(Icons.auto_awesome_rounded,
+                size: 16, color: CubedColors.brand),
             const SizedBox(width: 8),
             const Text('단맛 레시피: ',
                 style: TextStyle(color: CubedColors.inkSoft, fontSize: 13)),
             Expanded(
               child: Text(combo.headline,
                   style: const TextStyle(
-                      color: CubedColors.brand, fontWeight: FontWeight.w800, fontSize: 14)),
+                      color: CubedColors.brand,
+                      fontWeight: FontWeight.w800,
+                      fontSize: 14)),
             ),
-            const Icon(Icons.chevron_right_rounded, size: 16, color: CubedColors.inkSoft),
+            const Icon(Icons.chevron_right_rounded,
+                size: 16, color: CubedColors.inkSoft),
           ],
         ),
       ),
@@ -235,7 +256,9 @@ class _NumbersSection extends StatelessWidget {
             style: TextStyle(color: CubedColors.inkSoft, fontSize: 12)),
         children: [
           PortionSlider(
-              netCarb: it.netCarb, kcal: it.product.kcal, unitDesc: it.product.unitDesc),
+              netCarb: it.netCarb,
+              kcal: it.product.kcal,
+              unitDesc: it.product.unitDesc),
           const SizedBox(height: 12),
           _NutritionGrid(p: it.product),
           const SizedBox(height: 10),
@@ -267,8 +290,8 @@ class _AskAiButton extends StatelessWidget {
       ),
       onPressed: () => Navigator.of(context).push(
         MaterialPageRoute(
-          builder: (_) => ChatScreen(
-              initialPrompt: '${product.name}, 혈당 관리 중인데 먹어도 괜찮아?'),
+          builder: (_) =>
+              ChatScreen(initialPrompt: '${product.name}, 혈당 관리 중인데 먹어도 괜찮아?'),
         ),
       ),
       icon: const Icon(Icons.forum_rounded, size: 18),
@@ -311,9 +334,13 @@ class _NutritionGrid extends StatelessWidget {
               padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
               child: Column(
                 children: [
-                  Text(e.$2, style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 15)),
+                  Text(e.$2,
+                      style: const TextStyle(
+                          fontWeight: FontWeight.w800, fontSize: 15)),
                   const SizedBox(height: 3),
-                  Text(e.$1, style: const TextStyle(color: CubedColors.inkSoft, fontSize: 11)),
+                  Text(e.$1,
+                      style: const TextStyle(
+                          color: CubedColors.inkSoft, fontSize: 11)),
                 ],
               ),
             ),
@@ -367,7 +394,9 @@ class _Alternatives extends ConsumerWidget {
             child: const Row(children: [
               Text('👍', style: TextStyle(fontSize: 18)),
               SizedBox(width: 10),
-              Expanded(child: Text('이 칸에서 이미 좋은 선택이에요.', style: TextStyle(fontWeight: FontWeight.w600))),
+              Expanded(
+                  child: Text('이 칸에서 이미 좋은 선택이에요.',
+                      style: TextStyle(fontWeight: FontWeight.w600))),
             ]),
           );
         }
@@ -377,16 +406,21 @@ class _Alternatives extends ConsumerWidget {
               margin: const EdgeInsets.only(bottom: 10),
               child: ListTile(
                 onTap: () => Navigator.of(context).push(
-                  MaterialPageRoute(builder: (_) => ResultScreen(product: alt.product)),
+                  MaterialPageRoute(
+                      builder: (_) => ResultScreen(product: alt.product)),
                 ),
                 leading: CircleAvatar(
-                  backgroundColor: CubedColors.grade(alt.grade).withValues(alpha: 0.15),
+                  backgroundColor:
+                      CubedColors.grade(alt.grade).withValues(alpha: 0.15),
                   child: Text(gradeText[alt.grade]!.emoji),
                 ),
                 title: Text(alt.product.name,
-                    maxLines: 1, overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 14)),
-                subtitle: Text('순탄수 ${_n(alt.netCarb)}g · ${gradeText[alt.grade]!.badge}',
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
+                        fontWeight: FontWeight.w700, fontSize: 14)),
+                subtitle: Text(
+                    '순탄수 ${_n(alt.netCarb)}g · ${gradeText[alt.grade]!.badge}',
                     style: const TextStyle(fontSize: 12)),
                 trailing: const Icon(Icons.arrow_forward_ios_rounded, size: 14),
               ),
@@ -397,7 +431,8 @@ class _Alternatives extends ConsumerWidget {
     );
   }
 
-  static String _n(double v) => v == v.roundToDouble() ? v.toInt().toString() : v.toString();
+  static String _n(double v) =>
+      v == v.roundToDouble() ? v.toInt().toString() : v.toString();
 }
 
 class _SectionTitle extends StatelessWidget {
@@ -409,9 +444,11 @@ class _SectionTitle extends StatelessWidget {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        Text(title, style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 17)),
+        Text(title,
+            style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 17)),
         if (trailing != null)
-          Text(trailing!, style: const TextStyle(color: CubedColors.inkSoft, fontSize: 13)),
+          Text(trailing!,
+              style: const TextStyle(color: CubedColors.inkSoft, fontSize: 13)),
       ],
     );
   }
@@ -430,12 +467,14 @@ class _DraftNotice extends StatelessWidget {
         border: Border.all(color: CubedColors.line),
       ),
       child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        const Icon(Icons.info_outline_rounded, size: 16, color: CubedColors.inkSoft),
+        const Icon(Icons.info_outline_rounded,
+            size: 16, color: CubedColors.inkSoft),
         const SizedBox(width: 8),
         Expanded(
           child: Text(
             '검수 전 자동 추출 데이터예요. 실제 라벨과 다를 수 있어요.${notes != null && notes!.isNotEmpty ? '\n· $notes' : ''}',
-            style: const TextStyle(color: CubedColors.inkSoft, fontSize: 12, height: 1.5),
+            style: const TextStyle(
+                color: CubedColors.inkSoft, fontSize: 12, height: 1.5),
           ),
         ),
       ]),
