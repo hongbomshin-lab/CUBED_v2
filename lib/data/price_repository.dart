@@ -7,7 +7,8 @@ class PriceRepository {
   final SupabaseClient _db;
 
   static const _priceCols =
-      'id,product_id,channel,store,price,unit_count,promo_type,link_url,fetched_at';
+      'id,product_id,channel,store,price,unit_count,promo_type,'
+      'offer_key,offer_title,offer_note,link_url,fetched_at';
 
   Future<List<ProductPrice>> forProduct(String productId) async {
     final rows = await _db

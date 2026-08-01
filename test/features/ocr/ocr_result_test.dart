@@ -9,7 +9,11 @@ void main() {
       'category': '탄산음료',
       'serving_size': 355,
       'unit': 'ml',
-      'kcal': 0, 'carb': 0, 'sugar': 0, 'protein': 0, 'fat': 0,
+      'kcal': 0,
+      'carb': 0,
+      'sugar': 0,
+      'protein': 0,
+      'fat': 0,
       'ingredients_raw': '정제수, 합성착향료, 수크랄로스, 아세설팜칼륨',
       'sweeteners': [
         {'slug': 'sucralose', 'amount_g': null},
@@ -34,7 +38,8 @@ void main() {
   });
 
   test('fromParsed: 누락 필드는 기본값', () {
-    final r = OcrResult.fromParsed({'category': '과자/스낵', 'unit': 'g', 'sweeteners': []});
+    final r = OcrResult.fromParsed(
+        {'category': '과자/스낵', 'unit': 'g', 'sweeteners': []});
     expect(r.product.name, '촬영한 제품');
     expect(r.product.kcal, 0);
     expect(r.product.sweeteners, isEmpty);
@@ -42,14 +47,38 @@ void main() {
 
   test('fromParsed: image_path → imagePath', () {
     final r = OcrResult.fromParsed({
-      'category': '과자/스낵', 'unit': 'g', 'sweeteners': [],
+      'category': '과자/스낵',
+      'unit': 'g',
+      'sweeteners': [],
       'image_path': 'abc-123-folder',
     });
     expect(r.imagePath, 'abc-123-folder');
   });
 
   test('fromParsed: image_path 없으면 imagePath null', () {
-    final r = OcrResult.fromParsed({'category': '과자/스낵', 'unit': 'g', 'sweeteners': []});
+    final r = OcrResult.fromParsed(
+        {'category': '과자/스낵', 'unit': 'g', 'sweeteners': []});
     expect(r.imagePath, isNull);
+  });
+
+  test('fromParsed: 등록 제품 매칭 시 DB Product를 결과에 사용한다', () {
+    final r = OcrResult.fromParsed({
+      'name': 'OCR 제품명',
+      'unit': 'g',
+      'sweeteners': <Map<String, dynamic>>[],
+      'matched_product': {
+        'product_id': 'lala-1',
+        'name': '라라스윗 저당 초콜릿 초코바',
+        'brand': '라라스윗',
+        'serving_size': 90,
+        'unit': 'ml',
+        'verified': true,
+        'product_sweeteners': <Map<String, dynamic>>[],
+      },
+    });
+
+    expect(r.product.productId, 'lala-1');
+    expect(r.product.name, '라라스윗 저당 초콜릿 초코바');
+    expect(r.product.verified, true);
   });
 }

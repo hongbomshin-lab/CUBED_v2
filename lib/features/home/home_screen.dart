@@ -6,11 +6,11 @@ import '../../core/feature_flags.dart';
 import '../../core/theme.dart';
 import '../../providers/providers.dart';
 import '../auth/login_screen.dart';
+import '../capture/capture_screen.dart';
 import '../chat/chat_screen.dart';
 import '../diary/diary_screen.dart';
 import '../scan/scan_screen.dart';
 import '../search/search_screen.dart';
-import '../recognition/recognize_product_screen.dart';
 
 class HomeScreen extends ConsumerWidget {
   const HomeScreen({super.key});
@@ -67,11 +67,10 @@ class HomeScreen extends ConsumerWidget {
                 Expanded(
                   child: _SmallAction(
                     icon: Icons.center_focus_strong_rounded,
-                    title: '사진으로 찾기',
-                    subtitle: '제품 앞면 1장',
+                    title: '사진으로 분석',
+                    subtitle: '제품·원재료·영양 3장',
                     onTap: () => Navigator.of(context).push(
-                      MaterialPageRoute(
-                          builder: (_) => const RecognizeProductScreen()),
+                      MaterialPageRoute(builder: (_) => const CaptureScreen()),
                     ),
                   ),
                 ),

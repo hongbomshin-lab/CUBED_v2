@@ -7,6 +7,9 @@ class ProductPrice {
     required this.price,
     required this.unitCount,
     required this.promoType,
+    this.offerKey,
+    this.offerTitle,
+    this.offerNote,
     this.linkUrl,
     required this.fetchedAt,
   });
@@ -18,6 +21,9 @@ class ProductPrice {
   final int price;
   final int unitCount;
   final String promoType;
+  final String? offerKey;
+  final String? offerTitle;
+  final String? offerNote;
   final String? linkUrl;
   final DateTime fetchedAt;
 
@@ -47,6 +53,9 @@ class ProductPrice {
         price: (map['price'] as num).toInt(),
         unitCount: (map['unit_count'] as num?)?.toInt() ?? 1,
         promoType: map['promo_type'] as String? ?? 'regular',
+        offerKey: map['offer_key'] as String?,
+        offerTitle: map['offer_title'] as String?,
+        offerNote: map['offer_note'] as String?,
         linkUrl: map['link_url'] as String?,
         fetchedAt: DateTime.parse(map['fetched_at'] as String),
       );

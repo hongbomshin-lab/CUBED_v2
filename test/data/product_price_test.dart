@@ -40,4 +40,24 @@ void main() {
 
     expect(deal.discountRate, 21);
   });
+
+  test('행사명과 구매 조건을 DB 응답에서 읽는다', () {
+    final price = ProductPrice.fromMap({
+      'id': 'price-2',
+      'product_id': 'product-1',
+      'channel': 'brand_mall',
+      'store': '라라스윗 공식몰',
+      'price': 2970,
+      'unit_count': 3,
+      'promo_type': 'sale',
+      'offer_key': 'lalasweet-250-addon',
+      'offer_title': '제과 베스트 990원딜',
+      'offer_note': '제과 2세트 구매 후 추가 옵션 선택 시',
+      'fetched_at': '2026-08-02T01:00:00Z',
+    });
+
+    expect(price.unitPrice, 990);
+    expect(price.offerTitle, '제과 베스트 990원딜');
+    expect(price.offerNote, contains('추가 옵션'));
+  });
 }
