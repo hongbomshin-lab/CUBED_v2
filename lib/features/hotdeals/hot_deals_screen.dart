@@ -118,6 +118,16 @@ class _DealCard extends StatelessWidget {
                     overflow: TextOverflow.ellipsis,
                     style: const TextStyle(
                         fontSize: 14, fontWeight: FontWeight.w800)),
+                if (offer.offerTitle != null) ...[
+                  const SizedBox(height: 3),
+                  Text(offer.offerTitle!,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                          color: CubedColors.brand,
+                          fontSize: 12,
+                          fontWeight: FontWeight.w700)),
+                ],
                 const SizedBox(height: 3),
                 Text('${offer.store} · ${checkedDate(offer.fetchedAt)}',
                     style: const TextStyle(
@@ -134,6 +144,16 @@ class _DealCard extends StatelessWidget {
                         Text('${offer.unitCount}개 ${won(offer.price)}',
                             style: const TextStyle(
                                 color: CubedColors.inkSoft, fontSize: 11)),
+                        if (offer.offerNote != null) ...[
+                          const SizedBox(height: 4),
+                          Text(offer.offerNote!,
+                              maxLines: 3,
+                              overflow: TextOverflow.ellipsis,
+                              style: const TextStyle(
+                                  color: CubedColors.inkSoft,
+                                  fontSize: 10,
+                                  height: 1.3)),
+                        ],
                       ],
                     ),
                   ),

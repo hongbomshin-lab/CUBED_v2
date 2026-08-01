@@ -44,14 +44,14 @@ class _PriceContent extends StatelessWidget {
     final best = deals.isNotEmpty ? deals.first : items.first;
     final summary = regular != null && best.unitPrice < regular.unitPrice
         ? '정가 ${won(regular.unitPrice)} → ${best.channelLabel} ${won(best.unitPrice)}'
-        : '가장 낮은 개당가 ${won(best.unitPrice)}';
+        : '${best.channelLabel} 특가 개당 ${won(best.unitPrice)}';
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         const SizedBox(height: 22),
-        const Text('가격 비교',
-            style: TextStyle(fontWeight: FontWeight.w800, fontSize: 17)),
+        Text(best.channel == 'brand_mall' ? '공식몰에서 더 싸게 살 수 있어요' : '가격 비교',
+            style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 17)),
         const SizedBox(height: 5),
         Text(summary,
             style: const TextStyle(
@@ -98,7 +98,7 @@ class _PriceRow extends StatelessWidget {
               children: [
                 Row(children: [
                   Flexible(
-                    child: Text(item.store,
+                    child: Text(item.offerTitle ?? item.store,
                         overflow: TextOverflow.ellipsis,
                         style: const TextStyle(
                             fontWeight: FontWeight.w700, fontSize: 14)),
@@ -121,9 +121,17 @@ class _PriceRow extends StatelessWidget {
                   ],
                 ]),
                 const SizedBox(height: 4),
-                Text('$detail · ${checkedDate(item.fetchedAt)}',
+                Text('${item.store} · $detail · ${checkedDate(item.fetchedAt)}',
                     style: const TextStyle(
                         color: CubedColors.inkSoft, fontSize: 11)),
+                if (item.offerNote != null) ...[
+                  const SizedBox(height: 5),
+                  Text(item.offerNote!,
+                      style: const TextStyle(
+                          color: CubedColors.inkSoft,
+                          fontSize: 11,
+                          height: 1.35)),
+                ],
               ],
             ),
           ),

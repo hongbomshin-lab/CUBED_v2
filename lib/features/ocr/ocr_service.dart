@@ -29,7 +29,7 @@ class OcrResult {
               sortOrder: e.key,
             ))
         .toList();
-    final product = Product(
+    final parsedProduct = Product(
       productId: 'ocr-temp',
       name: (m['name'] as String?) ?? '촬영한 제품',
       brand: m['brand'] as String?,
@@ -53,9 +53,14 @@ class OcrResult {
       notes: m['notes'] as String?,
       sweeteners: swList,
     );
+    final matched = m['matched_product'];
+    final product = matched is Map
+        ? Product.fromMap(Map<String, dynamic>.from(matched))
+        : parsedProduct;
     return OcrResult(
       product: product,
-      unknownSweeteners: ((m['unknown_sweeteners'] as List?) ?? const []).cast<String>(),
+      unknownSweeteners:
+          ((m['unknown_sweeteners'] as List?) ?? const []).cast<String>(),
       rawText: m['ingredients_raw'] as String?,
       imagePath: m['image_path'] as String?,
     );
@@ -67,7 +72,7 @@ class OcrService {
   final SupabaseClient _db;
 
   /// 3장(전체샷·원재료·영양성분, base64) + 바코드 → submit-product 호출.
-  /// Edge Function이 Gemini 멀티이미지로 파싱하고 제보를 저장한 뒤 파싱 결과를 돌려준다.
+  /// Edge Function이 CLOVA 멀티이미지로 파싱하고 제보를 저장한 뒤 파싱 결과를 돌려준다.
   Future<OcrResult> parseAndSubmit({
     required String fullB64,
     required String ingredientsB64,
