@@ -7,15 +7,24 @@ class PriceRepository {
   final SupabaseClient _db;
 
   static const _priceCols =
-      'id,product_id,channel,store,price,unit_count,promo_type,'
-      'offer_key,offer_title,offer_note,link_url,fetched_at';
+      'id,product_id,catalog_product_key,catalog_name,brand,'
+      'channel,store,price,unit_count,promo_type,offer_kind,'
+      'minimum_order_amount,offer_key,offer_title,offer_note,link_url,fetched_at';
 
-  Future<List<ProductPrice>> forProduct(String productId) async {
-    final rows = await _db
-        .from('product_prices')
-        .select(_priceCols)
-        .eq('product_id', productId)
-        .eq('is_active', true);
+  Future<List<ProductPrice>> forProduct({
+    String? productId,
+    String? catalogProductKey,
+  }) async {
+    var query =
+        _db.from('product_prices').select(_priceCols).eq('is_active', true);
+    if (catalogProductKey != null) {
+      query = query.eq('catalog_product_key', catalogProductKey);
+    } else if (productId != null) {
+      query = query.eq('product_id', productId);
+    } else {
+      return const [];
+    }
+    final rows = await query;
     final prices = rows.map((row) => ProductPrice.fromMap(row)).toList();
     prices.sort((a, b) => a.unitPrice.compareTo(b.unitPrice));
     return prices;
@@ -37,7 +46,8 @@ class PriceRepository {
 
     final regularByProduct = <String, int>{};
     for (final row in results[1]) {
-      final productId = row['product_id'] as String;
+      final productId = row['product_id'] as String?;
+      if (productId == null) continue;
       final unitPrice =
           ((row['price'] as num) / (row['unit_count'] as num)).round();
       final current = regularByProduct[productId];

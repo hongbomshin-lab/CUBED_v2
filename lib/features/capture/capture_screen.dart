@@ -49,7 +49,9 @@ class CaptureScreen extends ConsumerWidget {
         MaterialPageRoute(
             builder: (_) => ResultScreen(
                 product: result.product,
-                submissionImagePath: result.imagePath)),
+                submissionImagePath: result.imagePath,
+                priceCatalogKey: result.priceCatalogKey,
+                priceCatalogName: result.priceCatalogName)),
       );
     } catch (e) {
       ctrl.setError('$e');

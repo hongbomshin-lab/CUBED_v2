@@ -27,9 +27,14 @@ final priceRepositoryProvider = Provider<PriceRepository>(
   (ref) => PriceRepository(ref.watch(supabaseProvider)),
 );
 
+typedef PriceLookup = ({String? productId, String? catalogProductKey});
+
 final productPricesProvider =
-    FutureProvider.family<List<ProductPrice>, String>((ref, productId) {
-  return ref.watch(priceRepositoryProvider).forProduct(productId);
+    FutureProvider.family<List<ProductPrice>, PriceLookup>((ref, lookup) {
+  return ref.watch(priceRepositoryProvider).forProduct(
+        productId: lookup.productId,
+        catalogProductKey: lookup.catalogProductKey,
+      );
 });
 
 final hotDealsProvider = FutureProvider<List<HotDealItem>>((ref) {

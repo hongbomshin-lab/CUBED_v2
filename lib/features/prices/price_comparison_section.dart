@@ -8,29 +8,43 @@ import '../../data/models/product_price.dart';
 import '../../providers/providers.dart';
 
 class PriceComparisonSection extends ConsumerWidget {
-  const PriceComparisonSection({super.key, required this.productId});
+  const PriceComparisonSection({
+    super.key,
+    required this.productId,
+    this.catalogProductKey,
+    this.catalogName,
+  });
   final String productId;
+  final String? catalogProductKey;
+  final String? catalogName;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    if (productId == 'ocr-temp') return const SizedBox.shrink();
-    final prices = ref.watch(productPricesProvider(productId));
+    if (productId == 'ocr-temp' && catalogProductKey == null) {
+      return const SizedBox.shrink();
+    }
+    final lookup = (
+      productId: productId == 'ocr-temp' ? null : productId,
+      catalogProductKey: catalogProductKey,
+    );
+    final prices = ref.watch(productPricesProvider(lookup));
     return prices.when(
       loading: () => const _Loading(),
       error: (_, __) => _PriceError(
-        onRetry: () => ref.invalidate(productPricesProvider(productId)),
+        onRetry: () => ref.invalidate(productPricesProvider(lookup)),
       ),
       data: (items) {
         if (items.isEmpty) return const SizedBox.shrink();
-        return _PriceContent(items: items);
+        return _PriceContent(items: items, catalogName: catalogName);
       },
     );
   }
 }
 
 class _PriceContent extends StatelessWidget {
-  const _PriceContent({required this.items});
+  const _PriceContent({required this.items, this.catalogName});
   final List<ProductPrice> items;
+  final String? catalogName;
 
   @override
   Widget build(BuildContext context) {
@@ -41,10 +55,17 @@ class _PriceContent extends StatelessWidget {
         );
     final deals = items.where((item) => !item.isRegular).toList()
       ..sort((a, b) => a.unitPrice.compareTo(b.unitPrice));
-    final best = deals.isNotEmpty ? deals.first : items.first;
-    final summary = regular != null && best.unitPrice < regular.unitPrice
-        ? '정가 ${won(regular.unitPrice)} → ${best.channelLabel} ${won(best.unitPrice)}'
-        : '${best.channelLabel} 특가 개당 ${won(best.unitPrice)}';
+    final standaloneDeals = deals.where((item) => !item.isConditional).toList();
+    final best = standaloneDeals.isNotEmpty
+        ? standaloneDeals.first
+        : deals.isNotEmpty
+            ? deals.first
+            : items.first;
+    final summary = best.isConditional
+        ? '기본 상품 구매 시 추가 옵션 개당 ${won(best.unitPrice)}'
+        : regular != null && best.unitPrice < regular.unitPrice
+            ? '정가 ${won(regular.unitPrice)} → ${best.channelLabel} ${won(best.unitPrice)}'
+            : '${best.channelLabel} 특가 개당 ${won(best.unitPrice)}';
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -58,6 +79,11 @@ class _PriceContent extends StatelessWidget {
                 color: CubedColors.brand,
                 fontSize: 15,
                 fontWeight: FontWeight.w800)),
+        if (catalogName != null) ...[
+          const SizedBox(height: 4),
+          Text('$catalogName 제품으로 확인했어요',
+              style: const TextStyle(color: CubedColors.inkSoft, fontSize: 11)),
+        ],
         const SizedBox(height: 12),
         for (final item in items) ...[
           _PriceRow(item: item, isBest: identical(item, best)),
@@ -112,8 +138,8 @@ class _PriceRow extends StatelessWidget {
                         color: CubedColors.brand,
                         borderRadius: BorderRadius.circular(4),
                       ),
-                      child: const Text('최저가',
-                          style: TextStyle(
+                      child: Text(item.isConditional ? '조건부' : '최저가',
+                          style: const TextStyle(
                               color: Colors.white,
                               fontSize: 10,
                               fontWeight: FontWeight.w800)),
@@ -131,6 +157,14 @@ class _PriceRow extends StatelessWidget {
                           color: CubedColors.inkSoft,
                           fontSize: 11,
                           height: 1.35)),
+                ],
+                if (item.minimumOrderAmount != null) ...[
+                  const SizedBox(height: 4),
+                  Text('기본 구성 ${won(item.minimumOrderAmount!)} 구매 필요',
+                      style: const TextStyle(
+                          color: CubedColors.caution,
+                          fontSize: 11,
+                          fontWeight: FontWeight.w700)),
                 ],
               ],
             ),
