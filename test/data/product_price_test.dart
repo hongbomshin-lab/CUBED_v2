@@ -8,6 +8,8 @@ void main() {
     final price = ProductPrice(
       id: 'price-1',
       productId: 'product-1',
+      catalogProductKey: 'product:product-1',
+      catalogName: '저당 초콜릿 초코바',
       channel: 'brand_mall',
       store: '라라스윗 공식몰',
       price: 20900,
@@ -26,6 +28,8 @@ void main() {
       offer: ProductPrice(
         id: 'price-1',
         productId: 'product-1',
+        catalogProductKey: 'product:product-1',
+        catalogName: '저당 초콜릿 초코바',
         channel: 'brand_mall',
         store: '라라스윗 공식몰',
         price: 20900,
@@ -45,6 +49,8 @@ void main() {
     final price = ProductPrice.fromMap({
       'id': 'price-2',
       'product_id': 'product-1',
+      'catalog_product_key': 'lalasweet:popcorn:corn-soup',
+      'catalog_name': '라라스윗 저당 콘스프맛 팝콘',
       'channel': 'brand_mall',
       'store': '라라스윗 공식몰',
       'price': 2970,
@@ -53,11 +59,15 @@ void main() {
       'offer_key': 'lalasweet-250-addon',
       'offer_title': '제과 베스트 990원딜',
       'offer_note': '제과 2세트 구매 후 추가 옵션 선택 시',
+      'offer_kind': 'conditional_addon',
+      'minimum_order_amount': 34000,
       'fetched_at': '2026-08-02T01:00:00Z',
     });
 
     expect(price.unitPrice, 990);
     expect(price.offerTitle, '제과 베스트 990원딜');
     expect(price.offerNote, contains('추가 옵션'));
+    expect(price.isConditional, true);
+    expect(price.minimumOrderAmount, 34000);
   });
 }

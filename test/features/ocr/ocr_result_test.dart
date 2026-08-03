@@ -81,4 +81,23 @@ void main() {
     expect(r.product.name, '라라스윗 저당 초콜릿 초코바');
     expect(r.product.verified, true);
   });
+
+  test('fromParsed: 미등록 제품의 가격 카탈로그 매칭을 보존한다', () {
+    final r = OcrResult.fromParsed({
+      'name': '라라스윗 자두 제로바',
+      'brand': '라라스윗',
+      'unit': 'g',
+      'sweeteners': <Map<String, dynamic>>[],
+      'price_match': {
+        'catalog_product_key': 'lalasweet:zero-bar:plum',
+        'catalog_name': '라라스윗 자두 제로바',
+        'confidence': 0.92,
+      },
+    });
+
+    expect(r.product.productId, 'ocr-temp');
+    expect(r.priceCatalogKey, 'lalasweet:zero-bar:plum');
+    expect(r.priceCatalogName, '라라스윗 자두 제로바');
+    expect(r.priceMatchConfidence, 0.92);
+  });
 }

@@ -18,11 +18,17 @@ import 'widgets/verdict_hero.dart';
 
 class ResultScreen extends ConsumerWidget {
   const ResultScreen(
-      {super.key, required this.product, this.submissionImagePath});
+      {super.key,
+      required this.product,
+      this.submissionImagePath,
+      this.priceCatalogKey,
+      this.priceCatalogName});
   final Product product;
 
   /// 촬영(OCR) 제품의 submission-images 폴더 uuid — 먹은기록 썸네일용
   final String? submissionImagePath;
+  final String? priceCatalogKey;
+  final String? priceCatalogName;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -32,16 +38,28 @@ class ResultScreen extends ConsumerWidget {
       body: interp.when(
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (e, _) => Center(child: Text('해석 오류: $e')),
-        data: (it) => _Body(it: it, submissionImagePath: submissionImagePath),
+        data: (it) => _Body(
+          it: it,
+          submissionImagePath: submissionImagePath,
+          priceCatalogKey: priceCatalogKey,
+          priceCatalogName: priceCatalogName,
+        ),
       ),
     );
   }
 }
 
 class _Body extends ConsumerWidget {
-  const _Body({required this.it, this.submissionImagePath});
+  const _Body({
+    required this.it,
+    this.submissionImagePath,
+    this.priceCatalogKey,
+    this.priceCatalogName,
+  });
   final Interpretation it;
   final String? submissionImagePath;
+  final String? priceCatalogKey;
+  final String? priceCatalogName;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -61,7 +79,11 @@ class _Body extends ConsumerWidget {
           _RecipeLine(combo: it.recipeCombo!),
         ],
 
-        PriceComparisonSection(productId: p.productId),
+        PriceComparisonSection(
+          productId: p.productId,
+          catalogProductKey: priceCatalogKey,
+          catalogName: priceCatalogName,
+        ),
 
         // ── 2층: 행동 — 주의 등급이면 대안을 먼저
         if (it.grade == Grade.caution) ...[

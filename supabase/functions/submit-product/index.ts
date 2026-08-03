@@ -2,15 +2,14 @@
 // 입력: { images:{full,ingredients,nutrition}(base64), barcode? }
 // 처리: Gemini 파싱 → submission-images 업로드 → user_submissions insert → 파싱 반환.
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
+import { createClient, type SupabaseClient } from "jsr:@supabase/supabase-js@2";
+import { type ParseImage, parseImages } from "../_shared/parse.ts";
+import { recognizeWithClova } from "../_shared/recognize.ts";
 import {
-  createClient,
-  type SupabaseClient,
-} from "jsr:@supabase/supabase-js@2";
-import { parseImages, type ParseImage } from "../_shared/parse.ts";
-import {
-  recognizeWithClova,
-  type RecognitionCandidate,
-} from "../_shared/recognize.ts";
+  buildProductIdentitySet,
+  type PriceCatalogRow,
+  type RegisteredProductCandidate,
+} from "../_shared/price_catalog.ts";
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SERVICE_ROLE = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
@@ -22,7 +21,8 @@ const PRODUCT_COLS =
 
 const CORS = {
   "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+  "Access-Control-Allow-Headers":
+    "authorization, x-client-info, apikey, content-type",
 };
 
 function b64ToBytes(b64: string): Uint8Array {
@@ -48,13 +48,16 @@ Deno.serve(async (req: Request) => {
     const parsed = await parseImages(imgs);
     const db = createClient(SUPABASE_URL, SERVICE_ROLE);
 
-    // 영양 분석은 항상 반환하고, 앞면 사진에서 등록된 라라스윗 SKU를 추가로 찾는다.
+    // 영양 분석은 항상 반환하고, 앞면 사진에서 등록 제품 또는 가격 카탈로그 SKU를 찾는다.
     let matchedProduct: Record<string, unknown> | null = null;
+    let priceMatch: Record<string, unknown> | null = null;
     try {
-      matchedProduct = await matchRegisteredLalasweet(
+      const match = await matchLalasweetIdentity(
         db,
         images.full,
       );
+      matchedProduct = match.matchedProduct;
+      priceMatch = match.priceMatch;
     } catch (recognitionError) {
       console.error(
         "submit-product 라라스윗 매칭 실패(비치명):",
@@ -70,9 +73,17 @@ Deno.serve(async (req: Request) => {
       const bucket = db.storage.from("submission-images");
       // supabase-js는 API 오류 시 throw하지 않고 { error }를 반환 — 명시 확인 후 throw
       const uploads = await Promise.all([
-        bucket.upload(`${folder}/full.jpg`, b64ToBytes(images.full), { contentType: "image/jpeg" }),
-        bucket.upload(`${folder}/ingredients.jpg`, b64ToBytes(images.ingredients), { contentType: "image/jpeg" }),
-        bucket.upload(`${folder}/nutrition.jpg`, b64ToBytes(images.nutrition), { contentType: "image/jpeg" }),
+        bucket.upload(`${folder}/full.jpg`, b64ToBytes(images.full), {
+          contentType: "image/jpeg",
+        }),
+        bucket.upload(
+          `${folder}/ingredients.jpg`,
+          b64ToBytes(images.ingredients),
+          { contentType: "image/jpeg" },
+        ),
+        bucket.upload(`${folder}/nutrition.jpg`, b64ToBytes(images.nutrition), {
+          contentType: "image/jpeg",
+        }),
       ]);
       const uploadErr = uploads.find((u) => u.error)?.error;
       if (uploadErr) throw uploadErr;
@@ -80,18 +91,23 @@ Deno.serve(async (req: Request) => {
         barcode: barcode ?? null,
         image_path: folder,
         parsed,
-        ocr_text: (parsed as { ingredients_raw?: string }).ingredients_raw ?? null,
+        ocr_text: (parsed as { ingredients_raw?: string }).ingredients_raw ??
+          null,
         status: "pending",
       });
       if (insertErr) throw insertErr;
       imagePath = folder;
     } catch (persistErr) {
-      console.error("submit-product persist 실패(비치명적):", String(persistErr));
+      console.error(
+        "submit-product persist 실패(비치명적):",
+        String(persistErr),
+      );
     }
 
     return json({
       ...parsed,
       matched_product: matchedProduct,
+      price_match: priceMatch,
       image_path: imagePath,
     }, 200);
   } catch (e) {
@@ -99,31 +115,66 @@ Deno.serve(async (req: Request) => {
   }
 });
 
-async function matchRegisteredLalasweet(
+async function matchLalasweetIdentity(
   db: SupabaseClient,
   imageBase64: string,
-): Promise<Record<string, unknown> | null> {
-  const { data, error } = await db
-    .from("products")
-    .select("product_id,name")
-    .eq("brand", "라라스윗")
-    .order("name");
-  if (error) throw error;
-  const candidates = (data ?? []) as RecognitionCandidate[];
-  if (candidates.length === 0) return null;
+): Promise<{
+  matchedProduct: Record<string, unknown> | null;
+  priceMatch: Record<string, unknown> | null;
+}> {
+  const [productsResult, pricesResult] = await Promise.all([
+    db.from("products").select("product_id,name").eq("brand", "라라스윗"),
+    db.from("product_prices")
+      .select("product_id,catalog_product_key,catalog_name,aliases")
+      .eq("brand", "라라스윗")
+      .eq("channel", "brand_mall")
+      .eq("is_active", true),
+  ]);
+  if (productsResult.error) throw productsResult.error;
+  if (pricesResult.error) throw pricesResult.error;
+
+  const identitySet = buildProductIdentitySet(
+    (productsResult.data ?? []) as RegisteredProductCandidate[],
+    (pricesResult.data ?? []) as PriceCatalogRow[],
+  );
+  if (identitySet.candidates.length === 0) {
+    return { matchedProduct: null, priceMatch: null };
+  }
 
   const apiKey = Deno.env.get("CLOVA_API_KEY");
   if (!apiKey) throw new Error("CLOVA_API_KEY 미설정");
-  const recognition = await recognizeWithClova(candidates, imageBase64, apiKey);
-  if (!recognition.matched || !recognition.productId) return null;
+  const recognition = await recognizeWithClova(
+    identitySet.candidates,
+    imageBase64,
+    apiKey,
+  );
+  if (!recognition.matched || !recognition.productId) {
+    return { matchedProduct: null, priceMatch: null };
+  }
 
-  const { data: product, error: productError } = await db
-    .from("products")
-    .select(PRODUCT_COLS)
-    .eq("product_id", recognition.productId)
-    .single();
-  if (productError) throw productError;
-  return product as Record<string, unknown>;
+  const identity = identitySet.identities.get(recognition.productId);
+  if (!identity) return { matchedProduct: null, priceMatch: null };
+
+  let matchedProduct: Record<string, unknown> | null = null;
+  if (identity.registeredProductId) {
+    const { data: product, error: productError } = await db
+      .from("products")
+      .select(PRODUCT_COLS)
+      .eq("product_id", identity.registeredProductId)
+      .single();
+    if (productError) throw productError;
+    matchedProduct = product as unknown as Record<string, unknown>;
+  }
+
+  const priceMatch = identity.catalogProductKey
+    ? {
+      catalog_product_key: identity.catalogProductKey,
+      catalog_name: identity.name,
+      confidence: recognition.confidence,
+      reason: recognition.reason,
+    }
+    : null;
+  return { matchedProduct, priceMatch };
 }
 
 function json(body: unknown, status: number): Response {

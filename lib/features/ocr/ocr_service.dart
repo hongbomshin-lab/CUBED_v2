@@ -8,11 +8,17 @@ import '../../data/models/sweetener.dart';
 /// OCR 파싱 결과 → 메모리상 Product (DB 저장 안 함; 해석은 동일 엔진 사용)
 class OcrResult {
   final Product product;
+  final String? priceCatalogKey;
+  final String? priceCatalogName;
+  final double? priceMatchConfidence;
   final List<String> unknownSweeteners;
   final String? rawText;
   final String? imagePath; // submission-images 폴더 uuid (서버 저장 실패 시 null)
   const OcrResult(
       {required this.product,
+      this.priceCatalogKey,
+      this.priceCatalogName,
+      this.priceMatchConfidence,
       this.unknownSweeteners = const [],
       this.rawText,
       this.imagePath});
@@ -54,11 +60,18 @@ class OcrResult {
       sweeteners: swList,
     );
     final matched = m['matched_product'];
+    final priceMatch = m['price_match'];
+    final priceMatchMap = priceMatch is Map
+        ? Map<String, dynamic>.from(priceMatch)
+        : const <String, dynamic>{};
     final product = matched is Map
         ? Product.fromMap(Map<String, dynamic>.from(matched))
         : parsedProduct;
     return OcrResult(
       product: product,
+      priceCatalogKey: priceMatchMap['catalog_product_key'] as String?,
+      priceCatalogName: priceMatchMap['catalog_name'] as String?,
+      priceMatchConfidence: (priceMatchMap['confidence'] as num?)?.toDouble(),
       unknownSweeteners:
           ((m['unknown_sweeteners'] as List?) ?? const []).cast<String>(),
       rawText: m['ingredients_raw'] as String?,
