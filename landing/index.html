@@ -1,0 +1,821 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ZERO DOT — 라벨의 0은 혈당의 0이 아니에요</title>
+<meta name="description" content="바코드 스캔 5초로 제로·저당 제품의 혈당 함정을 읽고, 제로맵으로 내 주변 저당 매장까지 — 먹고 나서 기록하는 대신, 먹기 전에 미리 확인하세요.">
+<link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@500;600&display=swap">
+<style>
+@font-face{font-family:'Gmarket Sans';font-weight:700;font-display:swap;
+  src:url('https://cdn.jsdelivr.net/gh/projectnoonnu/noonfonts_2001@1.1/GmarketSansBold.woff') format('woff')}
+@font-face{font-family:'Gmarket Sans';font-weight:500;font-display:swap;
+  src:url('https://cdn.jsdelivr.net/gh/projectnoonnu/noonfonts_2001@1.1/GmarketSansMedium.woff') format('woff')}
+
+:root{
+  --ink:#131619; --ink-soft:#5C6570; --paper:#FFFFFF; --bg:#F7F8FA; --line:#E4E7EA;
+  --brand:#12B886; --brand-deep:#0CA678; --brand-tint:#E6FBF4;
+  --stamp:#E03131; --amber:#F59E0B;
+  --disp:'Gmarket Sans','Pretendard Variable',sans-serif;
+  --mono:'IBM Plex Mono','Pretendard Variable',monospace;
+  --s1:8px; --s2:16px; --s3:24px; --s4:40px; --s5:64px; --s6:104px;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{
+  font-family:"Pretendard Variable",Pretendard,-apple-system,system-ui,sans-serif;
+  background:var(--bg); color:var(--ink); line-height:1.65;
+  -webkit-font-smoothing:antialiased; overflow-x:hidden;
+}
+a{color:inherit;text-decoration:none}
+.wrap{max-width:1080px;margin:0 auto;padding:0 var(--s3)}
+.mono{font-family:var(--mono)}
+
+/* ---------- nav ---------- */
+nav{position:sticky;top:0;z-index:50;background:rgba(247,248,250,.85);backdrop-filter:blur(12px);border-bottom:1px solid transparent;transition:border-color .2s}
+nav.scrolled{border-color:var(--line)}
+.nav-inner{display:flex;align-items:center;justify-content:space-between;height:64px}
+.logo{display:flex;align-items:center;gap:10px;font-family:var(--disp);font-weight:700;font-size:17px}
+.logo-dot{width:26px;height:26px;border-radius:8px;background:var(--brand);position:relative;flex:none}
+.logo-dot::after{content:"";position:absolute;inset:0;margin:auto;width:8px;height:8px;border-radius:50%;background:#fff}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;font-weight:700;font-size:15px;border-radius:14px;cursor:pointer;border:0;padding:13px 24px;transition:transform .18s ease,box-shadow .18s ease,background .18s ease}
+.btn:focus-visible{outline:3px solid var(--brand);outline-offset:2px}
+.btn-ink{background:var(--ink);color:#fff;box-shadow:0 8px 24px rgba(19,22,25,.18)}
+.btn-ink:hover{transform:translateY(-2px);box-shadow:0 12px 28px rgba(19,22,25,.26)}
+.btn-brand{background:var(--brand);color:#fff;box-shadow:0 8px 24px rgba(18,184,134,.32)}
+.btn-brand:hover{transform:translateY(-2px);background:var(--brand-deep)}
+.btn-ghost{background:transparent;border:1px solid var(--line);color:var(--ink)}
+.btn-ghost:hover{background:#fff;transform:translateY(-2px)}
+.btn-sm{padding:9px 16px;font-size:14px;border-radius:12px}
+
+/* ---------- section grammar: 영양정보 표의 문법 ---------- */
+section{padding:var(--s6) 0}
+.sec-head{border-top:3px solid var(--ink);padding-top:var(--s2)}
+.eyebrow{font-family:var(--mono);font-size:12.5px;font-weight:600;letter-spacing:.14em;color:var(--brand-deep);text-transform:uppercase;display:block;margin-bottom:12px}
+h1,h2{font-family:var(--disp);font-weight:700;letter-spacing:-.01em;word-break:keep-all}
+h1{font-size:clamp(34px,4.8vw,54px);line-height:1.28}
+h2{font-size:clamp(25px,3.4vw,36px);line-height:1.35}
+.lead{color:var(--ink-soft);font-size:17px;margin-top:var(--s2);max-width:34em;word-break:keep-all}
+.accent{color:var(--brand)}
+
+/* ---------- hero ---------- */
+.hero{padding:var(--s5) 0 var(--s6)}
+.hero-grid{display:grid;grid-template-columns:1.05fr .95fr;gap:var(--s5);align-items:center}
+.hero h1 .zero{color:var(--stamp);position:relative;white-space:nowrap}
+.hero .lead{font-size:18px}
+.hero-ctas{display:flex;gap:12px;flex-wrap:wrap;margin-top:var(--s4)}
+.hero-note{margin-top:var(--s2);font-size:13px;color:var(--ink-soft)}
+
+/* ---------- signature: 스캔당하는 영양정보 표 ---------- */
+.label-stage{position:relative;display:flex;flex-direction:column;align-items:center;gap:14px}
+.ntable{
+  position:relative;width:min(340px,100%);background:var(--paper);color:var(--ink);
+  border:2.5px solid var(--ink);font-size:13.5px;overflow:hidden;
+  box-shadow:14px 14px 0 rgba(19,22,25,.08);
+}
+.nt-head{background:var(--ink);color:#fff;font-family:var(--disp);font-weight:700;font-size:17px;padding:9px 14px 7px}
+.nt-sub{display:flex;justify-content:space-between;padding:8px 14px;border-bottom:2px solid var(--ink);font-weight:700}
+.nt-cols{display:flex;justify-content:space-between;padding:5px 14px;font-size:11px;color:var(--ink-soft);border-bottom:1px solid var(--line)}
+.nt-row{display:flex;justify-content:space-between;align-items:center;padding:8px 14px;border-bottom:1px solid var(--line);font-weight:600}
+.nt-row b{font-family:var(--mono);font-weight:600}
+.nt-row.indent{padding-left:26px;font-weight:500;color:var(--ink-soft)}
+.nt-foot{padding:7px 14px 9px;font-size:10.5px;color:var(--ink-soft);line-height:1.5}
+.nt-row.is-hot{background:transparent;animation:rowflash .5s ease 1.35s both}
+.nt-row.is-hot2{animation:rowflash .5s ease 1.05s both}
+@keyframes rowflash{0%{background:transparent}40%{background:#FFE3E3}100%{background:#FFF0F0}}
+.nt-row.is-hot2{animation-name:rowflash2}
+@keyframes rowflash2{0%{background:transparent}40%{background:#FFF3D6}100%{background:#FFF9EC}}
+
+.scanline{
+  position:absolute;left:-4px;right:-4px;top:0;height:3px;z-index:3;pointer-events:none;
+  background:var(--brand);box-shadow:0 0 14px 3px rgba(18,184,134,.55);
+  animation:scan 1.5s cubic-bezier(.4,0,.2,1) .35s both;
+}
+@keyframes scan{0%{top:0;opacity:0}8%{opacity:1}92%{opacity:1}100%{top:calc(100% - 3px);opacity:0}}
+
+.stamp{
+  position:absolute;right:10px;bottom:34px;z-index:4;
+  font-family:var(--disp);font-weight:700;font-size:15px;color:var(--stamp);
+  border:2.5px solid var(--stamp);border-radius:6px;padding:5px 12px;letter-spacing:.06em;
+  transform:rotate(-9deg);background:rgba(255,255,255,.85);
+  animation:stampin .35s cubic-bezier(.2,1.6,.4,1) 2.15s both;
+}
+@keyframes stampin{0%{opacity:0;transform:rotate(-9deg) scale(1.9)}100%{opacity:1;transform:rotate(-9deg) scale(1)}}
+
+.tag{
+  position:absolute;z-index:5;max-width:180px;font-size:12.5px;font-weight:700;line-height:1.45;
+  background:var(--paper);border:1.5px solid var(--ink);border-radius:12px;padding:9px 12px;
+  box-shadow:0 10px 24px rgba(19,22,25,.14);word-break:keep-all;
+}
+.tag::before{content:"";position:absolute;width:26px;height:1.5px;background:var(--ink);top:50%}
+.tag-red{color:var(--stamp);right:calc(50% + 178px);top:47%;animation:tagin .45s ease 1.55s both}
+.tag-red::before{right:-27px}
+.tag-amber{color:#B45309;left:calc(50% + 178px);top:30%;animation:tagin .45s ease 1.75s both}
+.tag-amber::before{left:-27px}
+@keyframes tagin{0%{opacity:0;transform:translateY(10px)}100%{opacity:1;transform:none}}
+
+.verdict-chip{
+  display:flex;align-items:center;gap:10px;background:var(--paper);border:1px solid var(--line);
+  border-radius:999px;padding:11px 20px;font-size:14px;font-weight:600;color:var(--ink-soft);
+  box-shadow:0 14px 30px rgba(19,22,25,.10);
+  animation:tagin .5s ease 2.45s both;
+}
+.verdict-chip i{width:11px;height:11px;border-radius:50%;background:var(--amber);box-shadow:0 0 0 4px rgba(245,158,11,.18);flex:none}
+.verdict-chip b{color:var(--stamp)}
+
+/* ---------- 뒷면(다크) 함정 챕터 ---------- */
+.back-sec{background:var(--ink);color:#fff;border-radius:0;padding:var(--s6) 0}
+.back-sec .sec-head{border-top-color:var(--brand)}
+.back-sec .eyebrow{color:var(--brand)}
+.back-sec h2{color:#fff}
+.back-sec .lead{color:#A6ADB4}
+.trap-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:var(--s2);margin-top:var(--s4)}
+.trap-card{border:1.5px solid rgba(255,255,255,.22);padding:var(--s3);background:rgba(255,255,255,.03)}
+.trap-card .num{font-family:var(--mono);font-size:12px;letter-spacing:.14em;color:var(--brand);display:block;margin-bottom:14px}
+.trap-card h3{font-family:var(--disp);font-weight:700;font-size:19px;margin-bottom:10px}
+.trap-card p{font-size:14px;color:#A6ADB4;word-break:keep-all}
+.trap-card p b{color:#E9ECEF;font-weight:700}
+.back-quote{margin-top:var(--s4);padding-top:var(--s3);border-top:1px solid rgba(255,255,255,.14);display:flex;align-items:center;justify-content:space-between;gap:var(--s2);flex-wrap:wrap}
+.back-quote p{font-size:15px;color:#DEE2E6;word-break:keep-all}
+.back-quote b{color:var(--brand)}
+
+/* ---------- steps + phone ---------- */
+.how-grid{display:grid;grid-template-columns:1fr auto;gap:var(--s5);align-items:center;margin-top:var(--s4)}
+.steps{display:flex;flex-direction:column;gap:var(--s2)}
+.step{background:var(--paper);border:1px solid var(--line);border-radius:20px;padding:var(--s3);display:flex;gap:var(--s2);align-items:flex-start;transition:transform .2s ease,box-shadow .2s ease}
+.step:hover{transform:translateY(-3px);box-shadow:0 14px 32px rgba(19,22,25,.08)}
+.step .n{font-family:var(--mono);font-size:12px;font-weight:600;letter-spacing:.12em;color:var(--brand-deep);background:var(--brand-tint);border-radius:8px;padding:5px 9px;flex:none;margin-top:2px}
+.step h3{font-family:var(--disp);font-weight:700;font-size:18px;margin-bottom:5px}
+.step p{font-size:14px;color:var(--ink-soft);word-break:keep-all}
+
+/* phone (앱의 세계 — 둥글고 민트) */
+.phone-col{display:flex;justify-content:center;position:relative}
+.blob{position:absolute;inset:-10% -16%;z-index:0;border-radius:50%;background:radial-gradient(closest-side,rgba(18,184,134,.13),transparent 70%)}
+.phone{position:relative;z-index:1;width:290px;background:#0F1115;border-radius:44px;padding:12px;box-shadow:0 30px 60px rgba(15,17,21,.26),0 4px 12px rgba(15,17,21,.14);transform:rotate(2deg)}
+.phone-screen{background:var(--bg);border-radius:34px;overflow:hidden}
+.phone-notch{height:26px;display:flex;justify-content:center;align-items:center}
+.phone-notch i{width:84px;height:8px;border-radius:99px;background:#0F1115;display:block}
+.app{padding:14px 14px 18px;font-size:13px}
+.app-head{display:flex;align-items:center;gap:8px;margin-bottom:12px}
+.app-head .back{width:26px;height:26px;border-radius:9px;background:#fff;border:1px solid var(--line);display:flex;align-items:center;justify-content:center}
+.app-head .back svg{width:13px;height:13px;stroke:var(--ink)}
+.app-head b{font-size:14px}
+.card{background:#fff;border:1px solid var(--line);border-radius:16px;padding:12px;margin-bottom:10px}
+.prod{display:flex;gap:10px;align-items:center}
+.prod-thumb{width:44px;height:44px;border-radius:12px;background:linear-gradient(135deg,#E9ECEF,#F8F9FA);display:flex;align-items:center;justify-content:center;flex:none}
+.prod-thumb svg{width:22px;height:22px;stroke:var(--ink-soft)}
+.prod b{display:block;font-size:14px}
+.prod span{color:var(--ink-soft);font-size:11.5px}
+.strip{display:flex;align-items:center;justify-content:space-between;gap:8px;background:#FFF5F5;border:1px solid #FFC9C9;border-radius:12px;padding:10px 12px;margin-top:10px}
+.strip .l{font-weight:700;color:var(--ink-soft);font-size:12.5px}
+.strip .r{font-weight:800;color:var(--stamp);font-size:13.5px;display:flex;align-items:center;gap:5px}
+.strip .r svg{width:14px;height:14px}
+.lights{display:flex;align-items:center;gap:6px;margin:10px 0 2px}
+.lights i{width:10px;height:10px;border-radius:50%;background:var(--line);display:block}
+.lights i.on{width:14px;height:14px;background:var(--amber);box-shadow:0 0 0 4px rgba(245,158,11,.18)}
+.lights em{font-style:normal;font-weight:800;font-size:12.5px;color:var(--amber);margin-left:4px}
+.bullet{display:flex;gap:7px;align-items:flex-start;color:var(--ink-soft);font-size:12px;margin-top:7px;line-height:1.45;word-break:keep-all}
+.bullet i{flex:none;width:5px;height:5px;border-radius:50%;background:var(--amber);margin-top:6px}
+.chips{display:flex;gap:6px;flex-wrap:wrap;margin-top:10px}
+.chip{font-size:11px;font-weight:700;padding:5px 10px;border-radius:999px;background:var(--bg);border:1px solid var(--line);color:var(--ink-soft)}
+.chip.warn{background:#FFF9EC;border-color:#FCE4B8;color:#B45309}
+.alt{display:flex;align-items:center;gap:9px}
+.alt-badge{flex:none;width:34px;height:34px;border-radius:11px;background:var(--brand-tint);display:flex;align-items:center;justify-content:center}
+.alt-badge svg{width:17px;height:17px;stroke:var(--brand-deep)}
+.alt b{font-size:12.5px;display:block}
+.alt span{font-size:11px;color:var(--ink-soft)}
+
+/* ---------- features ---------- */
+.feat-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:var(--s2);margin-top:var(--s4)}
+.feat{display:flex;gap:var(--s2);align-items:flex-start;background:var(--paper);border:1px solid var(--line);border-radius:20px;padding:var(--s3);transition:transform .2s ease,box-shadow .2s ease}
+.feat:hover{transform:translateY(-3px);box-shadow:0 14px 32px rgba(19,22,25,.08)}
+.feat .ico{flex:none;width:44px;height:44px;border-radius:14px;background:var(--brand-tint);display:flex;align-items:center;justify-content:center}
+.feat .ico svg{width:21px;height:21px;stroke:var(--brand-deep)}
+.feat h3{font-family:var(--disp);font-weight:700;font-size:16.5px;margin-bottom:4px}
+.feat p{font-size:14px;color:var(--ink-soft);word-break:keep-all}
+
+/* ---------- stats: ZERO DOT 정보 표 ---------- */
+.dtable{width:min(560px,100%);margin:var(--s4) auto 0;background:var(--paper);border:2.5px solid var(--ink);box-shadow:14px 14px 0 rgba(18,184,134,.14)}
+.dtable .nt-head{display:flex;justify-content:space-between;align-items:baseline}
+.dtable .nt-head small{font-family:var(--mono);font-weight:500;font-size:11px;letter-spacing:.1em;color:#9BE8D0}
+.dtable .row{display:flex;justify-content:space-between;align-items:baseline;padding:13px 16px;border-bottom:1px solid var(--line);font-weight:600;font-size:15px}
+.dtable .row:last-of-type{border-bottom:0}
+.dtable .row b{font-family:var(--mono);font-size:22px;color:var(--brand-deep)}
+.dtable .nt-foot{border-top:2px solid var(--ink)}
+
+/* ---------- final CTA ---------- */
+.final{background:linear-gradient(160deg,var(--brand) 0%,var(--brand-deep) 100%);border-radius:32px;color:#fff;text-align:center;overflow:hidden;position:relative}
+.final .inner{padding:var(--s6) var(--s3);position:relative;z-index:1}
+.final::before{content:"";position:absolute;width:420px;height:420px;border-radius:50%;background:rgba(255,255,255,.08);top:-200px;right:-120px}
+.final::after{content:"";position:absolute;width:300px;height:300px;border-radius:50%;background:rgba(255,255,255,.06);bottom:-160px;left:-80px}
+.final h2{color:#fff}
+.barcode{
+  width:150px;height:44px;margin:0 auto var(--s3);opacity:.9;
+  background:repeating-linear-gradient(90deg,#fff 0 3px,transparent 3px 6px,#fff 6px 7px,transparent 7px 12px,#fff 12px 16px,transparent 16px 19px);
+}
+.barcode-cap{font-family:var(--mono);font-size:11px;letter-spacing:.3em;color:rgba(255,255,255,.8);margin:-14px 0 var(--s3)}
+.final p.sub{color:rgba(255,255,255,.88);margin:var(--s2) auto var(--s4);max-width:28em;font-size:17px;word-break:keep-all}
+.final .btn-ink{background:#fff;color:var(--brand-deep)}
+.final .note{margin-top:var(--s2);font-size:13px;color:rgba(255,255,255,.75)}
+.cta-row{display:flex;gap:12px;justify-content:center;flex-wrap:wrap}
+
+/* ---------- footer ---------- */
+footer{padding:var(--s4) 0 var(--s5);color:var(--ink-soft);font-size:13.5px}
+.foot{display:flex;align-items:center;justify-content:space-between;gap:var(--s2);flex-wrap:wrap}
+.foot .logo{font-size:15px;color:var(--ink)}
+.foot .logo-dot{width:20px;height:20px;border-radius:6px}
+.foot .logo-dot::after{width:6px;height:6px}
+.foot-links{display:flex;gap:var(--s3)}
+.foot-links a:hover{color:var(--ink)}
+
+/* ---------- zero map ---------- */
+.map-grid{display:grid;grid-template-columns:1fr auto;gap:var(--s5);align-items:center}
+.map-points{list-style:none;margin-top:var(--s4);display:flex;flex-direction:column;gap:16px}
+.map-points li{display:flex;gap:12px;align-items:flex-start;word-break:keep-all}
+.map-points .k{flex:none;font-family:var(--mono);font-size:11px;font-weight:600;letter-spacing:.12em;color:var(--brand-deep);background:var(--brand-tint);border-radius:8px;padding:5px 9px;margin-top:2px}
+.map-points b{font-size:15.5px}
+.map-points p{font-size:14px;color:var(--ink-soft);margin-top:2px}
+.map-stage{position:relative;width:min(420px,100%);justify-self:center}
+.map-canvas{position:relative;aspect-ratio:10/11;border:2.5px solid var(--ink);overflow:hidden;
+  background:
+    linear-gradient(115deg,transparent 0 calc(52% - 10px),#FFFFFF calc(52% - 10px) calc(52% + 10px),transparent calc(52% + 10px)),
+    repeating-linear-gradient(0deg,transparent 0 58px,#fff 58px 64px),
+    repeating-linear-gradient(90deg,transparent 0 72px,#fff 72px 79px),
+    #E9EFEA;
+  box-shadow:14px 14px 0 rgba(18,184,134,.14)}
+.map-canvas .park{position:absolute;left:-34px;top:44%;width:150px;height:120px;background:rgba(18,184,134,.16);border-radius:58% 42% 55% 45%/55% 48% 52% 45%}
+.map-canvas .pond{position:absolute;right:-26px;top:5%;width:110px;height:90px;background:rgba(28,126,214,.13);border-radius:45% 55% 50% 50%/52% 48% 55% 45%}
+.map-chips{position:absolute;z-index:5;top:12px;left:12px;right:56px;display:flex;gap:6px;flex-wrap:wrap}
+.mchip{display:inline-flex;align-items:center;gap:6px;font-size:11px;font-weight:700;background:#fff;border:1px solid var(--line);border-radius:999px;padding:5px 10px;color:var(--ink-soft);box-shadow:0 4px 10px rgba(19,22,25,.08)}
+.mchip i{width:8px;height:8px;border-radius:50%;background:var(--c);display:block}
+.mchip.on{border-color:var(--ink);color:var(--ink)}
+.locbtn{position:absolute;z-index:5;right:12px;top:12px;width:36px;height:36px;border-radius:12px;background:#fff;border:1px solid var(--line);display:flex;align-items:center;justify-content:center;box-shadow:0 4px 10px rgba(19,22,25,.08)}
+.locbtn svg{width:17px;height:17px;stroke:var(--ink)}
+.pin{position:absolute;z-index:4;width:22px;height:22px;background:var(--c);border:2px solid #fff;border-radius:50% 50% 50% 0;transform:rotate(-45deg);box-shadow:2px 3px 8px rgba(19,22,25,.3);opacity:0}
+.pin::after{content:"";position:absolute;inset:0;margin:auto;width:7px;height:7px;border-radius:50%;background:#fff}
+.pin.big{width:30px;height:30px}
+.pin.big::after{width:9px;height:9px}
+.pin.big::before{content:"";position:absolute;inset:-9px;border-radius:50%;border:2px solid var(--c);opacity:0}
+.map-stage.in .pin{animation:pindrop .5s cubic-bezier(.2,1.5,.4,1) var(--d,0s) both}
+.map-stage.in .pin.big::before{animation:ringpulse 2.2s ease 1.8s infinite}
+@keyframes pindrop{0%{opacity:0;transform:rotate(-45deg) translate(6px,-6px) scale(.4)}100%{opacity:1;transform:rotate(-45deg)}}
+@keyframes ringpulse{0%{opacity:.8;transform:scale(.6)}70%{opacity:0;transform:scale(1.35)}100%{opacity:0}}
+.youdot{position:absolute;z-index:3;width:13px;height:13px;border-radius:50%;background:#1C7ED6;border:2.5px solid #fff;box-shadow:0 0 0 5px rgba(28,126,214,.2)}
+.map-pop{position:absolute;z-index:6;left:5%;bottom:7%;width:208px;background:#fff;border:1.5px solid var(--ink);border-radius:14px;padding:12px 14px;box-shadow:0 14px 30px rgba(19,22,25,.18);opacity:0;word-break:keep-all}
+.map-stage.in .map-pop{animation:tagin .45s ease 1.25s both}
+.map-pop .pop-type{display:inline-flex;align-items:center;gap:5px;font-size:10.5px;font-weight:700;color:var(--c);margin-bottom:3px}
+.map-pop .pop-type::before{content:"";width:7px;height:7px;border-radius:50%;background:var(--c)}
+.map-pop b{display:block;font-size:14px}
+.map-pop .pop-rate{display:block;font-family:var(--mono);font-size:11.5px;font-weight:600;color:var(--brand-deep);margin-top:2px}
+.map-pop p{font-size:11.5px;color:var(--ink-soft);margin-top:6px;line-height:1.5}
+.map-cap{font-family:var(--mono);font-size:11px;font-weight:500;letter-spacing:.22em;color:var(--ink-soft);text-align:center;margin-top:14px}
+
+/* ---------- versus: 기존 식단 앱 vs ZERO DOT ---------- */
+.vs-grid{display:grid;grid-template-columns:1fr 1fr;gap:var(--s3);margin-top:var(--s4);align-items:start}
+.vs-card{position:relative;background:var(--paper);border:2.5px solid var(--ink)}
+.vs-them{border-color:#ADB5BD;box-shadow:14px 14px 0 rgba(19,22,25,.06)}
+.vs-us{box-shadow:14px 14px 0 rgba(18,184,134,.16)}
+.vs-head{display:flex;justify-content:space-between;align-items:baseline;gap:8px;font-family:var(--disp);font-weight:700;font-size:17px;padding:11px 16px 9px;color:#fff}
+.vs-them .vs-head{background:#868E96}
+.vs-us .vs-head{background:var(--ink)}
+.vs-head small{font-family:var(--mono);font-weight:500;font-size:10.5px;letter-spacing:.12em}
+.vs-them .vs-head small{color:#DEE2E6}
+.vs-us .vs-head small{color:#9BE8D0}
+.vs-row{display:flex;gap:10px;align-items:flex-start;padding:12px 16px;border-bottom:1px solid var(--line);font-size:14.5px;word-break:keep-all}
+.vs-row i{flex:none;font-style:normal;font-family:var(--mono);font-weight:600;font-size:13px;margin-top:2px}
+.vs-them .vs-row{color:var(--ink-soft)}
+.vs-them .vs-row i{color:var(--stamp)}
+.vs-us .vs-row i{color:var(--brand)}
+.vs-us .vs-row b{color:var(--brand-deep)}
+.vs-foot{padding:13px 16px 14px;font-size:15px;font-weight:700;word-break:keep-all}
+.vs-them .vs-foot{background:#F1F3F5;color:var(--ink-soft)}
+.vs-them .vs-foot b{color:var(--stamp)}
+.vs-us .vs-foot{background:var(--brand-tint);color:var(--ink)}
+.vs-us .vs-foot b{color:var(--brand-deep)}
+.vs-stamp{position:absolute;z-index:2;top:-14px;right:14px;font-family:var(--disp);font-weight:700;font-size:14px;padding:4px 11px;border-radius:6px;border:2.5px solid;letter-spacing:.08em;background:rgba(255,255,255,.92)}
+.vs-them .vs-stamp{color:var(--stamp);border-color:var(--stamp);transform:rotate(-8deg)}
+.vs-us .vs-stamp{color:var(--brand-deep);border-color:var(--brand-deep);transform:rotate(7deg)}
+
+/* ---------- dialogs: 출시 알림 신청 / 숨은 관리자 ---------- */
+dialog{border:0;padding:0;background:transparent;max-width:none}
+dialog::backdrop{background:rgba(19,22,25,.55);backdrop-filter:blur(3px)}
+.dlg{position:relative;width:min(420px,calc(100vw - 32px));background:var(--paper);border:2.5px solid var(--ink);box-shadow:14px 14px 0 rgba(18,184,134,.16)}
+.dlg-head{display:flex;justify-content:space-between;align-items:baseline;gap:8px;background:var(--ink);color:#fff;font-family:var(--disp);font-weight:700;font-size:17px;padding:11px 44px 9px 16px}
+.dlg-head small{font-family:var(--mono);font-weight:500;font-size:10.5px;letter-spacing:.12em;color:#9BE8D0}
+.dlg-close{position:absolute;top:7px;right:6px;z-index:2;width:32px;height:32px;background:transparent;border:0;color:#fff;font-size:15px;cursor:pointer;line-height:1}
+.dlg-body{padding:var(--s3)}
+.dlg-lead{font-size:14px;color:var(--ink-soft);word-break:keep-all;margin-bottom:var(--s2)}
+.dlg-label{display:block;font-size:13px;font-weight:700;margin-bottom:6px}
+.dlg-input{width:100%;font:inherit;font-size:15px;padding:12px 14px;border:1.5px solid var(--line);border-radius:12px;background:var(--bg);color:var(--ink)}
+.dlg-input:focus{outline:3px solid rgba(18,184,134,.35);border-color:var(--brand)}
+.dlg-input+.dlg-label{margin-top:12px}
+.dlg-msg{min-height:18px;font-size:12.5px;font-weight:600;color:var(--stamp);margin:6px 0 8px}
+.dlg-submit{width:100%}
+.dlg-note{margin-top:12px;font-size:12px;color:var(--ink-soft);text-align:center;word-break:keep-all}
+.dlg-done{padding:var(--s4) var(--s3);text-align:center;display:flex;flex-direction:column;align-items:center;gap:8px}
+.dlg-done[hidden]{display:none}
+.dlg-done .ok{width:52px;height:52px;border-radius:50%;background:var(--brand-tint);display:flex;align-items:center;justify-content:center}
+.dlg-done .ok svg{width:26px;height:26px;stroke:var(--brand-deep)}
+.dlg-done b{font-family:var(--disp);font-size:19px}
+.dlg-done p{font-size:14px;color:var(--ink-soft);word-break:keep-all}
+.dlg-done .btn{margin-top:10px}
+.adm-bar{display:flex;justify-content:space-between;align-items:center;gap:10px}
+.adm-bar .cnt{font-family:var(--mono);font-size:12px;font-weight:600;color:var(--brand-deep)}
+.adm-list{max-height:300px;overflow:auto;border:1px solid var(--line);border-radius:12px;margin-top:12px}
+.adm-row{display:flex;justify-content:space-between;gap:10px;padding:9px 12px;border-bottom:1px solid var(--line);font-size:13px}
+.adm-row:last-child{border-bottom:0}
+.adm-row b{font-weight:600;word-break:break-all}
+.adm-row span{flex:none;font-family:var(--mono);font-size:11px;color:var(--ink-soft)}
+
+@media (max-width:860px){
+  .map-grid{grid-template-columns:1fr;gap:var(--s4)}
+  .vs-grid{grid-template-columns:1fr;gap:var(--s4)}
+}
+@media (prefers-reduced-motion:reduce){
+  .map-stage .pin,.map-stage.in .pin,.map-stage .map-pop,.map-stage.in .map-pop{animation:none;opacity:1}
+  .map-stage.in .pin.big::before{animation:none}
+}
+
+/* ---------- reveal & motion ---------- */
+.reveal{opacity:0;transform:translateY(24px);transition:opacity .6s ease,transform .6s ease}
+.reveal.in{opacity:1;transform:none}
+@media (prefers-reduced-motion:reduce){
+  .reveal{opacity:1;transform:none;transition:none}
+  .scanline{animation:none;opacity:0}
+  .tag,.stamp,.verdict-chip,.nt-row.is-hot,.nt-row.is-hot2{animation:none}
+  .nt-row.is-hot{background:#FFF0F0}
+  .nt-row.is-hot2{background:#FFF9EC}
+  html{scroll-behavior:auto}
+}
+
+/* ---------- responsive ---------- */
+@media (max-width:960px){
+  .tag-red{right:auto;left:8px;top:38%}
+  .tag-amber{left:auto;right:8px;top:22%}
+  .tag::before{display:none}
+}
+@media (max-width:860px){
+  .hero-grid{grid-template-columns:1fr;gap:var(--s5)}
+  .how-grid{grid-template-columns:1fr;gap:var(--s5)}
+  .trap-grid{grid-template-columns:1fr}
+  .feat-grid{grid-template-columns:1fr}
+  .label-stage{margin-top:var(--s2)}
+}
+@media (max-width:560px){
+  .tag{position:static;max-width:none;animation-name:tagin}
+  .label-stage{align-items:stretch}
+  .ntable{align-self:center}
+  .verdict-chip{justify-content:center}
+}
+</style>
+</head>
+<body>
+
+<nav id="nav">
+  <div class="wrap nav-inner">
+    <a class="logo" href="#top" aria-label="ZERO DOT 홈"><span class="logo-dot" aria-hidden="true"></span>ZERO DOT</a>
+    <a class="btn btn-ink btn-sm" href="#download">앱 다운로드</a>
+  </div>
+</nav>
+
+<header class="hero" id="top">
+  <div class="wrap hero-grid">
+    <div>
+      <span class="eyebrow">ZERO DOT · 편의점 제로식품 팩트체커</span>
+      <h1>라벨의 <span class="zero">0</span>은<br>혈당의 <span class="accent">0</span>이 아니에요.</h1>
+      <p class="lead">
+        당류 0g 뒤에 숨은 말티톨, 순탄수, 열량까지 —
+        바코드 스캔 한 번이면 ZERO DOT이 영양정보 표를 대신 읽어드려요.
+        편의점 밖에선, 제로맵이 내 주변 저당 매장을 켜드리고요.
+      </p>
+      <div class="hero-ctas">
+        <a class="btn btn-brand" href="#download">
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><path d="M12 3v12m0 0l-4-4m4 4l4-4"/><path d="M4 17v2a2 2 0 002 2h12a2 2 0 002-2v-2"/></svg>
+          무료로 시작하기
+        </a>
+        <a class="btn btn-ghost" href="#how">판정 미리보기</a>
+      </div>
+      <p class="hero-note">회원가입 없이 바로 스캔할 수 있어요.</p>
+    </div>
+
+    <div class="label-stage" role="img" aria-label="영양정보 표를 ZERO DOT이 스캔해 당류 0g 뒤의 말티톨과 순탄수 함정을 표시하고, '무설탕인데 혈당 올라요'로 판정하는 장면">
+      <div class="ntable" aria-hidden="true">
+        <div class="nt-head">영양정보</div>
+        <div class="nt-sub"><span>총 내용량 90g</span><span>380 kcal</span></div>
+        <div class="nt-cols"><span>총 내용량당</span><span>1일 기준치 비율</span></div>
+        <div class="nt-row is-hot2"><span>탄수화물 40g</span><b>12%</b></div>
+        <div class="nt-row is-hot"><span>당류 0g</span><b>0%</b></div>
+        <div class="nt-row indent"><span>당알코올 25g</span><b>—</b></div>
+        <div class="nt-row"><span>지방 18g</span><b>33%</b></div>
+        <div class="nt-row"><span>단백질 5g</span><b>9%</b></div>
+        <div class="nt-foot">1일 영양성분 기준치에 대한 비율(%)은 2,000 kcal 기준이므로 개인의 필요 열량에 따라 다를 수 있습니다.</div>
+        <span class="scanline"></span>
+        <span class="stamp">함정 2건</span>
+      </div>
+      <div class="tag tag-red" aria-hidden="true">말티톨 25g은<br>당류에 안 잡혀요</div>
+      <div class="tag tag-amber" aria-hidden="true">식이섬유 빼면<br>순탄수 18g</div>
+      <div class="verdict-chip" aria-hidden="true"><i></i>ZERO DOT 판정&nbsp;—&nbsp;<b>무설탕인데, 혈당 올라요</b></div>
+    </div>
+  </div>
+</header>
+
+<section class="back-sec">
+  <div class="wrap">
+    <div class="sec-head reveal">
+      <span class="eyebrow">The Back of the Pack</span>
+      <h2>&ldquo;제로&rdquo;는 앞면의 언어예요.<br>정답은 늘 뒷면에 있죠.</h2>
+      <p class="lead">
+        앞면의 큼직한 &ldquo;ZERO&rdquo;는 마케팅이 골라준 말이에요.
+        뒷면의 작은 표를 읽을 줄 알아야 하는데, 거기엔 세 가지 함정이 숨어 있어요.
+      </p>
+    </div>
+    <div class="trap-grid">
+      <div class="trap-card reveal">
+        <span class="num">함정 01 / 당알코올</span>
+        <h3>당류 0g인데 혈당이 올라요</h3>
+        <p>말티톨 같은 당알코올은 <b>당류로 표기되지 않지만</b> 설탕의 절반 수준으로 혈당을 올려요.</p>
+      </div>
+      <div class="trap-card reveal">
+        <span class="num">함정 02 / 열량</span>
+        <h3>제로 슈거 ≠ 제로 칼로리</h3>
+        <p>설탕만 뺐을 뿐, <b>지방과 탄수화물의 열량은 그대로</b>예요. 380 kcal 짜리 &ldquo;제로&rdquo;도 있어요.</p>
+      </div>
+      <div class="trap-card reveal">
+        <span class="num">함정 03 / 순탄수</span>
+        <h3>당류만 보면 놓쳐요</h3>
+        <p>혈당을 움직이는 건 <b>식이섬유를 뺀 순탄수</b>. 당류 0g이어도 순탄수가 높으면 부담이 커요.</p>
+      </div>
+    </div>
+    <div class="back-quote reveal">
+      <p>ZERO DOT은 이 함정들을 <b>제품마다 자동으로 검사</b>해서, 답 한 줄로 알려드려요.</p>
+      <a class="btn btn-brand btn-sm" href="#how">어떻게 하는지 보기</a>
+    </div>
+  </div>
+</section>
+
+<section id="how">
+  <div class="wrap">
+    <div class="sec-head reveal">
+      <span class="eyebrow">How it works</span>
+      <h2>성분표 공부는 이제 그만.<br>세 단계면 충분해요.</h2>
+    </div>
+    <div class="how-grid">
+      <div class="steps">
+        <div class="step reveal">
+          <span class="n">STEP 1</span>
+          <div><h3>찍는다</h3><p>바코드를 스캔하세요. 등록 안 된 제품이면 영양정보 표만 촬영해도 AI가 읽어내요.</p></div>
+        </div>
+        <div class="step reveal">
+          <span class="n">STEP 2</span>
+          <div><h3>판정 받는다</h3><p>혈당 신호등 등급, 들어간 대체당, 숨은 함정까지 — 답 한 줄과 이유 세 개로 정리해드려요.</p></div>
+        </div>
+        <div class="step reveal">
+          <span class="n">STEP 3</span>
+          <div><h3>더 나은 걸 고른다</h3><p>&ldquo;대신 이건 어때요?&rdquo; 같은 카테고리에서 혈당 부담이 덜한 제품을 추천받아요.</p></div>
+        </div>
+      </div>
+      <div class="phone-col reveal">
+        <div class="blob" aria-hidden="true"></div>
+        <div class="phone" role="img" aria-label="ZERO DOT 앱 판정 화면: 무설탕 표기 제품이 혈당 신호등 중간 등급으로 판정되고 대안이 추천되는 예시">
+          <div class="phone-screen">
+            <div class="phone-notch"><i></i></div>
+            <div class="app">
+              <div class="app-head">
+                <span class="back" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke-width="2.4"><path d="M15 6l-6 6 6 6"/></svg></span>
+                <b>스캔 결과</b>
+              </div>
+              <div class="card">
+                <div class="prod">
+                  <span class="prod-thumb" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.8"><rect x="5" y="3" width="14" height="18" rx="3"/><path d="M9 8h6M9 12h6M9 16h3"/></svg></span>
+                  <div><b>제로 초코 쿠키</b><span>과자 · 90g</span></div>
+                </div>
+                <div class="strip">
+                  <span class="l">무설탕·제로</span>
+                  <span class="r">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" aria-hidden="true"><path d="M12 5l7 13H5l7-13z"/><path d="M12 11v3.5"/><circle cx="12" cy="16.8" r=".4"/></svg>
+                    혈당 올라요
+                  </span>
+                </div>
+                <div class="lights" aria-hidden="true"><i></i><i class="on"></i><i></i><em>중간 등급</em></div>
+                <div class="bullet"><i></i>말티톨은 당류 0g이어도 혈당을 절반쯤 올려요</div>
+                <div class="bullet"><i></i>순탄수 18g — 표기보다 실제 부담이 커요</div>
+                <div class="chips">
+                  <span class="chip warn">말티톨</span><span class="chip">에리스리톨</span><span class="chip">수크랄로스</span>
+                </div>
+              </div>
+              <div class="card alt">
+                <span class="alt-badge" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke-width="2"><path d="M12 21C7 17 4 13.5 4 10a5 5 0 019-3 5 5 0 019 3c0 3.5-3 7-8 11h-2z"/></svg></span>
+                <div><b>대신 이건 어때요?</b><span>알룰로스 쿠키 · 혈당 부담 낮음</span></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="zeromap">
+  <div class="wrap">
+    <div class="map-grid">
+      <div>
+        <div class="sec-head reveal">
+          <span class="eyebrow">Zero Map · 제로맵</span>
+          <h2>편의점 밖에서도,<br>제로 라이프는 이어지니까.</h2>
+          <p class="lead">
+            스캔이 &ldquo;이거 먹어도 돼?&rdquo;의 답이라면,
+            제로맵은 &ldquo;오늘 어디 가지?&rdquo;의 답이에요.
+            내 주변의 저당 카페, 무설탕 베이커리, 제로스토어를 지도 위에 켜드려요.
+          </p>
+        </div>
+        <ul class="map-points">
+          <li class="reveal">
+            <span class="k">PIN</span>
+            <div><b>유형별 색깔 핀</b><p>카페·베이커리, 음식점, 제로스토어, 배달까지 — 지금 필요한 것만 걸러 봐요.</p></div>
+          </li>
+          <li class="reveal">
+            <span class="k">REVIEW</span>
+            <div><b>추천율과 진짜 후기</b><p>가 본 사람의 한 줄이 별점보다 정확해요. 매장 사진과 함께 확인하세요.</p></div>
+          </li>
+          <li class="reveal">
+            <span class="k">REPORT</span>
+            <div><b>제보로 자라는 지도</b><p>아는 저당 맛집이 지도에 없다면? 제보 한 번이면 다음 사람의 지도가 넓어져요.</p></div>
+          </li>
+        </ul>
+      </div>
+      <div class="map-stage reveal" role="img" aria-label="제로맵 예시 화면: 지도 위에 카페·음식점·제로스토어·배달 매장이 색깔 핀으로 표시되고, 추천율 92%의 무설탕 베이커리 정보 카드가 열려 있는 모습">
+        <div class="map-canvas" aria-hidden="true">
+          <span class="park"></span><span class="pond"></span>
+          <div class="map-chips">
+            <span class="mchip on"><i style="--c:#2A7A4B"></i>카페·베이커리</span>
+            <span class="mchip"><i style="--c:#F57C00"></i>음식점</span>
+            <span class="mchip"><i style="--c:#1976D2"></i>제로스토어</span>
+            <span class="mchip"><i style="--c:#7B1FA2"></i>배달</span>
+          </div>
+          <span class="locbtn"><svg viewBox="0 0 24 24" fill="none" stroke-width="2"><circle cx="12" cy="12" r="7"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/><circle cx="12" cy="12" r="2.2"/></svg></span>
+          <span class="pin big" style="--c:#2A7A4B;left:56%;top:33%;--d:.1s"></span>
+          <span class="pin" style="--c:#F57C00;left:20%;top:21%;--d:.3s"></span>
+          <span class="pin" style="--c:#2A7A4B;left:82%;top:17%;--d:.45s"></span>
+          <span class="pin" style="--c:#1976D2;left:74%;top:56%;--d:.6s"></span>
+          <span class="pin" style="--c:#7B1FA2;left:38%;top:60%;--d:.75s"></span>
+          <span class="pin" style="--c:#F57C00;left:64%;top:78%;--d:.9s"></span>
+          <span class="youdot" style="left:30%;top:42%"></span>
+          <div class="map-pop" style="--c:#2A7A4B">
+            <span class="pop-type">카페·베이커리</span>
+            <b>온당 무설탕 베이커리</b>
+            <span class="pop-rate">추천 92% · 리뷰 13</span>
+            <p>&ldquo;당 걱정 없이 먹는 크림빵, 여기가 처음이에요.&rdquo;</p>
+          </div>
+        </div>
+        <p class="map-cap" aria-hidden="true">MY TOWN · 127 SPOTS ON</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="versus">
+  <div class="wrap">
+    <div class="sec-head reveal">
+      <span class="eyebrow">Why Zero Dot</span>
+      <h2>기록하는 앱은 많아요.<br>미리 알려주는 앱이 없었을 뿐.</h2>
+      <p class="lead">
+        식단 앱의 결말은 늘 &lsquo;기록 귀찮음&rsquo;이었죠. ZERO DOT은 순서를 바꿨어요 —
+        먹고 나서 반성하는 대신, 먹기 전에 딱 5초.
+      </p>
+    </div>
+    <div class="vs-grid">
+      <div class="vs-card vs-them reveal">
+        <span class="vs-stamp" aria-hidden="true">숙제</span>
+        <div class="vs-head"><span>기존 식단 관리 앱</span><small>AFTER · 사후 기록</small></div>
+        <div class="vs-row"><i aria-hidden="true">✕</i><p>이미 먹은 후의 &lsquo;결과&rsquo;만 기록해요</p></div>
+        <div class="vs-row"><i aria-hidden="true">✕</i><p>일일이 검색하고 입력하는 수고는 덤이고요</p></div>
+        <div class="vs-row"><i aria-hidden="true">✕</i><p>칼로리 계산에 얽매여 스트레스받아요</p></div>
+        <div class="vs-row"><i aria-hidden="true">✕</i><p>비싼 저당 제품, 가격 부담은 소비자 몫이에요</p></div>
+        <div class="vs-foot">결국, 귀찮은 <b>&lsquo;숙제&rsquo;</b>로 남아요.</div>
+      </div>
+      <div class="vs-card vs-us reveal">
+        <span class="vs-stamp" aria-hidden="true">습관</span>
+        <div class="vs-head"><span>ZERO DOT</span><small>BEFORE · 사전 확인</small></div>
+        <div class="vs-row"><i aria-hidden="true">●</i><p>먹기 전, <b>&lsquo;미리&rsquo;</b> 혈당 부담을 확인해요</p></div>
+        <div class="vs-row"><i aria-hidden="true">●</i><p>바코드 스캔과 제로맵 — <b>5초</b>면 충분해요</p></div>
+        <div class="vs-row"><i aria-hidden="true">●</i><p>계산 대신 <b>답 한 줄</b>로 판정해드려요</p></div>
+        <div class="vs-row"><i aria-hidden="true">●</i><p>영양정보는 물론 <b>최저가 핫딜</b>까지 안내해요</p></div>
+        <div class="vs-foot">그래서, 지속 가능한 <b>&lsquo;습관&rsquo;</b>이 돼요.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <div class="sec-head reveal">
+      <span class="eyebrow">And More</span>
+      <h2>스캔 그 다음까지 챙겨드려요.</h2>
+    </div>
+    <div class="feat-grid">
+      <div class="feat reveal">
+        <span class="ico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke-width="2"><path d="M21 12a8 8 0 01-8 8H5l-2 2V12a8 8 0 018-8h2a8 8 0 018 8z"/><path d="M9 12h.01M13 12h.01M17 12h.01"/></svg></span>
+        <div><h3>AI에게 물어보기</h3><p>&ldquo;제로 콜라 매일 마셔도 돼?&rdquo; 등록된 제품 데이터만 근거로, 아는 만큼만 정직하게 답해요.</p></div>
+      </div>
+      <div class="feat reveal">
+        <span class="ico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke-width="2"><rect x="3" y="7" width="18" height="13" rx="3"/><path d="M9 7l1.5-2.5h3L15 7"/><circle cx="12" cy="13.2" r="3.2"/></svg></span>
+        <div><h3>함께 만드는 데이터</h3><p>등록 안 된 제품은 사진 한 장으로 제보하세요. 검수를 거쳐 모두의 데이터가 돼요.</p></div>
+      </div>
+      <div class="feat reveal">
+        <span class="ico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke-width="2"><rect x="3" y="5" width="18" height="16" rx="3"/><path d="M3 10h18M8 3v4M16 3v4"/><path d="M9 15l2 2 4-4"/></svg></span>
+        <div><h3>먹은 기록</h3><p>오늘 먹은 제로 간식을 달력에 쌓아두고, 내 혈당 습관을 한눈에 돌아봐요.</p></div>
+      </div>
+      <div class="feat reveal">
+        <span class="ico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke-width="2"><path d="M20 7l-9 9-4-4"/><path d="M4 5h6M4 9h3"/><circle cx="17" cy="7" r="4"/><path d="M17 5.5v1.6l1 .9"/></svg></span>
+        <div><h3>특가 &amp; 가격 비교</h3><p>같은 제로 제품, 어디가 제일 싼지. 편의점·공식몰 특가까지 모아서 보여드려요.</p></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <div class="dtable reveal">
+      <div class="nt-head">ZERO DOT 정보 <small>DATA FACTS</small></div>
+      <div class="row"><span>분석된 제로·저당 제품</span><b>409+</b></div>
+      <div class="row"><span>지도에 켜진 저당 매장</span><b>127곳</b></div>
+      <div class="row"><span>대체당 성분 데이터</span><b>28종</b></div>
+      <div class="row"><span>대체당 조합 규칙</span><b>12가지</b></div>
+      <div class="row"><span>스캔부터 판정까지</span><b>0.5초</b></div>
+      <div class="nt-foot">판정은 저장된 점수가 아니라, 스캔할 때마다 룰북으로 새로 계산해요.</div>
+    </div>
+  </div>
+</section>
+
+<section id="download">
+  <div class="wrap">
+    <div class="final reveal">
+      <div class="inner">
+        <div class="barcode" aria-hidden="true"></div>
+        <p class="barcode-cap" aria-hidden="true">BEEP — 0.5 SEC</p>
+        <h2>다음 편의점부터,<br>뒷면은 저희가 읽을게요.</h2>
+        <p class="sub">ZERO DOT은 무료예요. 스캔 한 번이면 라벨 뒤의 진실이 보여요.</p>
+        <div class="cta-row">
+          <a class="btn btn-ink" href="#" data-soon aria-label="App Store에서 다운로드 (출시 준비 중)">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M16.7 12.9c0-2.4 2-3.6 2.1-3.7-1.1-1.7-2.9-1.9-3.5-1.9-1.5-.2-2.9.9-3.7.9-.8 0-1.9-.9-3.2-.9-1.6 0-3.2 1-4 2.4-1.7 3-.4 7.4 1.2 9.8.8 1.2 1.8 2.5 3.1 2.4 1.2 0 1.7-.8 3.2-.8s1.9.8 3.2.8c1.3 0 2.2-1.2 3-2.4.9-1.4 1.3-2.7 1.3-2.8 0 0-2.6-1-2.7-3.8zM14.4 5.6c.7-.8 1.1-1.9 1-3.1-1 0-2.2.7-2.9 1.5-.6.7-1.2 1.9-1 3 1.1.1 2.2-.6 2.9-1.4z"/></svg>
+            App Store
+          </a>
+          <a class="btn btn-ink" href="#" data-soon aria-label="Google Play에서 다운로드 (출시 준비 중)">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M4 3.5v17c0 .4.4.7.8.5l9.9-8.5L4.8 3c-.4-.2-.8.1-.8.5zm12.2 6.9l-2.3 2.1 2.3 2.1 3.2-1.6c.5-.3.5-.9 0-1.2l-3.2-1.4zM5.9 3.7l8.8 7.6 2-1.8L5.9 3.7zm0 16.6l10.8-5.8-2-1.8-8.8 7.6z"/></svg>
+            Google Play
+          </a>
+        </div>
+        <p class="note">스토어 출시 준비 중 — 오픈 소식을 가장 먼저 받아보세요.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap foot">
+    <a class="logo" href="#top"><span class="logo-dot" aria-hidden="true"></span>ZERO DOT</a>
+    <div class="foot-links">
+      <a href="#how">기능</a>
+      <a href="#zeromap">제로맵</a>
+      <a href="#download">다운로드</a>
+      <a href="mailto:hongbomshin@gmail.com">문의</a>
+    </div>
+    <span id="brand-mark">&copy; 2026 ZERO DOT</span>
+  </div>
+</footer>
+
+<dialog id="notify" aria-labelledby="notify-title">
+  <div class="dlg">
+    <button class="dlg-close" type="button" data-close="notify" aria-label="닫기">✕</button>
+    <div class="dlg-head"><span id="notify-title">출시 알림 신청</span><small>NOTIFY ME</small></div>
+    <form class="dlg-body" id="notify-form" novalidate>
+      <p class="dlg-lead">아직 스토어 출시 준비 중이에요. 연락처를 남겨주시면 열리는 날 딱 한 번, 가장 먼저 알려드릴게요.</p>
+      <label class="dlg-label" for="notify-contact">이메일 또는 휴대폰 번호</label>
+      <input class="dlg-input" id="notify-contact" type="text" inputmode="email" autocomplete="email" placeholder="you@zerodot.kr 또는 010-1234-5678" required>
+      <p class="dlg-msg" id="notify-msg" role="alert"></p>
+      <button class="btn btn-brand dlg-submit" type="submit" id="notify-submit">출시하면 알려주세요</button>
+      <p class="dlg-note">남겨주신 연락처는 출시 알림 1회 발송에만 쓰고, 발송 후 파기해요.</p>
+    </form>
+    <div class="dlg-done" id="notify-done" hidden>
+      <span class="ok" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke-width="2.4"><path d="M20 7l-9 9-5-5"/></svg></span>
+      <b>신청 완료!</b>
+      <p id="notify-done-msg">출시하는 날, 가장 먼저 알려드릴게요.</p>
+      <button class="btn btn-ink btn-sm" type="button" data-close="notify">좋아요</button>
+    </div>
+  </div>
+</dialog>
+
+<dialog id="admin" aria-labelledby="admin-title">
+  <div class="dlg">
+    <button class="dlg-close" type="button" data-close="admin" aria-label="닫기">✕</button>
+    <div class="dlg-head"><span id="admin-title">신청자 목록</span><small>ADMIN ONLY</small></div>
+    <form class="dlg-body" id="admin-form" novalidate>
+      <label class="dlg-label" for="admin-email">관리자 이메일</label>
+      <input class="dlg-input" id="admin-email" type="email" autocomplete="username">
+      <label class="dlg-label" for="admin-pw">비밀번호</label>
+      <input class="dlg-input" id="admin-pw" type="password" autocomplete="current-password">
+      <p class="dlg-msg" id="admin-msg" role="alert"></p>
+      <button class="btn btn-ink dlg-submit" type="submit" id="admin-submit">로그인</button>
+    </form>
+    <div class="dlg-body" id="admin-panel" hidden>
+      <div class="adm-bar">
+        <span class="cnt" id="admin-count"></span>
+        <button class="btn btn-ghost btn-sm" type="button" id="admin-copy">전체 복사</button>
+      </div>
+      <div class="adm-list" id="admin-list"></div>
+    </div>
+  </div>
+</dialog>
+
+<script>
+const nav=document.getElementById('nav');
+addEventListener('scroll',()=>nav.classList.toggle('scrolled',scrollY>8),{passive:true});
+const io=new IntersectionObserver(es=>es.forEach(e=>{if(e.isIntersecting){e.target.classList.add('in');io.unobserve(e.target)}}),{threshold:.12});
+document.querySelectorAll('.reveal').forEach(el=>io.observe(el));
+
+/* ── 출시 알림 신청 ── */
+const SB_URL='https://aqhfddvvxnakgkdtirem.supabase.co';
+const SB_KEY='sb_publishable_BDjLdARNRSSTRwCK9GYjnA_qIgpPd7y';
+const $=id=>document.getElementById(id);
+
+document.querySelectorAll('[data-soon]').forEach(el=>el.addEventListener('click',e=>{
+  e.preventDefault();
+  $('notify-form').hidden=false;$('notify-done').hidden=true;$('notify-msg').textContent='';
+  $('notify').showModal();$('notify-contact').focus();
+}));
+document.querySelectorAll('[data-close]').forEach(b=>b.addEventListener('click',()=>$(b.dataset.close).close()));
+
+$('notify-form').addEventListener('submit',async e=>{
+  e.preventDefault();
+  const raw=$('notify-contact').value.trim();
+  const digits=raw.replace(/[\s-]/g,'');
+  const isEmail=/^[^\s@]+@[^\s@]+\.[A-Za-z]{2,}$/.test(raw);
+  const isPhone=/^01[016789][0-9]{7,8}$/.test(digits);
+  if(!isEmail&&!isPhone){$('notify-msg').textContent='이메일 또는 휴대폰 번호 형식을 확인해 주세요.';return;}
+  $('notify-msg').textContent='';$('notify-submit').disabled=true;
+  try{
+    const r=await fetch(SB_URL+'/rest/v1/launch_notifications',{
+      method:'POST',
+      headers:{apikey:SB_KEY,'Content-Type':'application/json',Prefer:'return=minimal'},
+      body:JSON.stringify({contact:isEmail?raw.toLowerCase():digits})
+    });
+    if(!r.ok&&r.status!==409)throw new Error(String(r.status)); /* 409 = 이미 신청됨 */
+    $('notify-done-msg').textContent=r.status===409
+      ?'이미 신청되어 있어요. 출시하면 꼭 연락드릴게요.'
+      :'출시하는 날, 남겨주신 연락처로 가장 먼저 알려드릴게요.';
+    $('notify-form').hidden=true;$('notify-done').hidden=false;$('notify-form').reset();
+  }catch{
+    $('notify-msg').textContent='등록에 실패했어요. 잠시 후 다시 시도해 주세요.';
+  }finally{$('notify-submit').disabled=false;}
+});
+
+/* ── 숨은 관리자 콘솔: 푸터 © 표기를 1.5초 안에 5번 클릭 ── */
+let markHits=0,markTimer;
+$('brand-mark').addEventListener('click',()=>{
+  markHits++;clearTimeout(markTimer);
+  markTimer=setTimeout(()=>markHits=0,1500);
+  if(markHits>=5){markHits=0;$('admin').showModal();$('admin-email').focus();}
+});
+
+let waitlist=[];
+$('admin-form').addEventListener('submit',async e=>{
+  e.preventDefault();
+  $('admin-msg').textContent='';$('admin-submit').disabled=true;
+  try{
+    const auth=await fetch(SB_URL+'/auth/v1/token?grant_type=password',{
+      method:'POST',
+      headers:{apikey:SB_KEY,'Content-Type':'application/json'},
+      body:JSON.stringify({email:$('admin-email').value.trim(),password:$('admin-pw').value})
+    });
+    if(!auth.ok){$('admin-msg').textContent='로그인에 실패했어요.';return;}
+    const {access_token}=await auth.json();
+    const r=await fetch(SB_URL+'/rest/v1/launch_notifications?select=contact,created_at&order=created_at.desc',{
+      headers:{apikey:SB_KEY,Authorization:'Bearer '+access_token}
+    });
+    waitlist=r.ok?await r.json():[];
+    $('admin-count').textContent=waitlist.length+'명 신청';
+    const list=$('admin-list');list.textContent='';
+    if(!waitlist.length){
+      const d=document.createElement('div');d.className='adm-row';
+      d.textContent='아직 신청자가 없거나, 열람 권한이 없는 계정이에요.';list.append(d);
+    }
+    waitlist.forEach(x=>{
+      const d=document.createElement('div');d.className='adm-row';
+      const b=document.createElement('b');b.textContent=x.contact;
+      const s=document.createElement('span');s.textContent=x.created_at.slice(0,10);
+      d.append(b,s);list.append(d);
+    });
+    $('admin-form').hidden=true;$('admin-panel').hidden=false;
+  }catch{
+    $('admin-msg').textContent='조회에 실패했어요. 잠시 후 다시 시도해 주세요.';
+  }finally{$('admin-submit').disabled=false;}
+});
+$('admin-copy').addEventListener('click',()=>{
+  navigator.clipboard.writeText(waitlist.map(x=>x.contact).join('\n'));
+  $('admin-copy').textContent='복사됨!';
+  setTimeout(()=>$('admin-copy').textContent='전체 복사',1500);
+});
+</script>
+</body>
+</html>
