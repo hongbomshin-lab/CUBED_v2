@@ -3,7 +3,9 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../core/location_cache.dart';
 import '../data/auth_repository.dart';
+import '../data/deal_repository.dart';
 import '../data/food_log_repository.dart';
+import '../data/models/brand_deal.dart';
 import '../data/models/comment.dart';
 import '../data/models/food_log.dart';
 import '../data/models/product.dart';
@@ -54,6 +56,22 @@ final socialRepositoryProvider = Provider<SocialRepository>(
 final storeRepositoryProvider = Provider<StoreRepository>(
   (ref) => StoreRepository(ref.watch(supabaseProvider)),
 );
+
+/// 브랜드 특가(핫딜) 데이터 접근
+final dealRepositoryProvider = Provider<DealRepository>(
+  (ref) => DealRepository(ref.watch(supabaseProvider)),
+);
+
+/// 핫딜 목록 (브랜드·카테고리·정렬 조합별).
+final dealsProvider = FutureProvider.autoDispose
+    .family<List<BrandDeal>, DealQuery>((ref, query) async {
+  return ref.watch(dealRepositoryProvider).deals(
+        brandSlug: query.brandSlug,
+        category: query.category,
+        sort: query.sort,
+      );
+});
+
 
 /// 저당맵: 권한 허용 후 확보한 사용자 현재 위치(없으면 null).
 /// 지도 중심·거리 계산의 기준점으로 사용.
