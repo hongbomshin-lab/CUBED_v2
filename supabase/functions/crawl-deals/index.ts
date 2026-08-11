@@ -1,6 +1,10 @@
 // CUBED 브랜드 특가 수집 Edge Function (Deno)
-// 라라스윗·널담 공식몰(카페24, SSR)을 fetch+HTML 파싱으로 긁어 brand_deals 에 반영.
+// 라라스윗·널담·마이노멀 공식몰을 fetch+HTML 파싱으로 긁어 brand_deals 에 반영.
 // 앱/웹은 DB만 읽는다. 이 함수는 수집·적재만.
+//
+// 자동 업데이트 on/off: crawl_settings.auto_update_enabled (기본 off).
+//   off 면 크론이 호출해도 no-op. 켜기: SQL Editor 에서  select set_auto_update(true);
+//   수동 강제 실행(플래그 무시): ?force=true
 //
 // 배포: supabase functions deploy crawl-deals --no-verify-jwt
 //       (project-ref aqhfddvvxnakgkdtirem. pg_cron+pg_net 호출이라 JWT 대신 CRAWL_SECRET 헤더로 보호)
@@ -166,6 +170,22 @@ Deno.serve(async (req) => {
   }
 
   const url = new URL(req.url);
+  // 자동 업데이트 on/off (기본 off). ?force=true 면 플래그 무시하고 실행(수동/테스트).
+  const force = url.searchParams.get("force") === "true";
+  if (!force) {
+    const { data: setting } = await supabase
+      .from("crawl_settings")
+      .select("auto_update_enabled")
+      .limit(1)
+      .maybeSingle();
+    if (!setting?.auto_update_enabled) {
+      return new Response(
+        JSON.stringify({ skipped: "auto_update disabled (crawl_settings)" }),
+        { headers: { "Content-Type": "application/json" } },
+      );
+    }
+  }
+
   const only = url.searchParams.get("brand");
   const targets = only ? BRANDS.filter((b) => b.slug === only) : BRANDS;
 
