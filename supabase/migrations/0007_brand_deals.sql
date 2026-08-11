@@ -21,7 +21,8 @@ create table if not exists crawl_brands (
 
 insert into crawl_brands (slug, display_name, base_url, platform) values
   ('lalasweet', '라라스윗', 'https://lalasweet.kr', 'cafe24'),
-  ('nuldam',   '널담',     'https://nuldam.com',   'cafe24')
+  ('nuldam',    '널담',     'https://nuldam.com',   'cafe24'),
+  ('mynormal',  '마이노멀', 'https://mynormal.shop', 'imweb')
 on conflict (slug) do nothing;
 
 -- ------------------------------------------------------------
