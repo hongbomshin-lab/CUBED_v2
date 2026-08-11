@@ -275,6 +275,7 @@ class _DealCard extends StatelessWidget {
                           height: 1.25,
                           fontWeight: FontWeight.w700)),
                   const SizedBox(height: 6),
+                  // 할인 히어로: 원가 있으면 할인율%, 없으면 '특가' 뱃지 (허위 원가 조작 없음)
                   if (deal.hasDiscount) ...[
                     Row(
                       crossAxisAlignment: CrossAxisAlignment.baseline,
@@ -296,10 +297,33 @@ class _DealCard extends StatelessWidget {
                             fontSize: 12,
                             color: CubedColors.inkSoft,
                             decoration: TextDecoration.lineThrough)),
-                  ] else
-                    Text('${_won(deal.salePrice)}원',
-                        style: const TextStyle(
-                            fontSize: 16, fontWeight: FontWeight.w900)),
+                  ] else ...[
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.baseline,
+                      textBaseline: TextBaseline.alphabetic,
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 6, vertical: 2),
+                          decoration: BoxDecoration(
+                            color: CubedColors.brand,
+                            borderRadius: BorderRadius.circular(6),
+                          ),
+                          child: const Text('특가',
+                              style: TextStyle(
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.w900,
+                                  color: Colors.white)),
+                        ),
+                        const SizedBox(width: 5),
+                        Text('${_won(deal.salePrice)}원',
+                            style: const TextStyle(
+                                fontSize: 16, fontWeight: FontWeight.w900)),
+                      ],
+                    ),
+                    // 원가 없는 상품과 높이 맞춤용 여백(취소선 자리)
+                    const SizedBox(height: 15),
+                  ],
                 ],
               ),
             ),
