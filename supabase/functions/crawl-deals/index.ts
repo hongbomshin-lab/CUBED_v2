@@ -10,8 +10,11 @@
 //       (project-ref aqhfddvvxnakgkdtirem. pg_cron+pg_net 호출이라 JWT 대신 CRAWL_SECRET 헤더로 보호)
 // 시크릿(대시보드 Edge Functions → Secrets, 코드/레포엔 절대 넣지 않음):
 //   SUPABASE_URL / SUPABASE_SERVICE_ROLE_KEY (자동 주입) · CRAWL_SECRET · DISCORD_WEBHOOK_URL(선택)
-// 스케줄: pg_cron 으로 하루 1회(KST 09시 = UTC 00시) 호출. x-crawl-secret 헤더 필수.
+// 스케줄: pg_cron 으로 하루 1회(KST 09시대) 호출. x-crawl-secret 헤더 필수.
 //         설정 SQL: supabase/functions/crawl-deals/schedule.sql
+// ⚠️ 반드시 ?brand= 로 브랜드별 1개씩 호출할 것.
+//    3브랜드를 한 호출에 몰면 HTML 파싱 누적으로 WORKER_RESOURCE_LIMIT 발생(실측).
+//    단독 실행: 널담 ~4초 / 라라스윗 ~17초 / 마이노멀 ~44초.
 
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
