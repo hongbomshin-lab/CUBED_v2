@@ -151,9 +151,17 @@ async function runBrand(cfg: typeof BRANDS[number]) {
 }
 
 Deno.serve(async (req) => {
-  // pg_cron 이외의 호출 차단
+  // 인증: x-crawl-secret 헤더가 CRAWL_SECRET 과 일치해야만 실행.
+  // fail-closed — 시크릿 미설정 시 열어두지 않고 거부(오배포 시 공개 노출 방지).
   const secret = Deno.env.get("CRAWL_SECRET");
-  if (secret && req.headers.get("x-crawl-secret") !== secret) {
+  if (!secret) {
+    return new Response("CRAWL_SECRET 미설정: 배포 후 시크릿을 등록하세요", {
+      status: 503,
+    });
+  }
+  // 타이밍 안전 비교(길이/내용 노출 최소화)
+  const given = req.headers.get("x-crawl-secret") ?? "";
+  if (given.length !== secret.length || given !== secret) {
     return new Response("forbidden", { status: 403 });
   }
 
