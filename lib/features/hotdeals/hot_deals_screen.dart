@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -8,8 +10,8 @@ import '../../data/deal_repository.dart';
 import '../../data/models/brand_deal.dart';
 import '../../providers/providers.dart';
 
-/// 핫딜 탭 — 저당 브랜드(라라스윗·널담) 공식몰 특가 모음.
-/// brand_deals 테이블을 읽어 표시(백엔드 crawl-deals 가 6시간마다 갱신).
+/// 핫딜 탭 — 저당 브랜드(라라스윗·널담·마이노멀) 공식몰 특가 모음.
+/// brand_deals 를 20개씩 페이지로 읽어(더보기) 부하를 줄인다.
 class HotDealsScreen extends ConsumerStatefulWidget {
   const HotDealsScreen({super.key});
 
@@ -18,9 +20,102 @@ class HotDealsScreen extends ConsumerStatefulWidget {
 }
 
 class _HotDealsScreenState extends ConsumerState<HotDealsScreen> {
-  String? _brandSlug; // null = 전체
-  String? _category; // null = 전체
+  final _searchCtrl = TextEditingController();
+  Timer? _debounce;
+
+  String _query = '';
+  String? _brandSlug;
+  String? _category;
   DealSort _sort = DealSort.discount;
+
+  final List<BrandDeal> _items = [];
+  bool _loading = true;
+  bool _loadingMore = false;
+  bool _error = false;
+  bool _hasMore = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _reload();
+  }
+
+  @override
+  void dispose() {
+    _debounce?.cancel();
+    _searchCtrl.dispose();
+    super.dispose();
+  }
+
+  Future<List<BrandDeal>> _fetch(int offset) =>
+      ref.read(dealRepositoryProvider).deals(
+            query: _query,
+            brandSlug: _brandSlug,
+            category: _category,
+            sort: _sort,
+            offset: offset,
+          );
+
+  /// 필터/검색 변경 시 처음부터 다시 로드.
+  Future<void> _reload() async {
+    setState(() {
+      _loading = true;
+      _error = false;
+      _items.clear();
+      _hasMore = true;
+    });
+    try {
+      final rows = await _fetch(0);
+      if (!mounted) return;
+      setState(() {
+        _items.addAll(rows);
+        _loading = false;
+        _hasMore = rows.length == DealRepository.pageSize;
+      });
+    } catch (_) {
+      if (!mounted) return;
+      setState(() {
+        _loading = false;
+        _error = true;
+      });
+    }
+  }
+
+  /// 더보기 — 다음 페이지를 이어붙임.
+  Future<void> _loadMore() async {
+    if (_loadingMore || !_hasMore) return;
+    setState(() => _loadingMore = true);
+    try {
+      final rows = await _fetch(_items.length);
+      if (!mounted) return;
+      setState(() {
+        _items.addAll(rows);
+        _loadingMore = false;
+        _hasMore = rows.length == DealRepository.pageSize;
+      });
+    } catch (_) {
+      if (!mounted) return;
+      setState(() => _loadingMore = false);
+    }
+  }
+
+  void _onSearch(String v) {
+    _debounce?.cancel();
+    _debounce = Timer(const Duration(milliseconds: 350), () {
+      if (!mounted || v.trim() == _query) return;
+      _query = v.trim();
+      _reload();
+    });
+  }
+
+  void _clearSearch() {
+    FocusScope.of(context).unfocus();
+    _searchCtrl.clear();
+    if (_query.isNotEmpty) {
+      _query = '';
+      _reload();
+    }
+  }
 
   Future<void> _open(BrandDeal d) async {
     final uri = Uri.parse(d.productUrl);
@@ -34,13 +129,6 @@ class _HotDealsScreenState extends ConsumerState<HotDealsScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final async = ref.watch(dealsProvider(DealQuery(
-      brandSlug: _brandSlug,
-      category: _category,
-      sort: _sort,
-    )));
-    final count = async.valueOrNull?.length;
-
     return Scaffold(
       backgroundColor: CubedColors.bg,
       body: SafeArea(
@@ -57,9 +145,16 @@ class _HotDealsScreenState extends ConsumerState<HotDealsScreen> {
                       letterSpacing: -0.5)),
             ),
             const Padding(
-              padding: EdgeInsets.fromLTRB(20, 0, 20, 10),
+              padding: EdgeInsets.fromLTRB(20, 0, 20, 8),
               child: Text('라라스윗·널담·마이노멀 공식몰 특가를 한눈에',
                   style: TextStyle(color: CubedColors.inkSoft, fontSize: 13)),
+            ),
+
+            // 검색바
+            _SearchBar(
+              controller: _searchCtrl,
+              onChanged: _onSearch,
+              onClear: _clearSearch,
             ),
 
             // 브랜드 필터 칩
@@ -72,13 +167,19 @@ class _HotDealsScreenState extends ConsumerState<HotDealsScreen> {
                   _Chip(
                     label: '전체',
                     selected: _brandSlug == null,
-                    onTap: () => setState(() => _brandSlug = null),
+                    onTap: () {
+                      _brandSlug = null;
+                      _reload();
+                    },
                   ),
                   for (final b in DealRepository.brands)
                     _Chip(
                       label: b.label,
                       selected: _brandSlug == b.slug,
-                      onTap: () => setState(() => _brandSlug = b.slug),
+                      onTap: () {
+                        _brandSlug = b.slug;
+                        _reload();
+                      },
                     ),
                 ],
               ),
@@ -95,13 +196,19 @@ class _HotDealsScreenState extends ConsumerState<HotDealsScreen> {
                   _CatChip(
                     label: '전체',
                     selected: _category == null,
-                    onTap: () => setState(() => _category = null),
+                    onTap: () {
+                      _category = null;
+                      _reload();
+                    },
                   ),
                   for (final c in DealRepository.categories)
                     _CatChip(
                       label: c,
                       selected: _category == c,
-                      onTap: () => setState(() => _category = c),
+                      onTap: () {
+                        _category = c;
+                        _reload();
+                      },
                     ),
                 ],
               ),
@@ -112,11 +219,13 @@ class _HotDealsScreenState extends ConsumerState<HotDealsScreen> {
               padding: const EdgeInsets.fromLTRB(20, 4, 16, 8),
               child: Row(
                 children: [
-                  Text(count == null ? '' : '$count개 특가',
-                      style: const TextStyle(
-                          fontSize: 12,
-                          fontWeight: FontWeight.w700,
-                          color: CubedColors.inkSoft)),
+                  Text(
+                    _loading ? '' : '${_items.length}${_hasMore ? '+' : ''}개',
+                    style: const TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w700,
+                        color: CubedColors.inkSoft),
+                  ),
                   const Spacer(),
                   for (final s in DealSort.values) ...[
                     if (s != DealSort.values.first)
@@ -128,39 +237,17 @@ class _HotDealsScreenState extends ConsumerState<HotDealsScreen> {
                     _SortText(
                         label: s.label,
                         on: _sort == s,
-                        onTap: () => setState(() => _sort = s)),
+                        onTap: () {
+                          _sort = s;
+                          _reload();
+                        }),
                   ],
                 ],
               ),
             ),
 
-            // 목록
-            Expanded(
-              child: async.when(
-                loading: () =>
-                    const Center(child: CircularProgressIndicator()),
-                error: (_, __) => const _Empty(
-                    icon: Icons.error_outline_rounded,
-                    text: '특가를 불러오지 못했어요'),
-                data: (deals) => deals.isEmpty
-                    ? const _Empty(
-                        icon: Icons.local_fire_department_outlined,
-                        text: '표시할 특가가 없어요')
-                    : GridView.builder(
-                        padding: const EdgeInsets.fromLTRB(12, 0, 12, 8),
-                        gridDelegate:
-                            const SliverGridDelegateWithFixedCrossAxisCount(
-                          crossAxisCount: 2,
-                          mainAxisSpacing: 12,
-                          crossAxisSpacing: 12,
-                          childAspectRatio: 0.60,
-                        ),
-                        itemCount: deals.length,
-                        itemBuilder: (_, i) => _DealCard(
-                            deal: deals[i], onTap: () => _open(deals[i])),
-                      ),
-              ),
-            ),
+            // 목록 + 더보기
+            Expanded(child: _buildBody()),
 
             const Padding(
               padding: EdgeInsets.fromLTRB(20, 0, 20, 8),
@@ -169,6 +256,120 @@ class _HotDealsScreenState extends ConsumerState<HotDealsScreen> {
             ),
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _buildBody() {
+    if (_loading) return const Center(child: CircularProgressIndicator());
+    if (_error) {
+      return const _Empty(
+          icon: Icons.error_outline_rounded, text: '특가를 불러오지 못했어요');
+    }
+    if (_items.isEmpty) {
+      return const _Empty(
+          icon: Icons.search_off_rounded, text: '표시할 특가가 없어요');
+    }
+    return CustomScrollView(
+      slivers: [
+        SliverPadding(
+          padding: const EdgeInsets.fromLTRB(12, 0, 12, 8),
+          sliver: SliverGrid(
+            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount: 2,
+              mainAxisSpacing: 12,
+              crossAxisSpacing: 12,
+              childAspectRatio: 0.60,
+            ),
+            delegate: SliverChildBuilderDelegate(
+              (_, i) =>
+                  _DealCard(deal: _items[i], onTap: () => _open(_items[i])),
+              childCount: _items.length,
+            ),
+          ),
+        ),
+        if (_hasMore)
+          SliverToBoxAdapter(
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(12, 0, 12, 16),
+              child: _loadingMore
+                  ? const Center(
+                      child: Padding(
+                        padding: EdgeInsets.all(8),
+                        child: SizedBox(
+                            width: 22,
+                            height: 22,
+                            child:
+                                CircularProgressIndicator(strokeWidth: 2)),
+                      ),
+                    )
+                  : OutlinedButton(
+                      onPressed: _loadMore,
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: CubedColors.ink,
+                        side: const BorderSide(color: CubedColors.line),
+                        padding: const EdgeInsets.symmetric(vertical: 13),
+                      ),
+                      child: const Text('더보기',
+                          style: TextStyle(fontWeight: FontWeight.w800)),
+                    ),
+            ),
+          ),
+      ],
+    );
+  }
+}
+
+class _SearchBar extends StatelessWidget {
+  const _SearchBar({
+    required this.controller,
+    required this.onChanged,
+    required this.onClear,
+  });
+  final TextEditingController controller;
+  final ValueChanged<String> onChanged;
+  final VoidCallback onClear;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(12, 2, 12, 8),
+      child: Container(
+        height: 44,
+        padding: const EdgeInsets.symmetric(horizontal: 14),
+        decoration: BoxDecoration(
+          color: CubedColors.surface,
+          borderRadius: BorderRadius.circular(22),
+          border: Border.all(color: CubedColors.line),
+        ),
+        child: Row(children: [
+          const Icon(Icons.search_rounded, size: 20, color: CubedColors.inkSoft),
+          const SizedBox(width: 8),
+          Expanded(
+            child: TextField(
+              controller: controller,
+              onChanged: onChanged,
+              textInputAction: TextInputAction.search,
+              decoration: const InputDecoration(
+                isCollapsed: true,
+                border: InputBorder.none,
+                hintText: '상품명 검색 (예: 쿠키)',
+                hintStyle: TextStyle(color: CubedColors.inkSoft, fontSize: 14),
+              ),
+              style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
+            ),
+          ),
+          ValueListenableBuilder<TextEditingValue>(
+            valueListenable: controller,
+            builder: (_, value, __) => value.text.isEmpty
+                ? const SizedBox.shrink()
+                : GestureDetector(
+                    onTap: onClear,
+                    child: const Icon(Icons.close_rounded,
+                        size: 18, color: CubedColors.inkSoft),
+                  ),
+          ),
+        ]),
       ),
     );
   }
@@ -321,7 +522,6 @@ class _DealCard extends StatelessWidget {
                                 fontSize: 16, fontWeight: FontWeight.w900)),
                       ],
                     ),
-                    // 원가 없는 상품과 높이 맞춤용 여백(취소선 자리)
                     const SizedBox(height: 15),
                   ],
                 ],

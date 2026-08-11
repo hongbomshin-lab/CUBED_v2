@@ -53,6 +53,7 @@ final dealRepositoryProvider = Provider<DealRepository>(
 final dealsProvider = FutureProvider.autoDispose
     .family<List<BrandDeal>, DealQuery>((ref, query) async {
   return ref.watch(dealRepositoryProvider).deals(
+        query: query.query,
         brandSlug: query.brandSlug,
         category: query.category,
         sort: query.sort,
