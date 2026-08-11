@@ -3,7 +3,9 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../core/location_cache.dart';
 import '../data/auth_repository.dart';
+import '../data/deal_repository.dart';
 import '../data/franchise_repository.dart';
+import '../data/models/brand_deal.dart';
 import '../data/models/comment.dart';
 import '../data/models/franchise_drink.dart';
 import '../data/models/my_comment.dart';
@@ -41,6 +43,22 @@ final storeRepositoryProvider = Provider<StoreRepository>(
 final franchiseRepositoryProvider = Provider<FranchiseRepository>(
   (ref) => FranchiseRepository(ref.watch(supabaseProvider)),
 );
+
+/// 브랜드 특가(핫딜) 데이터 접근
+final dealRepositoryProvider = Provider<DealRepository>(
+  (ref) => DealRepository(ref.watch(supabaseProvider)),
+);
+
+/// 핫딜 목록 (브랜드·카테고리·정렬 조합별).
+final dealsProvider = FutureProvider.autoDispose
+    .family<List<BrandDeal>, DealQuery>((ref, query) async {
+  return ref.watch(dealRepositoryProvider).deals(
+        query: query.query,
+        brandSlug: query.brandSlug,
+        category: query.category,
+        sort: query.sort,
+      );
+});
 
 /// 프랜차이즈 검색 결과 (검색어·브랜드·정렬 조합별). 같은 메뉴는 그룹으로 묶음.
 final franchiseSearchProvider = FutureProvider.autoDispose
