@@ -1,11 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:url_launcher/url_launcher.dart';
 
+import '../../core/feature_flags.dart';
 import '../../core/theme.dart';
 import '../../providers/providers.dart';
 import '../auth/login_screen.dart';
+import '../capture/capture_screen.dart';
 import '../chat/chat_screen.dart';
-import '../ocr/ocr_screen.dart';
+import '../diary/diary_screen.dart';
 import '../scan/scan_screen.dart';
 import '../search/search_screen.dart';
 
@@ -24,7 +27,7 @@ class HomeScreen extends ConsumerWidget {
           children: [
             Row(
               children: [
-                Text('CUBED',
+                Text('ZERO DOT',
                     style: Theme.of(context).textTheme.headlineMedium?.copyWith(
                           fontWeight: FontWeight.w900,
                           color: CubedColors.brand,
@@ -45,27 +48,29 @@ class HomeScreen extends ConsumerWidget {
                 style: TextStyle(color: CubedColors.inkSoft, fontSize: 15)),
             const SizedBox(height: 24),
 
-            // 메인 CTA — 바코드 스캔
-            _BigAction(
-              icon: Icons.qr_code_scanner_rounded,
-              title: '바코드 스캔',
-              subtitle: '제품 바코드를 비추면 혈당 영향·함정을 분석해요',
-              color: CubedColors.brand,
-              onTap: () => Navigator.of(context).push(
-                MaterialPageRoute(builder: (_) => const ScanScreen()),
+            // 메인 CTA — 바코드 스캔 (FeatureFlags.barcodeScan 으로 노출 제어)
+            if (FeatureFlags.barcodeScan) ...[
+              _BigAction(
+                icon: Icons.qr_code_scanner_rounded,
+                title: '바코드 스캔',
+                subtitle: '제품 바코드를 비추면 혈당 영향·함정을 분석해요',
+                color: CubedColors.brand,
+                onTap: () => Navigator.of(context).push(
+                  MaterialPageRoute(builder: (_) => const ScanScreen()),
+                ),
               ),
-            ),
-            const SizedBox(height: 12),
+              const SizedBox(height: 12),
+            ],
 
             Row(
               children: [
                 Expanded(
                   child: _SmallAction(
                     icon: Icons.center_focus_strong_rounded,
-                    title: '사진으로 찾기',
-                    subtitle: 'OCR 인식',
+                    title: '사진으로 분석',
+                    subtitle: '제품·원재료·영양 3장',
                     onTap: () => Navigator.of(context).push(
-                      MaterialPageRoute(builder: (_) => const OcrScreen()),
+                      MaterialPageRoute(builder: (_) => const CaptureScreen()),
                     ),
                   ),
                 ),
@@ -85,9 +90,23 @@ class HomeScreen extends ConsumerWidget {
             const SizedBox(height: 12),
 
             // AI 도우미 진입 — 제품·혈당·당류를 대화로 질문
-            _ChatAction(
+            _BannerAction(
+              icon: Icons.forum_rounded,
+              title: 'AI에게 물어보기',
+              subtitle: '제품·혈당·당류를 대화로 물어보세요',
               onTap: () => Navigator.of(context).push(
                 MaterialPageRoute(builder: (_) => const ChatScreen()),
+              ),
+            ),
+            const SizedBox(height: 12),
+
+            // 먹은 기록 달력 진입
+            _BannerAction(
+              icon: Icons.calendar_month_rounded,
+              title: '내가 먹은 기록',
+              subtitle: '날짜별로 먹은 제품을 돌아봐요',
+              onTap: () => Navigator.of(context).push(
+                MaterialPageRoute(builder: (_) => const DiaryScreen()),
               ),
             ),
 
@@ -98,12 +117,43 @@ class HomeScreen extends ConsumerWidget {
             const _Bullet('🔴', '‘무설탕’인데 혈당 올리는 당알코올 함정을 잡아내요'),
             const _Bullet('🟢', '대체당 조합에 맞춘 맞춤 메시지를 보여줘요'),
             const _Bullet('🔁', '주의 제품엔 같은 칸의 더 나은 대안을 추천해요'),
+
+            // 스토어 정책: 건강 정보 면책 + 개인정보처리방침 링크
+            const SizedBox(height: 28),
+            const Text(
+              'ZERO DOT의 혈당 영향 등급과 AI 답변은 참고용 정보이며 의학적 조언이 아닙니다. '
+              '질환이 있는 경우 전문가와 상담하세요.',
+              style: TextStyle(
+                  color: CubedColors.inkSoft, fontSize: 11, height: 1.5),
+            ),
+            Align(
+              alignment: Alignment.centerLeft,
+              child: TextButton(
+                style: TextButton.styleFrom(
+                  padding: EdgeInsets.zero,
+                  minimumSize: const Size(0, 32),
+                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                ),
+                onPressed: () => launchUrl(Uri.parse(kPrivacyPolicyUrl),
+                    mode: LaunchMode.externalApplication),
+                child: const Text('개인정보처리방침',
+                    style: TextStyle(
+                        color: CubedColors.inkSoft,
+                        fontSize: 11,
+                        decoration: TextDecoration.underline)),
+              ),
+            ),
           ],
         ),
       ),
     );
   }
 }
+
+/// 개인정보처리방침 공개 URL (docs/privacy-policy.md → GitHub Pages 호스팅).
+/// 스토어 등록 시 Play Console·App Store Connect에도 동일 URL을 입력한다.
+const kPrivacyPolicyUrl =
+    'https://hongbomshin-lab.github.io/CUBED_v2/privacy-policy';
 
 class _AccountChip extends ConsumerWidget {
   const _AccountChip();
@@ -125,8 +175,10 @@ class _AccountChip extends ConsumerWidget {
             child: Column(mainAxisSize: MainAxisSize.min, children: [
               const SizedBox(height: 12),
               ListTile(
-                leading: const Icon(Icons.person_rounded, color: CubedColors.brand),
-                title: Text(auth.displayName(), style: const TextStyle(fontWeight: FontWeight.w700)),
+                leading:
+                    const Icon(Icons.person_rounded, color: CubedColors.brand),
+                title: Text(auth.displayName(),
+                    style: const TextStyle(fontWeight: FontWeight.w700)),
                 subtitle: const Text('카카오 로그인됨'),
               ),
               ListTile(
@@ -136,6 +188,14 @@ class _AccountChip extends ConsumerWidget {
                   await ref.read(authRepositoryProvider).signOut();
                   if (context.mounted) Navigator.of(context).pop();
                 },
+              ),
+              // 스토어 정책상 앱 내 계정 삭제 필수 (Apple 5.1.1(v)·Google Play)
+              ListTile(
+                leading: const Icon(Icons.person_off_rounded,
+                    color: CubedColors.caution),
+                title: const Text('회원 탈퇴',
+                    style: TextStyle(color: CubedColors.caution)),
+                onTap: () => _confirmDeleteAccount(context, ref),
               ),
               const SizedBox(height: 8),
             ]),
@@ -154,13 +214,16 @@ class _AccountChip extends ConsumerWidget {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
         decoration: BoxDecoration(
-          color: loggedIn ? CubedColors.brand.withValues(alpha: 0.1) : CubedColors.bg,
+          color: loggedIn
+              ? CubedColors.brand.withValues(alpha: 0.1)
+              : CubedColors.bg,
           borderRadius: BorderRadius.circular(20),
           border: Border.all(color: CubedColors.line),
         ),
         child: Row(mainAxisSize: MainAxisSize.min, children: [
           Icon(loggedIn ? Icons.person_rounded : Icons.login_rounded,
-              size: 14, color: loggedIn ? CubedColors.brand : CubedColors.inkSoft),
+              size: 14,
+              color: loggedIn ? CubedColors.brand : CubedColors.inkSoft),
           const SizedBox(width: 4),
           Text(loggedIn ? auth.displayName() : '로그인',
               style: TextStyle(
@@ -169,6 +232,44 @@ class _AccountChip extends ConsumerWidget {
                   color: loggedIn ? CubedColors.brand : CubedColors.inkSoft)),
         ]),
       ),
+    );
+  }
+}
+
+/// 회원 탈퇴 확인 → Edge Function 호출 → 계정·데이터 삭제.
+Future<void> _confirmDeleteAccount(BuildContext context, WidgetRef ref) async {
+  final confirmed = await showDialog<bool>(
+    context: context,
+    builder: (ctx) => AlertDialog(
+      title: const Text('회원 탈퇴'),
+      content:
+          const Text('계정과 함께 먹은 기록·좋아요 등 모든 데이터가 삭제되며 되돌릴 수 없어요.\n정말 탈퇴하시겠어요?'),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.of(ctx).pop(false),
+          child: const Text('취소'),
+        ),
+        TextButton(
+          onPressed: () => Navigator.of(ctx).pop(true),
+          child:
+              const Text('탈퇴하기', style: TextStyle(color: CubedColors.caution)),
+        ),
+      ],
+    ),
+  );
+  if (confirmed != true || !context.mounted) return;
+
+  final messenger = ScaffoldMessenger.of(context);
+  final navigator = Navigator.of(context);
+  try {
+    await ref.read(authRepositoryProvider).deleteAccount();
+    if (context.mounted) navigator.pop(); // 계정 시트 닫기
+    messenger.showSnackBar(
+      const SnackBar(content: Text('탈퇴가 완료되었습니다. 그동안 이용해주셔서 감사합니다.')),
+    );
+  } catch (e) {
+    messenger.showSnackBar(
+      SnackBar(content: Text('탈퇴 처리에 실패했어요: $e')),
     );
   }
 }
@@ -190,9 +291,14 @@ class _DataBadge extends StatelessWidget {
         borderRadius: BorderRadius.circular(20),
       ),
       child: Row(mainAxisSize: MainAxisSize.min, children: [
-        Container(width: 7, height: 7, decoration: BoxDecoration(color: c, shape: BoxShape.circle)),
+        Container(
+            width: 7,
+            height: 7,
+            decoration: BoxDecoration(color: c, shape: BoxShape.circle)),
         const SizedBox(width: 6),
-        Text(t, style: TextStyle(color: c, fontSize: 12, fontWeight: FontWeight.w700)),
+        Text(t,
+            style:
+                TextStyle(color: c, fontSize: 12, fontWeight: FontWeight.w700)),
       ]),
     );
   }
@@ -244,14 +350,19 @@ class _BigAction extends StatelessWidget {
                 children: [
                   Text(title,
                       style: const TextStyle(
-                          color: Colors.white, fontSize: 19, fontWeight: FontWeight.w800)),
+                          color: Colors.white,
+                          fontSize: 19,
+                          fontWeight: FontWeight.w800)),
                   const SizedBox(height: 4),
                   Text(subtitle,
-                      style: TextStyle(color: Colors.white.withValues(alpha: 0.9), fontSize: 13)),
+                      style: TextStyle(
+                          color: Colors.white.withValues(alpha: 0.9),
+                          fontSize: 13)),
                 ],
               ),
             ),
-            const Icon(Icons.arrow_forward_ios_rounded, color: Colors.white, size: 16),
+            const Icon(Icons.arrow_forward_ios_rounded,
+                color: Colors.white, size: 16),
           ],
         ),
       ),
@@ -287,9 +398,13 @@ class _SmallAction extends StatelessWidget {
           children: [
             Icon(icon, color: CubedColors.brand, size: 26),
             const SizedBox(height: 12),
-            Text(title, style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 15)),
+            Text(title,
+                style:
+                    const TextStyle(fontWeight: FontWeight.w800, fontSize: 15)),
             const SizedBox(height: 2),
-            Text(subtitle, style: const TextStyle(color: CubedColors.inkSoft, fontSize: 12)),
+            Text(subtitle,
+                style:
+                    const TextStyle(color: CubedColors.inkSoft, fontSize: 12)),
           ],
         ),
       ),
@@ -297,8 +412,15 @@ class _SmallAction extends StatelessWidget {
   }
 }
 
-class _ChatAction extends StatelessWidget {
-  const _ChatAction({required this.onTap});
+class _BannerAction extends StatelessWidget {
+  const _BannerAction({
+    required this.icon,
+    required this.title,
+    required this.subtitle,
+    required this.onTap,
+  });
+  final IconData icon;
+  final String title, subtitle;
   final VoidCallback onTap;
 
   @override
@@ -322,22 +444,25 @@ class _ChatAction extends StatelessWidget {
                 color: CubedColors.brand.withValues(alpha: 0.15),
                 borderRadius: BorderRadius.circular(14),
               ),
-              child: const Icon(Icons.forum_rounded, color: CubedColors.brand, size: 24),
+              child: Icon(icon, color: CubedColors.brand, size: 24),
             ),
             const SizedBox(width: 14),
-            const Expanded(
+            Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text('AI에게 물어보기',
-                      style: TextStyle(fontWeight: FontWeight.w800, fontSize: 15)),
-                  SizedBox(height: 2),
-                  Text('제품·혈당·당류를 대화로 물어보세요',
-                      style: TextStyle(color: CubedColors.inkSoft, fontSize: 12)),
+                  Text(title,
+                      style: const TextStyle(
+                          fontWeight: FontWeight.w800, fontSize: 15)),
+                  const SizedBox(height: 2),
+                  Text(subtitle,
+                      style: const TextStyle(
+                          color: CubedColors.inkSoft, fontSize: 12)),
                 ],
               ),
             ),
-            const Icon(Icons.arrow_forward_ios_rounded, color: CubedColors.brand, size: 14),
+            const Icon(Icons.arrow_forward_ios_rounded,
+                color: CubedColors.brand, size: 14),
           ],
         ),
       ),
@@ -357,7 +482,9 @@ class _Bullet extends StatelessWidget {
         children: [
           Text(emoji, style: const TextStyle(fontSize: 16)),
           const SizedBox(width: 10),
-          Expanded(child: Text(text, style: const TextStyle(fontSize: 14, height: 1.4))),
+          Expanded(
+              child: Text(text,
+                  style: const TextStyle(fontSize: 14, height: 1.4))),
         ],
       ),
     );

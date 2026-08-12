@@ -29,7 +29,7 @@ class CubedApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'CUBED',
+      title: 'ZERO DOT',
       debugShowCheckedModeBanner: false,
       theme: buildCubedTheme(),
       home: const MainShell(),

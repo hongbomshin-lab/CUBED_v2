@@ -4,26 +4,45 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../core/location_cache.dart';
 import '../data/auth_repository.dart';
 import '../data/deal_repository.dart';
+import '../data/food_log_repository.dart';
 import '../data/franchise_repository.dart';
 import '../data/models/brand_deal.dart';
 import '../data/models/comment.dart';
+import '../data/models/food_log.dart';
 import '../data/models/franchise_drink.dart';
 import '../data/models/my_comment.dart';
 import '../data/models/my_review.dart';
 import '../data/models/product.dart';
+import '../data/models/product_price.dart';
 import '../data/models/store.dart';
 import '../data/models/store_review.dart';
+import '../data/price_repository.dart';
 import '../data/product_repository.dart';
 import '../data/social_repository.dart';
 import '../data/store_repository.dart';
 import '../domain/interpretation.dart';
 import '../features/chat/chat_service.dart';
 
-final supabaseProvider = Provider<SupabaseClient>((ref) => Supabase.instance.client);
+final supabaseProvider =
+    Provider<SupabaseClient>((ref) => Supabase.instance.client);
 
 final repositoryProvider = Provider<ProductRepository>(
   (ref) => ProductRepository(ref.watch(supabaseProvider)),
 );
+
+final priceRepositoryProvider = Provider<PriceRepository>(
+  (ref) => PriceRepository(ref.watch(supabaseProvider)),
+);
+
+typedef PriceLookup = ({String? productId, String? catalogProductKey});
+
+final productPricesProvider =
+    FutureProvider.family<List<ProductPrice>, PriceLookup>((ref, lookup) {
+  return ref.watch(priceRepositoryProvider).forProduct(
+        productId: lookup.productId,
+        catalogProductKey: lookup.catalogProductKey,
+      );
+});
 
 /// AI 채팅 서비스 (Edge Function 'chat' 호출)
 final chatServiceProvider = Provider<ChatService>(
@@ -170,4 +189,29 @@ final searchProvider =
     FutureProvider.family<List<Product>, String>((ref, q) async {
   if (q.trim().isEmpty) return const [];
   return ref.watch(repositoryProvider).searchByName(q.trim());
+});
+
+/// 먹은 기록 데이터 접근
+final foodLogRepositoryProvider = Provider<FoodLogRepository>(
+  (ref) => FoodLogRepository(ref.watch(supabaseProvider)),
+);
+
+/// 월별 먹은 기록 (달력). 키는 (year, month) 레코드 — 정규화를 타입으로 강제.
+final monthLogsProvider =
+    FutureProvider.family<List<FoodLog>, ({int year, int month})>(
+        (ref, key) async {
+  ref.watch(authStateProvider); // 로그인/로그아웃 시 갱신
+  return ref
+      .watch(foodLogRepositoryProvider)
+      .logsForMonth(DateTime(key.year, key.month, 1));
+});
+
+/// 오늘 이 제품을 기록했는지 (결과 화면 토글 버튼 상태)
+final todayLogProvider =
+    FutureProvider.family<FoodLog?, ({String? productId, String name})>(
+        (ref, key) async {
+  ref.watch(authStateProvider);
+  return ref
+      .watch(foodLogRepositoryProvider)
+      .todayLogFor(productId: key.productId, name: key.name);
 });

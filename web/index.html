@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <!--
+    If you are serving your web app in a path other than the root, change the
+    href value below to reflect the base path you are serving from.
+
+    The path provided below has to start and end with a slash "/" in order for
+    it to work correctly.
+
+    For more details:
+    * https://developer.mozilla.org/en-US/docs/Web/HTML/Element/base
+
+    This is a placeholder for base href that will be replaced by the value of
+    the `--base-href` argument provided to `flutter build`.
+  -->
+  <base href="$FLUTTER_BASE_HREF">
+
+  <meta charset="UTF-8">
+  <meta content="IE=Edge" http-equiv="X-UA-Compatible">
+  <meta name="description" content="ZERO DOT 제보 검수 관리자 콘솔">
+
+  <!-- iOS meta tags & icons -->
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black">
+  <meta name="apple-mobile-web-app-title" content="ZERO DOT 관리자">
+  <link rel="apple-touch-icon" href="icons/Icon-192.png">
+
+  <!-- Favicon -->
+  <link rel="icon" type="image/png" href="favicon.png"/>
+
+  <title>ZERO DOT 관리자 콘솔</title>
+  <link rel="manifest" href="manifest.json">
+
+  <!--
+    passkeys_web(supabase 인증이 끌어오는 transitive 의존성)는 전역 `PasskeyAuthenticator`(corbado
+    bundle.js)가 없으면 부팅 중 window.close()+throw로 앱 렌더를 막는다. 이 앱은 passkeys를 쓰지
+    않으므로(이메일/비밀번호 로그인) 외부 SDK 대신 안전한 no-op 전역 스텁을 둔다.
+    추후 passkey 로그인을 도입하면 이 스텁을 실제 bundle.js로 교체하면 된다.
+  -->
+  <script>
+    window.PasskeyAuthenticator = {
+      init: function () {},
+      register: function () { return Promise.reject('passkeys not supported'); },
+      login: function () { return Promise.reject('passkeys not supported'); },
+      cancelCurrentAuthenticatorOperation: function () {},
+      isUserVerifyingPlatformAuthenticatorAvailable: function () { return Promise.resolve(false); },
+      isConditionalMediationAvailable: function () { return Promise.resolve(false); },
+      hasPasskeySupport: function () { return false; }
+    };
+  </script>
+</head>
+<body>
+  <!--
+    You can customize the "flutter_bootstrap.js" script.
+    This is useful to provide a custom configuration to the Flutter loader
+    or to give the user feedback during the initialization process.
+
+    For more details:
+    * https://docs.flutter.dev/platform-integration/web/initialization
+  -->
+  <script src="flutter_bootstrap.js" async></script>
+</body>
+</html>
