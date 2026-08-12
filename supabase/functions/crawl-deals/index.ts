@@ -20,6 +20,10 @@ import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { BRANDS } from "./config.ts";
 import { crawlBrand, type ParsedItem } from "./crawlers.ts";
+import {
+  type PriceCatalogStats,
+  syncLalasweetPriceCatalog,
+} from "./price_catalog_sync.ts";
 
 const supabase = createClient(
   Deno.env.get("SUPABASE_URL")!,
@@ -154,7 +158,26 @@ async function runBrand(cfg: typeof BRANDS[number]) {
     );
   }
 
-  return { brand: cfg.slug, status: "ok", parsed: items.length, deals: dealCount, ...stats };
+  // 라라스윗은 결과화면 가격비교용 카탈로그(product_prices)도 함께 동기화.
+  // (구 sync-lalasweet-prices 함수 흡수 — 크롤러 통합.) 실패해도 딜 결과는 유지.
+  let priceCatalog: PriceCatalogStats | { error: string } | undefined;
+  if (cfg.slug === "lalasweet") {
+    try {
+      priceCatalog = await syncLalasweetPriceCatalog(supabase);
+    } catch (err) {
+      priceCatalog = { error: String(err) };
+      await notify(`🟠 **라라스윗** 가격 카탈로그 동기화 실패\n\`${String(err)}\``);
+    }
+  }
+
+  return {
+    brand: cfg.slug,
+    status: "ok",
+    parsed: items.length,
+    deals: dealCount,
+    ...stats,
+    ...(priceCatalog ? { price_catalog: priceCatalog } : {}),
+  };
 }
 
 Deno.serve(async (req) => {
