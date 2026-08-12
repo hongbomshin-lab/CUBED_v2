@@ -21,6 +21,8 @@ dependencies:
   mobile_scanner: ^5.1.1
   # OCR 사진 촬영/선택
   image_picker: ^1.1.2
+  # 업로드 전 이미지 압축(Storage 용량 절약)
+  flutter_image_compress: ^2.3.0
   # 썸네일
   cached_network_image: ^3.3.1
   # 아이콘/타이포

@@ -1,5 +1,8 @@
+import 'dart:typed_data';
+
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import 'models/my_review.dart';
 import 'models/store.dart';
 import 'models/store_review.dart';
 
@@ -41,6 +44,56 @@ class StoreRepository {
     return rows.map((m) => Store.fromMap(m)).toList();
   }
 
+  /// 이름으로 매장 검색 (부분일치, 최신 등록순). 지도 검색바용.
+  Future<List<Store>> searchByName(String query, {int limit = 20}) async {
+    final q = query.trim();
+    if (q.isEmpty) return const [];
+    final rows = await _db
+        .from('stores')
+        .select(_cols)
+        .eq('is_active', true)
+        .ilike('name', '%$q%')
+        .limit(limit);
+    return rows.map((m) => Store.fromMap(m)).toList();
+  }
+
+  /// 메뉴판 사진(압축본)을 Storage `menu-boards` 버킷에 업로드하고 public URL 반환.
+  /// 경로: {folder}/{userId}/{ms}.jpg — 승인/반려 시 정리하기 쉽도록 유저별로 분리.
+  /// [folder]는 기존 매장이면 storeId, 신규 매장 제보면 'new-store' 등.
+  Future<String> uploadMenuBoardPhoto({
+    required String folder,
+    required String userId,
+    required Uint8List bytes,
+    required int millis,
+  }) async {
+    const bucket = 'menu-boards';
+    final path = '$folder/$userId/$millis.jpg';
+    await _db.storage.from(bucket).uploadBinary(
+          path,
+          bytes,
+          fileOptions: const FileOptions(
+            contentType: 'image/jpeg',
+            upsert: true,
+          ),
+        );
+    return _db.storage.from(bucket).getPublicUrl(path);
+  }
+
+  /// 메뉴판 제보 등록. 사진 URL 필수 + 메모 선택. 승인 시 store_photos 자동 등록.
+  Future<void> submitMenuBoardReport({
+    required String storeId,
+    required String reportedBy,
+    required String imageUrl,
+    String? note,
+  }) async {
+    await _db.from('menu_board_reports').insert({
+      'store_id': storeId,
+      'reported_by': reportedBy,
+      'image_url': imageUrl,
+      if (note != null && note.isNotEmpty) 'note': note,
+    });
+  }
+
   /// 매장 리뷰 목록 (최신순).
   Future<List<StoreReview>> reviews(String storeId, {int limit = 50}) async {
     final rows = await _db
@@ -51,6 +104,58 @@ class StoreRepository {
         .order('created_at', ascending: false)
         .limit(limit);
     return rows.map((m) => StoreReview.fromMap(m)).toList();
+  }
+
+  /// 내가 즐겨찾기한 store_id 집합 (하트 상태 표시용).
+  Future<Set<String>> favoriteStoreIds(String userId) async {
+    final rows = await _db
+        .from('store_favorites')
+        .select('store_id')
+        .eq('user_id', userId);
+    return rows.map((m) => m['store_id'] as String).toSet();
+  }
+
+  /// 내가 즐겨찾기한 매장 목록 (최신순) — 매장 상세 표시용.
+  Future<List<Store>> favoriteStores(String userId) async {
+    final rows = await _db
+        .from('store_favorites')
+        .select('stores(*, store_photos(image_url, is_primary, photo_type))')
+        .eq('user_id', userId)
+        .order('created_at', ascending: false);
+    return rows
+        .map((m) => m['stores'])
+        .whereType<Map<String, dynamic>>()
+        .map((s) => Store.fromMap(s))
+        .toList();
+  }
+
+  /// 즐겨찾기 추가 (이미 있으면 무시).
+  Future<void> addFavorite(String userId, String storeId) async {
+    await _db.from('store_favorites').upsert(
+      {'user_id': userId, 'store_id': storeId},
+      onConflict: 'user_id,store_id',
+      ignoreDuplicates: true,
+    );
+  }
+
+  /// 즐겨찾기 삭제.
+  Future<void> removeFavorite(String userId, String storeId) async {
+    await _db
+        .from('store_favorites')
+        .delete()
+        .match({'user_id': userId, 'store_id': storeId});
+  }
+
+  /// 내가 작성한 리뷰 전체 (최신순) — 매장명 포함. 마이페이지용.
+  Future<List<MyReview>> myReviews(String userId, {int limit = 100}) async {
+    final rows = await _db
+        .from('store_reviews')
+        .select('id, store_id, is_recommended, content, created_at, stores(name)')
+        .eq('user_id', userId)
+        .eq('is_active', true)
+        .order('created_at', ascending: false)
+        .limit(limit);
+    return rows.map((m) => MyReview.fromMap(m)).toList();
   }
 
   /// 내가 이 매장에 쓴 리뷰 (없으면 null) — 작성/수정 화면 프리필용.

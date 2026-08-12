@@ -26,7 +26,7 @@ ANON = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImF
 OUTPUT_DIR = Path(__file__).parent / "output"
 OUTPUT_DIR.mkdir(exist_ok=True)
 
-BRANDS = ["제로연구소", "제로플러스", "제로초이스"]
+BRANDS = ["제로스토어", "제로연구소", "제로플러스", "제로초이스"]
 DISTRICTS = [
     "종로구", "중구", "용산구", "성동구", "광진구", "동대문구", "중랑구",
     "성북구", "강북구", "도봉구", "노원구", "은평구", "서대문구", "마포구",

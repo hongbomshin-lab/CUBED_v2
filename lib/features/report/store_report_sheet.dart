@@ -1,8 +1,11 @@
+import 'dart:typed_data';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/theme.dart';
 import '../../providers/providers.dart';
+import 'menu_photo_field.dart';
 
 /// 매장 제보 바텀시트.
 /// 이름(필수) + 네이버/카카오 URL(선택) + 사진 URL(선택, 여러 개) 만 받고,
@@ -18,6 +21,9 @@ class _StoreReportSheetState extends ConsumerState<StoreReportSheet> {
   final _name = TextEditingController();
   final _placeUrl = TextEditingController();
   final _photoUrls = TextEditingController();
+
+  /// 압축까지 끝낸 메뉴판 사진(메모리). 선택 전엔 null.
+  Uint8List? _photo;
   bool _submitting = false;
 
   @override
@@ -55,7 +61,20 @@ class _StoreReportSheetState extends ConsumerState<StoreReportSheet> {
 
     setState(() => _submitting = true);
     try {
-      await ref.read(storeRepositoryProvider).submitStoreReport(
+      final repo = ref.read(storeRepositoryProvider);
+      // 촬영/선택한 메뉴판 사진이 있으면 업로드해서 URL을 목록 맨 앞에 추가.
+      // 신규 매장이라 store_id가 없으므로 'new-store' 폴더에 저장.
+      final photo = _photo;
+      if (photo != null) {
+        final url = await repo.uploadMenuBoardPhoto(
+          folder: 'new-store',
+          userId: user.id,
+          bytes: photo,
+          millis: DateTime.now().millisecondsSinceEpoch,
+        );
+        photos.insert(0, url);
+      }
+      await repo.submitStoreReport(
             reportedBy: user.id,
             name: name,
             placeUrl: _placeUrl.text.trim(),
@@ -73,9 +92,11 @@ class _StoreReportSheetState extends ConsumerState<StoreReportSheet> {
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
+    return SingleChildScrollView(
       padding: EdgeInsets.only(
-        bottom: MediaQuery.of(context).viewInsets.bottom + 24,
+        bottom: MediaQuery.of(context).viewInsets.bottom +
+            MediaQuery.of(context).viewPadding.bottom +
+            24,
         left: 24,
         right: 24,
         top: 8,
@@ -105,6 +126,14 @@ class _StoreReportSheetState extends ConsumerState<StoreReportSheet> {
             controller: _placeUrl,
             hint: '예) https://naver.me/...  (선택)',
             keyboardType: TextInputType.url,
+          ),
+          const SizedBox(height: 14),
+          const Text('메뉴판 사진',
+              style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700)),
+          const SizedBox(height: 6),
+          MenuPhotoField(
+            photo: _photo,
+            onChanged: (bytes) => setState(() => _photo = bytes),
           ),
           const SizedBox(height: 14),
           _Field(
