@@ -23,28 +23,6 @@ void main() {
     expect(price.promoLabel, '묶음');
   });
 
-  test('정가 대비 개당 할인율을 계산한다', () {
-    final deal = HotDealItem(
-      offer: ProductPrice(
-        id: 'price-1',
-        productId: 'product-1',
-        catalogProductKey: 'product:product-1',
-        catalogName: '저당 초콜릿 초코바',
-        channel: 'brand_mall',
-        store: '라라스윗 공식몰',
-        price: 20900,
-        unitCount: 8,
-        promoType: 'bundle',
-        fetchedAt: fetchedAt,
-      ),
-      productId: 'product-1',
-      name: '저당 초콜릿 초코바',
-      regularUnitPrice: 3300,
-    );
-
-    expect(deal.discountRate, 21);
-  });
-
   test('행사명과 구매 조건을 DB 응답에서 읽는다', () {
     final price = ProductPrice.fromMap({
       'id': 'price-2',

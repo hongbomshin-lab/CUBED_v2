@@ -77,27 +77,3 @@ class ProductPrice {
         fetchedAt: DateTime.parse(map['fetched_at'] as String),
       );
 }
-
-class HotDealItem {
-  const HotDealItem({
-    required this.offer,
-    required this.productId,
-    required this.name,
-    this.brand,
-    this.imageFile,
-    this.regularUnitPrice,
-  });
-
-  final ProductPrice offer;
-  final String productId;
-  final String name;
-  final String? brand;
-  final String? imageFile;
-  final int? regularUnitPrice;
-
-  int? get discountRate {
-    final regular = regularUnitPrice;
-    if (regular == null || regular <= offer.unitPrice) return null;
-    return ((regular - offer.unitPrice) / regular * 100).round();
-  }
-}
