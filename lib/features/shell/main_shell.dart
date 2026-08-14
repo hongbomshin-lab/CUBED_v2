@@ -1,4 +1,6 @@
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 import '../../core/theme.dart';
 import '../account/account_screen.dart';
@@ -20,7 +22,8 @@ class _MainShellState extends State<MainShell> {
 
   static const _screens = [
     HomeScreen(),
-    MapScreen(),
+    // 네이버 지도 SDK는 웹 미지원 — 웹 프리뷰에서는 안내 화면으로 대체
+    if (kIsWeb) _MapUnavailable() else MapScreen(),
     HotDealsScreen(),
     AccountScreen(),
   ];
@@ -32,36 +35,136 @@ class _MainShellState extends State<MainShell> {
         index: _index,
         children: _screens,
       ),
-      bottomNavigationBar: NavigationBar(
-        selectedIndex: _index,
-        onDestinationSelected: (i) => setState(() => _index = i),
-        backgroundColor: CubedColors.surface,
-        indicatorColor: CubedColors.brand.withValues(alpha: 0.12),
-        labelBehavior: NavigationDestinationLabelBehavior.alwaysShow,
-        destinations: const [
-          NavigationDestination(
-            icon: Icon(Icons.analytics_outlined),
-            selectedIcon: Icon(Icons.analytics_rounded, color: CubedColors.brand),
-            label: '제품분석',
-          ),
-          NavigationDestination(
-            icon: Icon(Icons.map_outlined),
-            selectedIcon: Icon(Icons.map_rounded, color: CubedColors.brand),
-            label: '저당맵',
-          ),
-          NavigationDestination(
-            icon: Icon(Icons.local_fire_department_outlined),
-            selectedIcon: Icon(Icons.local_fire_department_rounded,
-                color: CubedColors.brand),
-            label: '핫딜',
-          ),
-          NavigationDestination(
-            icon: Icon(Icons.person_outline_rounded),
-            selectedIcon:
-                Icon(Icons.person_rounded, color: CubedColors.brand),
-            label: '마이',
-          ),
+      bottomNavigationBar: _Dock(
+        index: _index,
+        onSelect: (i) {
+          if (i != _index) HapticFeedback.selectionClick();
+          setState(() => _index = i);
+        },
+      ),
+    );
+  }
+}
+
+class _MapUnavailable extends StatelessWidget {
+  const _MapUnavailable();
+  @override
+  Widget build(BuildContext context) {
+    return const Scaffold(
+      body: Center(
+        child: Text('저당맵은 모바일 앱에서 이용할 수 있어요',
+            style: TextStyle(color: CubedColors.inkSoft)),
+      ),
+    );
+  }
+}
+
+/// 커스텀 하단 독 — 선택 탭은 잉크 필 + 라임 아이콘.
+class _Dock extends StatelessWidget {
+  const _Dock({required this.index, required this.onSelect});
+  final int index;
+  final ValueChanged<int> onSelect;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      decoration: const BoxDecoration(
+        color: CubedColors.surface,
+        borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+        boxShadow: [
+          BoxShadow(
+              color: Color(0x1410231B),
+              blurRadius: 24,
+              offset: Offset(0, -6)),
         ],
+      ),
+      child: SafeArea(
+        top: false,
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(12, 10, 12, 8),
+          child: Row(
+            children: [
+              _DockItem(
+                icon: Icons.troubleshoot_rounded,
+                label: '제품분석',
+                selected: index == 0,
+                onTap: () => onSelect(0),
+              ),
+              _DockItem(
+                icon: Icons.map_rounded,
+                label: '저당맵',
+                selected: index == 1,
+                onTap: () => onSelect(1),
+              ),
+              _DockItem(
+                icon: Icons.local_fire_department_rounded,
+                label: '핫딜',
+                selected: index == 2,
+                onTap: () => onSelect(2),
+              ),
+              _DockItem(
+                icon: Icons.person_rounded,
+                label: '마이',
+                selected: index == 3,
+                onTap: () => onSelect(3),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _DockItem extends StatelessWidget {
+  const _DockItem({
+    required this.icon,
+    required this.label,
+    required this.selected,
+    required this.onTap,
+  });
+  final IconData icon;
+  final String label;
+  final bool selected;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Expanded(
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(18),
+        child: Semantics(
+          selected: selected,
+          button: true,
+          label: label,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              AnimatedContainer(
+                duration: const Duration(milliseconds: 220),
+                curve: Curves.easeOutCubic,
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 20, vertical: 6),
+                decoration: BoxDecoration(
+                  color: selected ? CubedColors.ink : Colors.transparent,
+                  borderRadius: BorderRadius.circular(999),
+                ),
+                child: Icon(icon,
+                    size: 22,
+                    color:
+                        selected ? CubedColors.lime : CubedColors.inkSoft),
+              ),
+              const SizedBox(height: 4),
+              Text(label,
+                  style: TextStyle(
+                    fontSize: 11,
+                    fontWeight: selected ? FontWeight.w800 : FontWeight.w600,
+                    color: selected ? CubedColors.ink : CubedColors.inkSoft,
+                  )),
+            ],
+          ),
+        ),
       ),
     );
   }

@@ -22,8 +22,8 @@ class VerdictHero extends StatelessWidget {
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         color: c.withValues(alpha: 0.08),
-        borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: c.withValues(alpha: 0.3)),
+        borderRadius: BorderRadius.circular(CubedFx.radiusHero),
+        border: Border.all(color: c.withValues(alpha: 0.18)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -45,9 +45,9 @@ class VerdictHero extends StatelessWidget {
             Container(
               width: double.infinity,
               padding: const EdgeInsets.all(14),
-              decoration: BoxDecoration(
+              decoration: const BoxDecoration(
                 color: Colors.white,
-                borderRadius: BorderRadius.circular(14),
+                borderRadius: BorderRadius.all(Radius.circular(16)),
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -147,7 +147,12 @@ class _GradeBadge extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(gt.badge, style: TextStyle(color: c, fontWeight: FontWeight.w900, fontSize: 22)),
+        Text(gt.badge,
+            style: TextStyle(
+                color: c,
+                fontWeight: FontWeight.w800,
+                fontSize: 24,
+                letterSpacing: -0.5)),
         const SizedBox(height: 2),
         Text(gt.desc, style: const TextStyle(color: CubedColors.inkSoft, fontSize: 13, height: 1.4)),
       ],
@@ -178,7 +183,7 @@ class _SignalLights extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(6),
       decoration: BoxDecoration(
-        color: const Color(0xFF20242A),
+        color: CubedColors.ink,
         borderRadius: BorderRadius.circular(16),
       ),
       child: Column(children: [dot(Grade.caution), dot(Grade.mid), dot(Grade.low)]),
