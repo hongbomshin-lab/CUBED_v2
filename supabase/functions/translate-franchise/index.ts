@@ -74,9 +74,11 @@ function systemPrompt(lang: string): string {
   return `You translate Korean café menu names into ${LANG_LABEL[lang]}.
 
 Output format (STRICT):
-- ONLY a JSON array: [{"ko":"<original>","t":"<translation>"}]
-- One object per input item, SAME order, and "ko" must be the EXACT input string.
-- No explanations, no markdown fences, no extra keys.
+- The input is a numbered list. Output EXACTLY one line per input item.
+- Each line: the number, a period, a space, then ONLY the translation.
+    1. First translation
+    2. Second translation
+- Same count, same order. No quotes, no JSON, no markdown, no commentary.
 
 Accuracy rules — this is a food menu, a wrong ingredient is a serious error:
 - Translate the ACTUAL ingredients. Never substitute a different flavor
@@ -107,7 +109,10 @@ async function translateBatch(
       model: MODEL,
       messages: [
         { role: "system", content: systemPrompt(lang) },
-        { role: "user", content: JSON.stringify(names) },
+        {
+          role: "user",
+          content: names.map((n, i) => `${i + 1}. ${n}`).join("\n"),
+        },
       ],
       max_tokens: 2048,
       temperature: 0.1,
@@ -118,25 +123,21 @@ async function translateBatch(
   }
   const data = await res.json();
   const text: string = data?.choices?.[0]?.message?.content ?? "";
-  // 모델이 코드펜스를 붙이는 경우 대비
-  const jsonText = text.replace(/^```(?:json)?\s*|\s*```$/g, "").trim();
 
-  let parsed: unknown;
-  try {
-    parsed = JSON.parse(jsonText);
-  } catch {
-    const m = /\[[\s\S]*\]/.exec(jsonText);
-    if (!m) throw new Error(`JSON 파싱 실패: ${jsonText.slice(0, 150)}`);
-    parsed = JSON.parse(m[0]);
-  }
-
+  // "1. 번역" 형태를 줄 단위로 파싱.
+  // JSON 을 쓰지 않는 이유: 번역문에 따옴표·아포스트로피가 섞이면 모델이 이스케이프를
+  // 자주 틀려 배치 전체가 파싱 실패했다(실측). 줄 포맷은 그 문제가 없다.
   const out = new Map<string, string>();
-  if (!Array.isArray(parsed)) return out;
-  for (const row of parsed) {
-    const ko = (row?.ko ?? "").toString().trim();
-    const t = (row?.t ?? "").toString().trim();
-    // 원문에 없는 키(환각)는 버린다
-    if (ko && t && names.includes(ko)) out.set(ko, t);
+  const numbered = /^\s*(\d+)\s*[.)]\s*(.+?)\s*$/;
+  for (const line of text.split("\n")) {
+    const m = numbered.exec(line);
+    if (!m) continue;
+    const idx = parseInt(m[1], 10) - 1;
+    const value = m[2].replace(/^["'`]|["'`]$/g, "").trim();
+    if (idx >= 0 && idx < names.length && value) out.set(names[idx], value);
+  }
+  if (out.size === 0) {
+    throw new Error(`응답 파싱 실패: ${text.slice(0, 150)}`);
   }
   return out;
 }
@@ -162,20 +163,24 @@ Deno.serve(async (req) => {
 
   const startedAt = Date.now();
   const langs = onlyLang ? [onlyLang] : ["en", "ja", "zh"];
-  const result: Record<string, { done: number; failed: number }> = {};
+  const result: Record<string, { done: number; failed: number; errors: string[] }> = {};
   let processed = 0;
   let timedOut = false;
 
   for (const lang of langs) {
     if (!LANG_LABEL[lang]) continue;
-    result[lang] = { done: 0, failed: 0 };
+    result[lang] = { done: 0, failed: 0, errors: [] };
+
+    // 실패한 배치를 건너뛰기 위한 오프셋.
+    // 성공분은 todo 뷰에서 빠지므로 정상 흐름에선 0 유지.
+    let offset = 0;
 
     while (processed < limit && !timedOut) {
       const { data: todo, error } = await supabase
         .from("franchise_translation_todo")
         .select("source")
         .eq("lang", lang)
-        .limit(BATCH);
+        .range(offset, offset + BATCH - 1);
       if (error) {
         return new Response(JSON.stringify({ error: error.message }), {
           status: 500,
@@ -202,12 +207,17 @@ Deno.serve(async (req) => {
         }
         result[lang].done += rows.length;
         result[lang].failed += names.length - rows.length;
-        // 한 건도 못 얻으면 무한루프가 되므로 중단
-        if (rows.length === 0) break;
+        // 한 건도 못 얻은 배치는 건너뛴다(같은 배치 무한 재시도 방지)
+        if (rows.length === 0) {
+          if (result[lang].errors.length < 3) result[lang].errors.push("매칭 0건(모델 응답 형식 확인 필요)");
+          offset += BATCH;
+        }
       } catch (err) {
-        console.error(`[${lang}] 배치 실패:`, String(err));
+        // 배치 하나가 죽어도 전체를 멈추지 않는다 — 다음 배치로 진행
+        console.error(`[${lang}] 배치 실패(건너뜀 offset=${offset}):`, String(err));
+        if (result[lang].errors.length < 3) result[lang].errors.push(String(err).slice(0, 300));
         result[lang].failed += names.length;
-        break;
+        offset += BATCH;
       }
 
       processed += names.length;
