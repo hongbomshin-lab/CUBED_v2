@@ -8,7 +8,7 @@
 -- 채우는 경로:
 --   ① 이 마이그레이션의 brand/size 시드(수작업 검수본)
 --   ② scripts/output/franchise_i18n_en_seed.sql (원본 CSV name_en 유래)
---   ③ translate-franchise Edge Function (Gemini 배치 — 나머지 자동 번역)
+--   ③ translate-franchise Edge Function (CLOVA 배치 — 나머지 자동 번역)
 -- ============================================================
 
 create table if not exists public.franchise_translations (
@@ -83,9 +83,9 @@ insert into public.franchise_translations (kind, source, lang, value, is_reviewe
   ('brand', '컴포즈커피',   'en', 'COMPOSE COFFEE',   true),
   ('brand', '컴포즈커피',   'ja', 'COMPOSE COFFEE',   true),
   ('brand', '컴포즈커피',   'zh', 'COMPOSE COFFEE',   true),
-  ('brand', '빽다방',       'en', "PAIK'S COFFEE",    true),
-  ('brand', '빽다방',       'ja', "PAIK'S COFFEE",    true),
-  ('brand', '빽다방',       'zh', "PAIK'S COFFEE",    true),
+  ('brand', '빽다방',       'en', 'PAIK''S COFFEE',    true),
+  ('brand', '빽다방',       'ja', 'PAIK''S COFFEE',    true),
+  ('brand', '빽다방',       'zh', 'PAIK''S COFFEE',    true),
   ('brand', '이디야',       'en', 'EDIYA COFFEE',     true),
   ('brand', '이디야',       'ja', 'EDIYA COFFEE',     true),
   ('brand', '이디야',       'zh', 'EDIYA COFFEE',     true),
