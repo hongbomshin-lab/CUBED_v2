@@ -26,7 +26,7 @@ const supabase = createClient(
 );
 
 /** 한 번의 LLM 호출에 넣을 메뉴 수. 너무 크면 누락·잘림이 생긴다. */
-const BATCH = 25;
+const BATCH = 15;
 /** 이 시간을 넘기면 남은 건 다음 호출로 미룬다(Edge 컴퓨트 한도 회피). */
 const TIME_BUDGET_MS = 180_000;
 
@@ -36,19 +36,60 @@ const LANG_LABEL: Record<string, string> = {
   zh: "Simplified Chinese (简体中文)",
 };
 
+/** 오역이 잦았던 카페 용어 고정 사전 — 프롬프트에 주입해 환각을 막는다. */
+const GLOSSARY: Record<string, Record<string, string>> = {
+  en: {
+    "콜드브루": "Cold Brew", "콜드폼": "Cold Foam", "헤이즐넛": "Hazelnut",
+    "플랫치노": "Frappuccino-style blended", "빽스치노": "Bbaksccino",
+    "생강차": "Ginger Tea", "헛개": "Oriental Raisin", "막걸리향": "Makgeolli-flavored",
+    "흑당": "Brown Sugar", "말차": "Matcha", "쑥": "Mugwort", "유자": "Yuzu",
+    "자몽": "Grapefruit", "리치": "Lychee", "곡물": "Grain", "미숫가루": "Misugaru",
+    "달고나": "Dalgona", "아인슈페너": "Einspänner", "제로슈가": "Zero Sugar",
+    "스무디": "Smoothie", "에이드": "Ade", "디카페인": "Decaf",
+  },
+  ja: {
+    "콜드브루": "コールドブリュー", "콜드폼": "コールドフォーム", "헤이즐넛": "ヘーゼルナッツ",
+    "플랫치노": "フラペチーノ風", "빽스치노": "ベクスチーノ",
+    "생강차": "生姜茶", "헛개": "ケンポナシ", "막걸리향": "マッコリ風味",
+    "흑당": "黒糖", "말차": "抹茶", "쑥": "ヨモギ", "유자": "ゆず",
+    "자몽": "グレープフルーツ", "리치": "ライチ", "곡물": "穀物", "미숫가루": "ミスッカル",
+    "달고나": "ダルゴナ", "아인슈페너": "アインシュペナー", "제로슈가": "ゼロシュガー",
+    "스무디": "スムージー", "에이드": "エード", "디카페인": "デカフェ",
+  },
+  zh: {
+    "콜드브루": "冷萃咖啡", "콜드폼": "冷泡沫", "헤이즐넛": "榛果",
+    "플랫치노": "星冰乐风味", "빽스치노": "白斯奇诺",
+    "생강차": "生姜茶", "헛개": "枳椇", "막걸리향": "马格利风味",
+    "흑당": "黑糖", "말차": "抹茶", "쑥": "艾草", "유자": "柚子",
+    "자몽": "西柚", "리치": "荔枝", "곡물": "谷物", "미숫가루": "米谷粉",
+    "달고나": "达尔戈纳", "아인슈페너": "维也纳咖啡", "제로슈가": "零糖",
+    "스무디": "冰沙", "에이드": "气泡饮", "디카페인": "低因",
+  },
+};
+
 function systemPrompt(lang: string): string {
+  const glossary = Object.entries(GLOSSARY[lang] ?? {})
+    .map(([ko, t]) => `  ${ko} = ${t}`)
+    .join("\n");
   return `You translate Korean café menu names into ${LANG_LABEL[lang]}.
 
-Rules:
-- Output ONLY a JSON array of objects: [{"ko":"<original>","t":"<translation>"}]
-- Keep the SAME number of items and the EXACT original Korean string in "ko".
-- These are beverage/dessert menu items from Korean coffee chains.
-- Translate meaning, not sound, when the word is a common food term
-  (아메리카노 → Americano, 자몽 → Grapefruit, 흑당 → Brown Sugar, 라떼 → Latte).
-- Keep brand/product proper nouns recognizable; romanize only when there is no
-  common equivalent (헛개 → Oriental Raisin).
-- Keep size/count tokens as-is when present (1L, 500ml, 2개입).
-- No explanations, no markdown fences, no extra keys.`;
+Output format (STRICT):
+- ONLY a JSON array: [{"ko":"<original>","t":"<translation>"}]
+- One object per input item, SAME order, and "ko" must be the EXACT input string.
+- No explanations, no markdown fences, no extra keys.
+
+Accuracy rules — this is a food menu, a wrong ingredient is a serious error:
+- Translate the ACTUAL ingredients. Never substitute a different flavor
+  (ginger is NOT cinnamon, chocolate is NOT caramel, strawberry is NOT soda).
+- If a token is unfamiliar, transliterate it faithfully rather than guessing
+  a similar-sounding product.
+- Keep size/count/volume tokens as they are (1L, 500ml, 2개입, BASIC).
+- Leading markers stay attached to the translated name if present
+  (I-, H-, (HOT), ICED).
+- Character/IP names are transliterated, not translated.
+
+Fixed glossary — you MUST use these exact equivalents:
+${glossary}`;
 }
 
 async function translateBatch(
