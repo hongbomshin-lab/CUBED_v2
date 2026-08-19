@@ -13,6 +13,7 @@ import '../diary/eaten_today_button.dart';
 import '../prices/price_comparison_section.dart';
 import 'widgets/portion_slider.dart';
 import 'widgets/social_section.dart';
+import 'widgets/sugar_profile_sheet.dart';
 import 'widgets/sweetener_chips.dart';
 import 'widgets/verdict_hero.dart';
 
@@ -22,13 +23,17 @@ class ResultScreen extends ConsumerWidget {
       required this.product,
       this.submissionImagePath,
       this.priceCatalogKey,
-      this.priceCatalogName});
+      this.priceCatalogName,
+      this.sugarUnknown = false});
   final Product product;
 
   /// 촬영(OCR) 제품의 submission-images 폴더 uuid — 먹은기록 썸네일용
   final String? submissionImagePath;
   final String? priceCatalogKey;
   final String? priceCatalogName;
+
+  /// OCR에서 당류가 미표기(추측 금지 null)였던 임시 제품 — 개인 당류 판정 ⚪ 처리용
+  final bool sugarUnknown;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -43,6 +48,7 @@ class ResultScreen extends ConsumerWidget {
           submissionImagePath: submissionImagePath,
           priceCatalogKey: priceCatalogKey,
           priceCatalogName: priceCatalogName,
+          sugarUnknown: sugarUnknown,
         ),
       ),
     );
@@ -55,11 +61,13 @@ class _Body extends ConsumerWidget {
     this.submissionImagePath,
     this.priceCatalogKey,
     this.priceCatalogName,
+    this.sugarUnknown = false,
   });
   final Interpretation it;
   final String? submissionImagePath;
   final String? priceCatalogKey;
   final String? priceCatalogName;
+  final bool sugarUnknown;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -71,7 +79,13 @@ class _Body extends ConsumerWidget {
         const SizedBox(height: 16),
 
         // ── 1층: 답 + 이유 (VerdictHero가 판정 스트립·불릿·핵심 수치 통합)
-        VerdictHero(it: it),
+        VerdictHero(it: it, sugarUnknown: sugarUnknown),
+
+        // 프로필 미설정 시 온보딩 배너 — 응답하면 히어로가 즉시 개인 판정으로 교체
+        if (ref.watch(sugarProfileProvider) == null && !sugarUnknown) ...[
+          const SizedBox(height: 10),
+          const _PersonalizeBanner(),
+        ],
 
         // 단맛 레시피 한 줄 (다중 조합 규칙 매칭 시)
         if (it.recipeCombo != null) ...[
@@ -183,6 +197,45 @@ class _ProductHeader extends StatelessWidget {
   }
 }
 
+/// "이게 나한테 많은 걸까요?" — 당류 프로필 온보딩 진입 배너.
+class _PersonalizeBanner extends StatelessWidget {
+  const _PersonalizeBanner();
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      onTap: () => showSugarProfileSheet(context),
+      borderRadius: BorderRadius.circular(14),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+        decoration: BoxDecoration(
+          color: CubedColors.inkCard,
+          borderRadius: BorderRadius.circular(14),
+        ),
+        child: const Row(
+          children: [
+            Text('🤔', style: TextStyle(fontSize: 16)),
+            SizedBox(width: 8),
+            Expanded(
+              child: Text('이게 나한테 많은 걸까요?',
+                  style: TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.w800,
+                      fontSize: 14)),
+            ),
+            Text('내 기준 만들기',
+                style: TextStyle(
+                    color: CubedColors.lime,
+                    fontWeight: FontWeight.w700,
+                    fontSize: 12)),
+            Icon(Icons.chevron_right_rounded,
+                size: 18, color: CubedColors.lime),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
 /// 다중 조합 규칙 → "단맛 레시피" 한 줄 아이덴티티. 탭하면 조합 설명 시트.
 class _RecipeLine extends StatelessWidget {
   const _RecipeLine({required this.combo});
@@ -278,6 +331,7 @@ class _NumbersSection extends StatelessWidget {
             style: TextStyle(color: CubedColors.inkSoft, fontSize: 12)),
         children: [
           PortionSlider(
+              productId: it.product.productId,
               netCarb: it.netCarb,
               kcal: it.product.kcal,
               unitDesc: it.product.unitDesc),

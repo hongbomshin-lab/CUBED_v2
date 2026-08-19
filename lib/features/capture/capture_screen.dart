@@ -30,6 +30,35 @@ class CaptureScreen extends ConsumerWidget {
     if (file == null) return;
     final bytes = await file.readAsBytes();
     ref.read(captureControllerProvider.notifier).setImage(slot, bytes);
+    // 전면샷이면 등록 제품 빠른 매칭 시도 — 성공 시 나머지 2장 생략
+    if (slot == CaptureSlot.full && context.mounted) {
+      _tryQuickMatch(context, ref, bytes);
+    }
+  }
+
+  /// 전면 1장 빠른 매칭 (비치명). 매칭되면 즉시 결과 화면, 실패하면 조용히 3장 플로우 계속.
+  Future<void> _tryQuickMatch(
+      BuildContext context, WidgetRef ref, Uint8List bytes) async {
+    final ctrl = ref.read(captureControllerProvider.notifier);
+    if (ref.read(captureControllerProvider).quickMatching) return;
+    ctrl.setQuickMatching(true);
+    try {
+      final result = await OcrService(ref.read(supabaseProvider))
+          .quickMatch(fullB64: base64Encode(bytes));
+      if (result != null && context.mounted) {
+        Navigator.of(context).pushReplacement(
+          MaterialPageRoute(
+              builder: (_) => ResultScreen(
+                  product: result.product,
+                  priceCatalogKey: result.priceCatalogKey,
+                  priceCatalogName: result.priceCatalogName)),
+        );
+        return;
+      }
+    } catch (_) {
+      // 비치명 — 현행 3장 플로우로 계속
+    }
+    if (context.mounted) ctrl.setQuickMatching(false);
   }
 
   Future<void> _submit(BuildContext context, WidgetRef ref) async {
@@ -51,7 +80,8 @@ class CaptureScreen extends ConsumerWidget {
                 product: result.product,
                 submissionImagePath: result.imagePath,
                 priceCatalogKey: result.priceCatalogKey,
-                priceCatalogName: result.priceCatalogName)),
+                priceCatalogName: result.priceCatalogName,
+                sugarUnknown: result.sugarUnknown)),
       );
     } catch (e) {
       ctrl.setError('$e');
@@ -83,6 +113,28 @@ class CaptureScreen extends ConsumerWidget {
                 const SizedBox(height: 4),
                 const Text('전체샷으로 카테고리를, 원재료·영양성분으로 대체당과 혈당 영향을 분석해요.',
                     style: TextStyle(color: CubedColors.inkSoft, height: 1.5)),
+                if (state.quickMatching) ...[
+                  const SizedBox(height: 12),
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 14, vertical: 11),
+                    decoration: BoxDecoration(
+                      color: CubedColors.brand.withValues(alpha: 0.08),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: const Row(children: [
+                      SizedBox(
+                          width: 14,
+                          height: 14,
+                          child: CircularProgressIndicator(
+                              strokeWidth: 2, color: CubedColors.brand)),
+                      SizedBox(width: 10),
+                      Text('등록된 제품인지 확인 중… 맞으면 바로 결과로 이동해요',
+                          style: TextStyle(
+                              color: CubedColors.brandDeep, fontSize: 13)),
+                    ]),
+                  ),
+                ],
                 const SizedBox(height: 16),
                 for (final slot in CaptureSlot.values)
                   _SlotCard(

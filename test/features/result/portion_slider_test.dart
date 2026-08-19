@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:cubed_app/features/result/widgets/portion_slider.dart';
 
@@ -19,12 +20,17 @@ void main() {
     expect(portionSummary(factor: 3, netCarb: 33.33, kcal: 50), '순탄수 100g · 150kcal');
   });
   testWidgets('긴 unitDesc도 오버플로 없이 렌더링', (tester) async {
-    await tester.pumpWidget(const MaterialApp(
-      home: Scaffold(
-        body: SizedBox(
-          width: 320,
-          child: PortionSlider(
-              netCarb: 4, kcal: 120, unitDesc: '1회분(123.456789012345678ml)'),
+    await tester.pumpWidget(const ProviderScope(
+      child: MaterialApp(
+        home: Scaffold(
+          body: SizedBox(
+            width: 320,
+            child: PortionSlider(
+                productId: 'p1',
+                netCarb: 4,
+                kcal: 120,
+                unitDesc: '1회분(123.456789012345678ml)'),
+          ),
         ),
       ),
     ));

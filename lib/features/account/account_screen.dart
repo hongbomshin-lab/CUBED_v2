@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/theme.dart';
 import '../../providers/providers.dart';
 import '../auth/login_screen.dart';
+import '../result/widgets/sugar_profile_sheet.dart';
 import 'favorite_stores_screen.dart';
 import 'my_comments_screen.dart';
 import 'my_reviews_screen.dart';
@@ -147,6 +148,11 @@ class _LoggedIn extends ConsumerWidget {
         const SizedBox(height: 12),
 
         // 메뉴
+        _MenuTile(
+          icon: Icons.tune_rounded,
+          label: '내 당류 기준',
+          onTap: () => showSugarProfileSheet(context),
+        ),
         _MenuTile(
           icon: Icons.favorite_border_rounded,
           label: '즐겨찾기 매장',

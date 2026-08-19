@@ -25,8 +25,8 @@ export function buildRecognitionBody(
     `${candidate.product_id}\t${candidate.name}`
   ).join("\n");
   const system = `너는 한국 식품 패키지 앞면을 보고 제품을 식별하는 분류기다.
-아래 라라스윗 후보 중 사진과 정확히 같은 SKU 하나만 고른다.
-맛, 제품 형태, 제품명 표기가 모두 일치하지 않거나 라라스윗 제품이 아니면 product_id를 null로 둔다.
+아래 등록 제품 후보 중 사진과 정확히 같은 SKU 하나만 고른다.
+브랜드, 맛, 제품 형태, 제품명 표기가 모두 일치하지 않거나 후보에 없는 제품이면 product_id를 null로 둔다.
 추측하지 말고 확신도를 0~1 숫자로 반환한다.
 출력은 코드펜스 없이 JSON 객체 하나만 쓴다:
 {"product_id":"후보 ID 또는 null","confidence":0.0,"reason":"짧은 한국어 근거"}
