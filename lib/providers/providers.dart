@@ -2,6 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../core/location_cache.dart';
+import '../core/sugar_profile.dart';
 import '../data/auth_repository.dart';
 import '../data/deal_repository.dart';
 import '../data/food_log_repository.dart';
@@ -190,6 +191,34 @@ final searchProvider =
   if (q.trim().isEmpty) return const [];
   return ref.watch(repositoryProvider).searchByName(q.trim());
 });
+
+/// 당류 개인화 프로필 (SharedPreferences, 서버 미동기화). null = 미설정.
+class SugarProfileController extends StateNotifier<SugarProfile?> {
+  SugarProfileController() : super(null) {
+    _load();
+  }
+  Future<void> _load() async {
+    try {
+      state = await SugarProfile.load();
+    } catch (_) {
+      // 프리퍼런스 불가 환경(위젯 테스트 등) — 미설정 유지
+    }
+  }
+
+  Future<void> save(SugarProfile p) async {
+    state = p;
+    await SugarProfile.save(p);
+  }
+}
+
+final sugarProfileProvider =
+    StateNotifierProvider<SugarProfileController, SugarProfile?>(
+  (ref) => SugarProfileController(),
+);
+
+/// 결과 화면 양 배수(제품별) — 양 슬라이더 ↔ 개인 당류 판정 히어로 실시간 연동용.
+final portionFactorProvider =
+    StateProvider.autoDispose.family<double, String>((ref, productId) => 1.0);
 
 /// 먹은 기록 데이터 접근
 final foodLogRepositoryProvider = Provider<FoodLogRepository>(
