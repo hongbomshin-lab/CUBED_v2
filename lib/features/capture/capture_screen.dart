@@ -30,13 +30,16 @@ class CaptureScreen extends ConsumerWidget {
     if (file == null) return;
     final bytes = await file.readAsBytes();
     ref.read(captureControllerProvider.notifier).setImage(slot, bytes);
-    // 전면샷이면 등록 제품 빠른 매칭 시도 — 성공 시 나머지 2장 생략
-    if (slot == CaptureSlot.full && context.mounted) {
+    // 전면샷 단계면 등록 제품 빠른 매칭부터 — 매칭되면 나머지 2장 생략
+    if (slot == CaptureSlot.full &&
+        !ref.read(captureControllerProvider).quickChecked &&
+        context.mounted) {
       _tryQuickMatch(context, ref, bytes);
     }
   }
 
-  /// 전면 1장 빠른 매칭 (비치명). 매칭되면 즉시 결과 화면, 실패하면 조용히 3장 플로우 계속.
+  /// 전면 1장 빠른 매칭 (비치명). 매칭되면 즉시 결과 화면,
+  /// 실패하면 quickChecked로 전환해 나머지 2장 슬롯을 연다.
   Future<void> _tryQuickMatch(
       BuildContext context, WidgetRef ref, Uint8List bytes) async {
     final ctrl = ref.read(captureControllerProvider.notifier);
@@ -56,9 +59,9 @@ class CaptureScreen extends ConsumerWidget {
         return;
       }
     } catch (_) {
-      // 비치명 — 현행 3장 플로우로 계속
+      // 비치명 — 3장 플로우로 전환
     }
-    if (context.mounted) ctrl.setQuickMatching(false);
+    if (context.mounted) ctrl.markQuickChecked();
   }
 
   Future<void> _submit(BuildContext context, WidgetRef ref) async {
@@ -91,8 +94,11 @@ class CaptureScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final state = ref.watch(captureControllerProvider);
+    // 1단계: 전면 1장 → 빠른 매칭. 2단계(quickChecked): 미등록 확정 → 3장 플로우.
+    final slots =
+        state.quickChecked ? CaptureSlot.values : const [CaptureSlot.full];
     return Scaffold(
-      appBar: AppBar(title: const Text('사진으로 분석 (3장)')),
+      appBar: AppBar(title: const Text('사진으로 분석')),
       body: state.submitting
           ? const Center(
               child: Column(
@@ -108,11 +114,19 @@ class CaptureScreen extends ConsumerWidget {
           : ListView(
               padding: const EdgeInsets.all(20),
               children: [
-                const Text('아래 3장을 모두 촬영하면 분석돼요',
-                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800)),
+                Text(
+                    state.quickChecked
+                        ? '등록되지 않은 제품이에요'
+                        : '제품 앞면부터 찍어주세요',
+                    style: const TextStyle(
+                        fontSize: 18, fontWeight: FontWeight.w800)),
                 const SizedBox(height: 4),
-                const Text('전체샷으로 카테고리를, 원재료·영양성분으로 대체당과 혈당 영향을 분석해요.',
-                    style: TextStyle(color: CubedColors.inkSoft, height: 1.5)),
+                Text(
+                    state.quickChecked
+                        ? '원재료명·영양성분표까지 3장이 모이면 AI가 분석해요.'
+                        : '등록된 제품이면 한 장으로 바로 결과가 나와요.',
+                    style: const TextStyle(
+                        color: CubedColors.inkSoft, height: 1.5)),
                 if (state.quickMatching) ...[
                   const SizedBox(height: 12),
                   Container(
@@ -136,7 +150,7 @@ class CaptureScreen extends ConsumerWidget {
                   ),
                 ],
                 const SizedBox(height: 16),
-                for (final slot in CaptureSlot.values)
+                for (final slot in slots)
                   _SlotCard(
                     slot: slot,
                     index: slot.index + 1,
@@ -157,16 +171,21 @@ class CaptureScreen extends ConsumerWidget {
                     child: Text(state.error!, style: const TextStyle(color: CubedColors.caution)),
                   ),
                 ],
-                const SizedBox(height: 16),
-                FilledButton.icon(
-                  style: FilledButton.styleFrom(
-                    backgroundColor: CubedColors.brand,
-                    padding: const EdgeInsets.symmetric(vertical: 16),
+                if (state.quickChecked) ...[
+                  const SizedBox(height: 16),
+                  FilledButton.icon(
+                    style: FilledButton.styleFrom(
+                      backgroundColor: CubedColors.brand,
+                      padding: const EdgeInsets.symmetric(vertical: 16),
+                    ),
+                    onPressed:
+                        state.isComplete ? () => _submit(context, ref) : null,
+                    icon: const Icon(Icons.auto_awesome),
+                    label: Text(state.isComplete
+                        ? '분석·제보하기'
+                        : '3장을 모두 촬영해주세요 (${state.count}/3)'),
                   ),
-                  onPressed: state.isComplete ? () => _submit(context, ref) : null,
-                  icon: const Icon(Icons.auto_awesome),
-                  label: Text(state.isComplete ? '분석·제보하기' : '3장을 모두 촬영해주세요 (${state.count}/3)'),
-                ),
+                ],
               ],
             ),
     );
