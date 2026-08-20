@@ -68,55 +68,79 @@ const GLOSSARY: Record<string, Record<string, string>> = {
 };
 
 /**
- * 재료 정합성 규칙 — 원문에 왼쪽 낱말이 있으면 번역문에 오른쪽 후보 중
- * 하나가 반드시 있어야 한다. 메뉴 번역에서 가장 치명적인 오류가
- * '재료 바꿔치기'(딸기→체리, 바닐라→초콜릿)라 기계적으로 걸러낸다.
- * 검증 실패분은 적재하지 않고 1건씩 재요청한다.
+ * 재료 정합성 규칙 — 원문에 재료어가 있으면 번역문에 대응어가 있어야 한다.
+ * 메뉴 번역에서 가장 치명적인 오류가 '재료 바꿔치기'(딸기→체리, 바닐라→초콜릿)라
+ * 기계적으로 걸러낸다. 검증 실패분은 적재하지 않고 1건씩 재요청한다.
+ *
+ * 각 항목: 한국어 낱말 / en·ja·zh 허용 표기 / (선택) 이 낱말이 있으면 규칙 제외.
+ * 허용 표기의 **첫 번째가 표준형**이고, 그대로 프롬프트 용어집에 주입된다
+ * — 검증과 지시가 어긋나면 모델이 영원히 못 맞춘다.
+ * 나머지는 정당한 이표기(한자·히라가나·가타카나)라 오탐을 막는 용도.
  */
-const INGREDIENTS: Array<[string[], string[], string[], string[]]> = [
-  [["레몬"], ["lemon"], ["レモン"], ["柠檬"]],
-  [["자몽"], ["grapefruit"], ["グレープフルーツ"], ["西柚", "葡萄柚"]],
-  [["딸기"], ["strawberry"], ["ストロベリー", "いちご", "イチゴ"], ["草莓"]],
-  [["초코", "초콜릿", "쇼콜라"], ["choco"], ["チョコ", "ショコラ"], ["巧克力"]],
-  [["망고"], ["mango"], ["マンゴー"], ["芒果"]],
-  [["바나나"], ["banana"], ["バナナ"], ["香蕉"]],
-  [["복숭아", "피치"], ["peach"], ["ピーチ", "桃"], ["桃"]],
-  [["블루베리"], ["blueberry"], ["ブルーベリー"], ["蓝莓"]],
-  [["사과", "애플"], ["apple"], ["アップル", "りんご", "リンゴ"], ["苹果"]],
-  [["포도", "그레이프"], ["grape"], ["グレープ", "ぶどう"], ["葡萄"]],
-  [["유자"], ["yuzu", "citron"], ["ゆず", "ユズ", "柚子"], ["柚子"]],
-  [["생강"], ["ginger"], ["生姜", "ジンジャー", "しょうが"], ["生姜", "姜"]],
-  [["녹차", "그린티", "말차"], ["green tea", "matcha"], ["抹茶", "緑茶", "グリーンティー"], ["绿茶", "抹茶"]],
-  [["홍차", "블랙티"], ["black tea"], ["紅茶", "ブラックティー"], ["红茶"]],
-  [["고구마"], ["sweet potato"], ["さつまいも", "スイートポテト"], ["红薯", "地瓜", "番薯"]],
-  [["감자"], ["potato"], ["じゃがいも", "ポテト"], ["土豆", "马铃薯"]],
-  [["우베", "타로"], ["ube", "taro"], ["ウベ", "タロ"], ["芋", "紫薯"]],
-  [["오트", "귀리"], ["oat"], ["オート", "オーツ"], ["燕麦"]],
-  [["아몬드"], ["almond"], ["アーモンド"], ["杏仁"]],
-  [["땅콩"], ["peanut"], ["ピーナッツ", "落花生"], ["花生"]],
-  [["코코넛"], ["coconut"], ["ココナッツ"], ["椰"]],
-  [["레드빈", "팥"], ["red bean"], ["あずき", "小豆", "レッドビーン"], ["红豆"]],
-  [["옥수수"], ["corn"], ["コーン", "とうもろこし"], ["玉米"]],
-  [["흑임자", "검은깨"], ["black sesame"], ["黒ごま", "ブラックセサミ"], ["黑芝麻"]],
-  [["수박"], ["watermelon"], ["スイカ", "西瓜"], ["西瓜"]],
-  [["파인애플"], ["pineapple"], ["パイナップル"], ["菠萝", "凤梨"]],
-  [["오렌지"], ["orange"], ["オレンジ"], ["橙", "橘"]],
-  [["라임"], ["lime"], ["ライム"], ["青柠", "莱姆"]],
-  [["체리"], ["cherry"], ["チェリー", "さくらんぼ"], ["樱桃"]],
-  [["멜론"], ["melon"], ["メロン"], ["蜜瓜", "甜瓜"]],
-  [["자두"], ["plum"], ["プラム", "すもも"], ["李", "梅"]],
-  [["대추"], ["jujube", "date"], ["なつめ"], ["红枣", "枣"]],
-  [["인절미"], ["injeolmi", "rice cake"], ["きなこ", "インジョルミ"], ["黄豆粉", "打糕"]],
-  [["카라멜", "캬라멜"], ["caramel"], ["キャラメル", "カラメル"], ["焦糖", "卡拉"]],
-  [["바닐라"], ["vanilla"], ["バニラ"], ["香草", "云呢拿"]],
-  [["헤이즐넛"], ["hazelnut"], ["ヘーゼルナッツ"], ["榛果", "榛子"]],
-  [["민트"], ["mint"], ["ミント"], ["薄荷"]],
-  [["복분자"], ["bokbunja", "raspberry"], ["ラズベリー", "ボクブンジャ"], ["覆盆子", "树莓"]],
-  [["요거트", "요구르트"], ["yogurt", "yoghurt"], ["ヨーグルト"], ["酸奶", "优格"]],
-  [["치즈"], ["cheese"], ["チーズ"], ["奶酪", "芝士"]],
-];
+type Rule = {
+  ko: string[];
+  en: string[];
+  ja: string[];
+  zh: string[];
+  except?: string[];
+};
 
-const LANG_COL: Record<string, number> = { en: 1, ja: 2, zh: 3 };
+const INGREDIENTS: Rule[] = [
+  { ko: ["레몬"], en: ["lemon"], ja: ["レモン"], zh: ["柠檬"] },
+  { ko: ["자몽"], en: ["grapefruit"], ja: ["グレープフルーツ"], zh: ["西柚", "葡萄柚"] },
+  // 산딸기는 라즈베리 — 딸기 규칙에서 뺀다.
+  { ko: ["산딸기"], en: ["raspberry"], ja: ["ラズベリー", "木苺"], zh: ["覆盆子", "树莓"] },
+  {
+    ko: ["딸기"],
+    en: ["strawberry"],
+    ja: ["ストロベリー", "いちご", "イチゴ", "苺"],
+    zh: ["草莓"],
+    except: ["산딸기"],
+  },
+  { ko: ["초코", "초콜릿", "쇼콜라"], en: ["choco"], ja: ["チョコ", "ショコラ"], zh: ["巧克力"] },
+  { ko: ["망고"], en: ["mango"], ja: ["マンゴー"], zh: ["芒果"] },
+  { ko: ["바나나"], en: ["banana"], ja: ["バナナ"], zh: ["香蕉"] },
+  { ko: ["복숭아", "피치"], en: ["peach"], ja: ["ピーチ", "桃"], zh: ["桃"] },
+  { ko: ["블루베리"], en: ["blueberry"], ja: ["ブルーベリー"], zh: ["蓝莓"] },
+  { ko: ["사과", "애플"], en: ["apple"], ja: ["アップル", "りんご", "リンゴ", "林檎"], zh: ["苹果"] },
+  { ko: ["포도", "그레이프"], en: ["grape"], ja: ["グレープ", "ぶどう", "ブドウ", "葡萄"], zh: ["葡萄"] },
+  { ko: ["유자"], en: ["yuzu", "citron", "yuja"], ja: ["ゆず", "ユズ", "柚子"], zh: ["柚子"] },
+  { ko: ["생강"], en: ["ginger"], ja: ["生姜", "ジンジャー", "しょうが", "ショウガ"], zh: ["生姜", "姜"] },
+  {
+    ko: ["녹차", "그린티", "말차"],
+    en: ["green tea", "matcha"],
+    ja: ["抹茶", "緑茶", "グリーンティー"],
+    zh: ["绿茶", "抹茶"],
+  },
+  { ko: ["홍차", "블랙티"], en: ["black tea"], ja: ["紅茶", "ブラックティー"], zh: ["红茶"] },
+  { ko: ["고구마"], en: ["sweet potato"], ja: ["さつまいも", "スイートポテト", "薩摩芋"], zh: ["红薯", "地瓜", "番薯"] },
+  { ko: ["감자"], en: ["potato"], ja: ["じゃがいも", "ポテト", "馬鈴薯"], zh: ["土豆", "马铃薯"] },
+  { ko: ["우베", "타로"], en: ["ube", "taro"], ja: ["ウベ", "タロ", "紫芋"], zh: ["芋", "紫薯"] },
+  { ko: ["오트", "귀리"], en: ["oat"], ja: ["オート", "オーツ", "燕麦"], zh: ["燕麦"] },
+  { ko: ["아몬드"], en: ["almond"], ja: ["アーモンド"], zh: ["杏仁"] },
+  { ko: ["땅콩"], en: ["peanut"], ja: ["ピーナッツ", "落花生"], zh: ["花生"] },
+  { ko: ["코코넛"], en: ["coconut"], ja: ["ココナッツ", "ココナツ"], zh: ["椰"] },
+  { ko: ["레드빈", "팥"], en: ["red bean"], ja: ["あずき", "小豆", "アズキ", "レッドビーン"], zh: ["红豆"] },
+  { ko: ["옥수수"], en: ["corn"], ja: ["コーン", "とうもろこし", "トウモロコシ"], zh: ["玉米"] },
+  { ko: ["흑임자", "검은깨"], en: ["black sesame"], ja: ["黒ごま", "黒胡麻", "ブラックセサミ"], zh: ["黑芝麻"] },
+  { ko: ["수박"], en: ["watermelon"], ja: ["スイカ", "西瓜"], zh: ["西瓜"] },
+  { ko: ["파인애플"], en: ["pineapple"], ja: ["パイナップル"], zh: ["菠萝", "凤梨"] },
+  { ko: ["오렌지"], en: ["orange"], ja: ["オレンジ"], zh: ["橙", "橘"] },
+  { ko: ["라임"], en: ["lime"], ja: ["ライム"], zh: ["青柠", "莱姆"] },
+  { ko: ["체리"], en: ["cherry"], ja: ["チェリー", "さくらんぼ", "桜桃"], zh: ["樱桃"] },
+  { ko: ["멜론"], en: ["melon"], ja: ["メロン"], zh: ["蜜瓜", "甜瓜"] },
+  { ko: ["자두"], en: ["plum"], ja: ["プラム", "すもも", "スモモ", "李"], zh: ["李", "梅"] },
+  // 대추는 なつめ·棗·大棗 가 모두 정당한 표기다(초기 규칙이 히라가나만 봐서 오탐).
+  { ko: ["대추"], en: ["jujube", "date"], ja: ["なつめ", "棗", "ナツメ"], zh: ["红枣", "枣", "大枣"] },
+  { ko: ["인절미"], en: ["injeolmi"], ja: ["きなこ", "きな粉", "インジョルミ"], zh: ["黄豆粉", "打糕", "米糕"] },
+  { ko: ["카라멜", "캬라멜"], en: ["caramel"], ja: ["キャラメル", "カラメル"], zh: ["焦糖", "卡拉"] },
+  { ko: ["바닐라"], en: ["vanilla"], ja: ["バニラ"], zh: ["香草", "云呢拿"] },
+  { ko: ["헤이즐넛"], en: ["hazelnut"], ja: ["ヘーゼルナッツ"], zh: ["榛果", "榛子"] },
+  { ko: ["민트"], en: ["mint"], ja: ["ミント", "薄荷"], zh: ["薄荷"] },
+  { ko: ["복분자"], en: ["bokbunja", "raspberry"], ja: ["ラズベリー", "ボクブンジャ"], zh: ["覆盆子", "树莓"] },
+  { ko: ["요거트", "요구르트"], en: ["yogurt", "yoghurt"], ja: ["ヨーグルト"], zh: ["酸奶", "优格"] },
+  { ko: ["치즈"], en: ["cheese"], ja: ["チーズ"], zh: ["奶酪", "芝士"] },
+];
 
 /** 재료가 뒤바뀌지 않았는지 검사. 문제가 없으면 null, 있으면 기대 후보 목록. */
 function ingredientMiss(
@@ -124,18 +148,36 @@ function ingredientMiss(
   source: string,
   value: string,
 ): string[] | null {
-  const col = LANG_COL[lang];
-  if (!col) return null;
+  if (lang !== "en" && lang !== "ja" && lang !== "zh") return null;
   const low = value.toLowerCase();
   for (const rule of INGREDIENTS) {
-    if (!rule[0].some((k) => source.includes(k))) continue;
-    const expected = rule[col] as string[];
+    if (rule.except?.some((k) => source.includes(k))) continue;
+    if (!rule.ko.some((k) => source.includes(k))) continue;
+    const expected = rule[lang];
     if (!expected.some((e) => low.includes(e.toLowerCase()))) return expected;
   }
   return null;
 }
 
-function systemPrompt(lang: string): string {
+/** 이 메뉴명에 걸리는 재료 규칙의 표준형만 뽑아 프롬프트에 넣는다. */
+function ingredientHints(lang: string, names: string[]): string {
+  if (lang !== "en" && lang !== "ja" && lang !== "zh") return "";
+  const hits = new Map<string, string>();
+  for (const rule of INGREDIENTS) {
+    for (const name of names) {
+      if (rule.except?.some((k) => name.includes(k))) continue;
+      if (rule.ko.some((k) => name.includes(k))) {
+        hits.set(rule.ko[0], rule[lang][0]);
+        break;
+      }
+    }
+  }
+  if (hits.size === 0) return "";
+  return "\n\nIngredients appearing in THIS batch — use exactly these:\n" +
+    [...hits].map(([ko, t]) => `  ${ko} = ${t}`).join("\n");
+}
+
+function systemPrompt(lang: string, names: string[]): string {
   const glossary = Object.entries(GLOSSARY[lang] ?? {})
     .map(([ko, t]) => `  ${ko} = ${t}`)
     .join("\n");
@@ -159,7 +201,7 @@ Accuracy rules — this is a food menu, a wrong ingredient is a serious error:
 - Character/IP names are transliterated, not translated.
 
 Fixed glossary — you MUST use these exact equivalents:
-${glossary}`;
+${glossary}${ingredientHints(lang, names)}`;
 }
 
 async function translateBatch(
@@ -176,7 +218,7 @@ async function translateBatch(
     body: JSON.stringify({
       model: MODEL,
       messages: [
-        { role: "system", content: systemPrompt(lang) },
+        { role: "system", content: systemPrompt(lang, names) },
         {
           role: "user",
           content: names.map((n, i) => `${i + 1}. ${n}`).join("\n"),
