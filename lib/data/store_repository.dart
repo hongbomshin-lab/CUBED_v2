@@ -4,6 +4,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'models/my_review.dart';
 import 'models/store.dart';
+import 'models/store_menu.dart';
 import 'models/store_review.dart';
 
 /// 매장 데이터 접근 (stores + store_photos).
@@ -104,6 +105,17 @@ class StoreRepository {
         .order('created_at', ascending: false)
         .limit(limit);
     return rows.map((m) => StoreReview.fromMap(m)).toList();
+  }
+
+  /// 매장 대표 메뉴 (저당 + 시그니처). 저당 메뉴를 먼저, 그 안에서 sort_order 순.
+  Future<List<StoreMenu>> menus(String storeId) async {
+    final rows = await _db
+        .from('store_menus')
+        .select()
+        .eq('store_id', storeId)
+        .order('kind', ascending: true) // low_sugar < signature (사전순)
+        .order('sort_order', ascending: true);
+    return rows.map((m) => StoreMenu.fromMap(m)).toList();
   }
 
   /// 내가 즐겨찾기한 store_id 집합 (하트 상태 표시용).

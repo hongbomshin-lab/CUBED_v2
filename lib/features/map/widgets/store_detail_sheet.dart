@@ -6,6 +6,7 @@ import 'package:url_launcher/url_launcher.dart';
 import '../../../core/location_cache.dart';
 import '../../../core/theme.dart';
 import '../../../data/models/store.dart';
+import '../../../data/models/store_menu.dart';
 import '../../../data/models/store_review.dart';
 import '../../../providers/providers.dart';
 import '../../auth/login_screen.dart';
@@ -331,6 +332,9 @@ class _StoreDetailSheetState extends ConsumerState<StoreDetailSheet>
 
                       const SizedBox(height: 16),
                       const Divider(color: CubedColors.line),
+
+                      // 대표 메뉴 — 탭에 묻히지 않도록 탭 위에 둔다.
+                      _MenuSection(storeId: s.id),
                     ],
                   ),
                 ),
@@ -456,6 +460,199 @@ class _Handle extends StatelessWidget {
           ),
         ),
       );
+}
+
+/// 매장 대표 메뉴 — 저당 메뉴(당류 강조) + 시그니처 메뉴.
+/// 자료가 없는 매장에서는 섹션 자체를 감춘다(빈 껍데기를 보여주지 않는다).
+class _MenuSection extends ConsumerWidget {
+  const _MenuSection({required this.storeId});
+  final String storeId;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final async = ref.watch(storeMenusProvider(storeId));
+    final menus = async.valueOrNull ?? const <StoreMenu>[];
+    if (menus.isEmpty) return const SizedBox.shrink();
+
+    final lowSugar = menus.where((m) => m.isLowSugar).toList();
+    final signature = menus.where((m) => !m.isLowSugar).toList();
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const SizedBox(height: 14),
+        const Text('대표 메뉴',
+            style: TextStyle(fontSize: 15, fontWeight: FontWeight.w800)),
+        const SizedBox(height: 10),
+        if (lowSugar.isNotEmpty) ...[
+          const _MenuGroupLabel(
+            icon: Icons.eco_rounded,
+            label: '저당 메뉴',
+            color: CubedColors.brand,
+          ),
+          for (final m in lowSugar) _MenuTile(menu: m),
+        ],
+        if (signature.isNotEmpty) ...[
+          if (lowSugar.isNotEmpty) const SizedBox(height: 10),
+          const _MenuGroupLabel(
+            icon: Icons.star_rounded,
+            label: '시그니처',
+            color: Color(0xFFE0A100),
+          ),
+          for (final m in signature) _MenuTile(menu: m),
+        ],
+        const SizedBox(height: 14),
+        const Divider(color: CubedColors.line),
+      ],
+    );
+  }
+}
+
+class _MenuGroupLabel extends StatelessWidget {
+  const _MenuGroupLabel({
+    required this.icon,
+    required this.label,
+    required this.color,
+  });
+  final IconData icon;
+  final String label;
+  final Color color;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 6),
+      child: Row(children: [
+        Icon(icon, size: 15, color: color),
+        const SizedBox(width: 5),
+        Text(label,
+            style: TextStyle(
+                fontSize: 12.5, fontWeight: FontWeight.w800, color: color)),
+      ]),
+    );
+  }
+}
+
+class _MenuTile extends StatelessWidget {
+  const _MenuTile({required this.menu});
+  final StoreMenu menu;
+
+  @override
+  Widget build(BuildContext context) {
+    // 보조 정보(칼로리·가격·기준량)는 있는 것만 이어 붙인다.
+    final sub = <String>[
+      if (menu.serving != null) menu.serving!,
+      if (menu.calories != null) '${_fmt(menu.calories!)} kcal',
+      if (menu.priceWon != null) '${_won(menu.priceWon!)}원',
+    ];
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 6),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(children: [
+                  Flexible(
+                    child: Text(menu.name,
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                            fontSize: 14, fontWeight: FontWeight.w700)),
+                  ),
+                  if (menu.isEstimated) ...[
+                    const SizedBox(width: 6),
+                    const _TinyBadge(text: '추정'),
+                  ],
+                ]),
+                if (sub.isNotEmpty || menu.note != null) ...[
+                  const SizedBox(height: 2),
+                  Text(
+                    [sub.join(' · '), if (menu.note != null) menu.note!]
+                        .where((s) => s.isNotEmpty)
+                        .join(' · '),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
+                        fontSize: 12, color: CubedColors.inkSoft),
+                  ),
+                ],
+              ],
+            ),
+          ),
+          const SizedBox(width: 10),
+          // 당류 — 미공개면 수치 대신 안내 문구(추정값을 지어내지 않는다).
+          if (menu.sugarUnknown)
+            const Text('정보 준비 중',
+                style: TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w600,
+                    color: CubedColors.inkSoft))
+          else
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.baseline,
+              textBaseline: TextBaseline.alphabetic,
+              children: [
+                Text('당 ',
+                    style: TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w700,
+                        color: _sugarColor(menu.sugarG!))),
+                Text(_fmt(menu.sugarG!),
+                    style: TextStyle(
+                        fontSize: 17,
+                        fontWeight: FontWeight.w900,
+                        height: 1,
+                        color: _sugarColor(menu.sugarG!))),
+                Text('g',
+                    style: TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w700,
+                        color: _sugarColor(menu.sugarG!))),
+              ],
+            ),
+        ],
+      ),
+    );
+  }
+
+  static String _fmt(double v) =>
+      v == v.roundToDouble() ? v.toInt().toString() : v.toStringAsFixed(1);
+
+  static String _won(int v) =>
+      v.toString().replaceAllMapped(RegExp(r'(\d)(?=(\d{3})+$)'), (m) => '${m[1]},');
+
+  /// 저당맵 기준과 같은 색 구간 (프랜차이즈 메뉴 카드와 일관).
+  static Color _sugarColor(double g) {
+    if (g <= 5) return CubedColors.brand;
+    if (g <= 15) return const Color(0xFFE0A100);
+    return const Color(0xFFD9534F);
+  }
+}
+
+class _TinyBadge extends StatelessWidget {
+  const _TinyBadge({required this.text});
+  final String text;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
+      decoration: BoxDecoration(
+        color: CubedColors.bg,
+        borderRadius: BorderRadius.circular(4),
+        border: Border.all(color: CubedColors.line),
+      ),
+      child: Text(text,
+          style: const TextStyle(
+              fontSize: 10,
+              fontWeight: FontWeight.w700,
+              color: CubedColors.inkSoft)),
+    );
+  }
 }
 
 class _InfoRow extends StatelessWidget {

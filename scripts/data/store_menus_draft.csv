@@ -1,0 +1,21 @@
+brand,name,kind,sugar_g,calories,price_won,serving,note,source_url,confidence
+샐러디,콥 샐러디,low_sugar,3.4,219.1,,215g,전 샐러디 메뉴 중 당류 최저,https://salady.com/pdf/220908_nutrition.pdf,official
+샐러디,고추장머쉬룸 웜볼,low_sugar,3.8,433.9,,365g,,https://salady.com/pdf/220908_nutrition.pdf,official
+샐러디,우삼겹 웜볼,low_sugar,5.1,409.9,,285g,,https://salady.com/pdf/220908_nutrition.pdf,official
+샐러디,우삼겹메밀면 샐러디,low_sugar,5.2,307.4,,305g,,https://salady.com/pdf/220908_nutrition.pdf,official
+샐러디,시저치킨 샐러디,signature,8.5,116.4,,160g,전 메뉴 중 최저 칼로리,https://salady.com/pdf/220908_nutrition.pdf,official
+슬로우캘리,애사비 에이드,low_sugar,0,0,,,당류·열량 0,https://www.slowcali.co.kr/bbs/content.php?co_id=menu,official
+슬로우캘리,연어 포케 (메밀면&샐러드),low_sugar,3.0,536.3,,,,https://www.slowcali.co.kr/bbs/content.php?co_id=menu,official
+슬로우캘리,크런치 시저 샐러드,low_sugar,3.1,189.9,,151g,,https://www.slowcali.co.kr/bbs/content.php?co_id=menu,official
+슬로우캘리,문어 포케 (현미밥&샐러드),low_sugar,3.4,398.2,,336g,,https://www.slowcali.co.kr/bbs/content.php?co_id=menu,official
+슬로우캘리,올인원 포케 (현미밥&샐러드),signature,3.4,453.2,,405g,브랜드 대표 포케,https://www.slowcali.co.kr/bbs/content.php?co_id=menu,official
+영칼로리포케,무설탕 수비드 안심 김치 덮밥,low_sugar,1,330,,,,https://xn--2o2b2xt4yeqi6sah0v.com/,estimated
+영칼로리포케,저당 갈비 포케,low_sugar,2,500,,,메뉴명에 '저당' 표기,https://xn--2o2b2xt4yeqi6sah0v.com/,estimated
+영칼로리포케,저당 갈비 덮밥,low_sugar,3,300,,,메뉴명에 '저당' 표기,https://xn--2o2b2xt4yeqi6sah0v.com/,estimated
+영칼로리포케,부채살 포케,signature,2,325,,,,https://xn--2o2b2xt4yeqi6sah0v.com/,estimated
+영칼로리포케,연어 포케,signature,4,400,,,,https://xn--2o2b2xt4yeqi6sah0v.com/,estimated
+디저트39,0칼로리 복숭아 아이스티,low_sugar,,0,2300,,공식 메뉴판 '제로·저칼로리' 분류,https://www.dessert39.com/html/pages/menu_beverage.php,official
+디저트39,착한 콜드브루,signature,,,1900,,공식 메뉴판 '베스트 인기 메뉴',https://www.dessert39.com/html/pages/menu_beverage.php,official
+디저트39,아메리카노,signature,,,3900,,공식 메뉴판 '베스트 인기 메뉴',https://www.dessert39.com/html/pages/menu_beverage.php,official
+디저트39,착한 바닐라라떼,signature,,,2800,,공식 메뉴판 '베스트 인기 메뉴',https://www.dessert39.com/html/pages/menu_beverage.php,official
+디저트39,자바칩 프라페,signature,,,5500,,공식 메뉴판 '베스트 인기 메뉴',https://www.dessert39.com/html/pages/menu_beverage.php,official

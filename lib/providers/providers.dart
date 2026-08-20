@@ -19,6 +19,7 @@ import '../data/models/my_review.dart';
 import '../data/models/product.dart';
 import '../data/models/product_price.dart';
 import '../data/models/store.dart';
+import '../data/models/store_menu.dart';
 import '../data/models/store_review.dart';
 import '../data/price_repository.dart';
 import '../data/product_repository.dart';
@@ -135,6 +136,12 @@ final userLocationProvider = StateProvider<LatLng?>((ref) => null);
 final storeReviewsProvider =
     FutureProvider.family<List<StoreReview>, String>((ref, storeId) async {
   return ref.watch(storeRepositoryProvider).reviews(storeId);
+});
+
+/// 매장 대표 메뉴 (저당 + 시그니처). 매장 상세 시트에서 사용.
+final storeMenusProvider =
+    FutureProvider.autoDispose.family<List<StoreMenu>, String>((ref, storeId) {
+  return ref.watch(storeRepositoryProvider).menus(storeId);
 });
 
 final authRepositoryProvider = Provider<AuthRepository>(
