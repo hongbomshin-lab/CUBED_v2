@@ -103,7 +103,7 @@ class FranchiseRepository {
 
     return menus.where((m) {
       final hay = [
-        dict.menu(m.displayName),
+        dict.menuName(m.displayName, m.translationKey),
         m.displayName,
         m.representative.nameClean,
         m.representative.name,

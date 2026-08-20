@@ -67,10 +67,10 @@ const Map<String, Map<AppLang, String>> _strings = {
     AppLang.zh: '热',
   },
   'sizeCount': {
-    AppLang.ko: '사이즈',
-    AppLang.en: 'sizes',
-    AppLang.ja: 'サイズ',
-    AppLang.zh: '规格',
+    AppLang.ko: '사이즈 {n}',
+    AppLang.en: '{n} sizes',
+    AppLang.ja: 'サイズ{n}種',
+    AppLang.zh: '{n} 种规格',
   },
   // 상세
   'sugar': {

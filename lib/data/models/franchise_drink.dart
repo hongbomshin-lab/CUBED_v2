@@ -141,6 +141,11 @@ class FranchiseMenu {
 
   bool get hasVariants => variants.length > 1;
 
+  /// 번역 사전 조회 키 — 항상 온도 접두어를 뗀 기본명.
+  /// (변형이 하나뿐인 메뉴는 displayName 에 '(ICED)' 같은 표기가 남아 있어
+  ///  그대로 조회하면 사전에 없다. 온도는 목록·상세에서 따로 표시하므로 손실 없음.)
+  String get translationKey => representative.baseName;
+
   /// 존재하는 온도 종류 (없으면 빈 목록).
   List<String> get temperatures =>
       variants.map((v) => v.temperature).whereType<String>().toSet().toList();

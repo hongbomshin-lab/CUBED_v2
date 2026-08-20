@@ -340,7 +340,7 @@ class _MenuCard extends StatelessWidget {
       for (final t in menu.temperatures)
         uiText(t == 'ICE' ? 'iced' : 'hot', lang),
       if (menu.sizes.length > 1)
-        '${uiText('sizeCount', lang)} ${menu.sizes.length}',
+        uiText('sizeCount', lang).replaceFirst('{n}', '${menu.sizes.length}'),
     ];
 
     return Material(
@@ -358,7 +358,7 @@ class _MenuCard extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      dict.menu(menu.displayName),
+                      dict.menuName(menu.displayName, menu.translationKey),
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
                       style: const TextStyle(

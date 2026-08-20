@@ -98,7 +98,7 @@ class _FranchiseDetailSheetState extends ConsumerState<_FranchiseDetailSheet> {
                     fontWeight: FontWeight.w700,
                     color: CubedColors.inkSoft)),
             const SizedBox(height: 4),
-            Text(dict.menu(menu.displayName),
+            Text(dict.menuName(menu.displayName, menu.translationKey),
                 style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w800)),
             if (d.volumeMl != null) ...[
               const SizedBox(height: 4),

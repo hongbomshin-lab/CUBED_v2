@@ -96,13 +96,14 @@ class _LangPill extends StatelessWidget {
         child: Container(
           height: 44,
           padding: const EdgeInsets.symmetric(horizontal: 16),
-          alignment: Alignment.center,
+          // alignment 를 주면 Container 가 가용 폭 전체로 늘어난다 — 내용 폭에 맞춘다.
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(22),
             border: selected ? null : Border.all(color: CubedColors.line),
           ),
           child: Row(
             mainAxisSize: MainAxisSize.min,
+            mainAxisAlignment: MainAxisAlignment.center,
             children: [
               Icon(
                 selected ? Icons.translate_rounded : Icons.circle_outlined,

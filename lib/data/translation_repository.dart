@@ -21,6 +21,12 @@ class TranslationDict {
   }
 
   String menu(String? s) => of('menu', s);
+
+  /// 메뉴 표시명 번역 — 사전 키(기본명)로 찾고, 없으면 화면용 원문으로 폴백.
+  String menuName(String display, String key) {
+    if (!lang.needsTranslation) return display;
+    return _map['menu|${key.trim()}'] ?? _map['menu|${display.trim()}'] ?? display;
+  }
   String brand(String? s) => of('brand', s);
   String size(String? s) => of('size', s);
   String category(String? s) => of('category', s);
