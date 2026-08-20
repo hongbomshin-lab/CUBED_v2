@@ -51,25 +51,39 @@ class FranchiseDrink {
   static double? _d(dynamic v) => v == null ? null : (v as num).toDouble();
   static int? _i(dynamic v) => v == null ? null : (v as num).toInt();
 
-  /// name_clean에서 온도 접두어/(ICED)를 떼어 (기본명, 온도) 반환.
+  /// name_clean에서 온도 표기를 떼어 (기본명, 온도) 반환.
+  ///
+  /// 브랜드마다 표기가 달라 전부 흡수한다:
+  ///   이디야 `I-`/`H-`, 빽다방 `ICED `/`HOT `, `(HOT)`/`(ICED)`, `아이스`/`따뜻한`/`핫`
+  /// ⚠️ DB의 franchise_base_name() 과 동일 규칙이어야 한다(번역 조회 키).
   static (String, String?) parseTemp(String nameClean) {
     var n = nameClean.trim();
     String? temp;
-    if (n.startsWith('아이스')) {
-      temp = 'ICE';
-      n = n.substring('아이스'.length).trim();
-    } else if (n.startsWith('따뜻한')) {
-      temp = 'HOT';
-      n = n.substring('따뜻한'.length).trim();
-    } else if (n.startsWith('핫')) {
-      temp = 'HOT';
-      n = n.substring(1).trim();
+
+    // 앞머리 온도 표기 1회 제거
+    final head = RegExp(
+      r'^(I-|H-|\((HOT|ICE|ICED|아이스|핫)\)|(ICED|ICE|HOT)\s|아이스\s*|따뜻한\s*|핫\s*)',
+      caseSensitive: false,
+    );
+    final m = head.firstMatch(n);
+    if (m != null) {
+      final token = m.group(0)!.trim().toUpperCase();
+      final isHot = token == 'H-' ||
+          token.contains('HOT') ||
+          token.startsWith('따뜻한') ||
+          token.startsWith('핫');
+      temp = isHot ? 'HOT' : 'ICE';
+      n = n.substring(m.end).trim();
     }
+
+    // 뒤에 붙는 (ICED)
     final iced = RegExp(r'\s*\(ICED\)', caseSensitive: false);
     if (iced.hasMatch(n)) {
       temp = 'ICE';
       n = n.replaceAll(iced, '').trim();
     }
+
+    n = n.replaceAll(RegExp(r'\s{2,}'), ' ').trim();
     return (n.isEmpty ? nameClean.trim() : n, temp);
   }
 
@@ -126,6 +140,11 @@ class FranchiseMenu {
   });
 
   bool get hasVariants => variants.length > 1;
+
+  /// 번역 사전 조회 키 — 항상 온도 접두어를 뗀 기본명.
+  /// (변형이 하나뿐인 메뉴는 displayName 에 '(ICED)' 같은 표기가 남아 있어
+  ///  그대로 조회하면 사전에 없다. 온도는 목록·상세에서 따로 표시하므로 손실 없음.)
+  String get translationKey => representative.baseName;
 
   /// 존재하는 온도 종류 (없으면 빈 목록).
   List<String> get temperatures =>
