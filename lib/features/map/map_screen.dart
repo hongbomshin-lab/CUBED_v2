@@ -9,6 +9,7 @@ import '../../core/i18n/ui_strings.dart';
 import '../../core/location_cache.dart';
 import '../../core/theme.dart';
 import '../../data/models/store.dart';
+import '../../data/translation_repository.dart';
 import '../../providers/providers.dart';
 import '../auth/login_screen.dart';
 import '../franchise/franchise_browser.dart';
@@ -165,6 +166,8 @@ class _MapScreenState extends ConsumerState<MapScreen> {
 
   Future<void> _renderMarkers(NaverMapController c, List<Store> stores) async {
     await c.clearOverlays(type: NOverlayType.marker);
+    // 마커 캡션도 선택 언어로. 번역이 없으면 원문(한국어)이 그대로 나온다.
+    final dict = ref.read(dictProvider);
     final markers = <NMarker>{};
     for (final s in stores) {
       final marker = NMarker(
@@ -173,7 +176,7 @@ class _MapScreenState extends ConsumerState<MapScreen> {
         icon: await _iconFor(s.type),
         size: const Size(40, 48),
         caption: NOverlayCaption(
-          text: s.name,
+          text: dict.store(s.name),
           textSize: 12,
           color: CubedColors.ink,
           haloColor: Colors.white,
@@ -227,8 +230,16 @@ class _MapScreenState extends ConsumerState<MapScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       // 매장 제보 버튼은 지도 모드에서만.
-      floatingActionButton: _mode == _MapMode.store
-          ? FloatingActionButton.extended(
+      // 언어 버튼은 두 모드 모두에서 쓸 수 있어야 한다 — 선택한 언어가
+      // 메뉴 정보뿐 아니라 지도의 매장 이름·메뉴에도 적용되기 때문.
+      floatingActionButton: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.end,
+        children: [
+          const LanguageFab(),
+          if (_mode == _MapMode.store) ...[
+            const SizedBox(height: 10),
+            FloatingActionButton.extended(
               heroTag: 'report',
               backgroundColor: CubedColors.brand,
               foregroundColor: Colors.white,
@@ -236,9 +247,10 @@ class _MapScreenState extends ConsumerState<MapScreen> {
               icon: const Icon(Icons.add_location_alt_rounded),
               label: const Text('매장 제보',
                   style: TextStyle(fontWeight: FontWeight.w800)),
-            )
-          // 메뉴 정보 모드에서는 같은 자리에 언어 선택 버튼.
-          : const LanguageFab(),
+            ),
+          ],
+        ],
+      ),
       body: SafeArea(
         bottom: false,
         child: Column(
@@ -266,14 +278,16 @@ class _MapScreenState extends ConsumerState<MapScreen> {
 
   /// 매장 지도 모드 본문 (검색 + store_type 필터 + 지도).
   Widget _storeView() {
+    final lang = ref.watch(menuLangProvider);
     return Column(
       children: [
         _SearchBar(
           controller: _searchCtrl,
           onChanged: _onSearchChanged,
           onClear: _clearSearch,
+          hint: uiText('storeSearchHint', lang),
         ),
-        _FilterBar(selected: _selected, onTap: _toggleFilter),
+        _FilterBar(selected: _selected, onTap: _toggleFilter, lang: lang),
         Expanded(
           child: Stack(
             children: [
@@ -309,6 +323,8 @@ class _MapScreenState extends ConsumerState<MapScreen> {
                     results: _searchResults,
                     userLoc: ref.watch(userLocationProvider),
                     onTap: _onSearchResultTap,
+                    dict: ref.watch(dictProvider),
+                    lang: lang,
                   ),
                 ),
             ],
@@ -389,10 +405,12 @@ class _SearchBar extends StatelessWidget {
     required this.controller,
     required this.onChanged,
     required this.onClear,
+    required this.hint,
   });
   final TextEditingController controller;
   final ValueChanged<String> onChanged;
   final VoidCallback onClear;
+  final String hint;
 
   @override
   Widget build(BuildContext context) {
@@ -415,11 +433,12 @@ class _SearchBar extends StatelessWidget {
               controller: controller,
               onChanged: onChanged,
               textInputAction: TextInputAction.search,
-              decoration: const InputDecoration(
+              decoration: InputDecoration(
                 isCollapsed: true,
                 border: InputBorder.none,
-                hintText: '저당 매장 이름 검색',
-                hintStyle: TextStyle(color: CubedColors.inkSoft, fontSize: 14),
+                hintText: hint,
+                hintStyle: const TextStyle(
+                    color: CubedColors.inkSoft, fontSize: 14),
               ),
               style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
             ),
@@ -446,10 +465,14 @@ class _SearchResults extends StatelessWidget {
     required this.results,
     required this.userLoc,
     required this.onTap,
+    required this.dict,
+    required this.lang,
   });
   final List<Store> results;
   final LatLng? userLoc;
   final void Function(Store) onTap;
+  final TranslationDict dict;
+  final AppLang lang;
 
   @override
   Widget build(BuildContext context) {
@@ -467,12 +490,12 @@ class _SearchResults extends StatelessWidget {
         ],
       ),
       child: results.isEmpty
-          ? const Padding(
-              padding: EdgeInsets.symmetric(vertical: 20),
+          ? Padding(
+              padding: const EdgeInsets.symmetric(vertical: 20),
               child: Center(
-                child: Text('검색 결과가 없어요',
-                    style:
-                        TextStyle(color: CubedColors.inkSoft, fontSize: 13)),
+                child: Text(uiText('noSearchResult', lang),
+                    style: const TextStyle(
+                        color: CubedColors.inkSoft, fontSize: 13)),
               ),
             )
           : ListView.separated(
@@ -499,7 +522,7 @@ class _SearchResults extends StatelessWidget {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Text(s.name,
+                            Text(dict.store(s.name),
                                 maxLines: 1,
                                 overflow: TextOverflow.ellipsis,
                                 style: const TextStyle(
@@ -595,9 +618,22 @@ class _PinTailPainter extends CustomPainter {
 }
 
 class _FilterBar extends StatelessWidget {
-  const _FilterBar({required this.selected, required this.onTap});
+  const _FilterBar({
+    required this.selected,
+    required this.onTap,
+    required this.lang,
+  });
   final Set<StoreType> selected;
   final void Function(StoreType? type) onTap;
+  final AppLang lang;
+
+  /// StoreType → UI 문구 키. (enum 의 label 은 한국어 고정이라 여기서 갈아끼운다)
+  static const _typeKeys = {
+    StoreType.cafe: 'typeCafe',
+    StoreType.restaurant: 'typeRestaurant',
+    StoreType.zeroStore: 'typeZeroStore',
+    StoreType.delivery: 'typeDelivery',
+  };
 
   @override
   Widget build(BuildContext context) {
@@ -609,14 +645,14 @@ class _FilterBar extends StatelessWidget {
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
         children: [
           _Chip(
-            label: '전체',
+            label: uiText('all', lang),
             color: CubedColors.ink,
             active: selected.isEmpty,
             onTap: () => onTap(null),
           ),
           for (final t in StoreType.values)
             _Chip(
-              label: t.label,
+              label: uiText(_typeKeys[t]!, lang),
               color: t.markerColor,
               active: selected.contains(t),
               onTap: () => onTap(t),

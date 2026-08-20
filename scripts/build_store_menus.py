@@ -110,6 +110,11 @@ def main():
         f"-- 생성: build_store_menus.py · {len(values)}행",
         "-- 출처·신뢰도는 각 행의 source_url/confidence 참고. 당류 미공개는 null.",
         "",
+        "-- 테이블이 초안 스키마로 먼저 만들어진 환경을 위해 칼럼을 먼저 맞춘다.",
+        "alter table public.store_menus add column if not exists serving text;",
+        "alter table public.store_menus"
+        " add column if not exists updated_at timestamptz default now();",
+        "",
         "insert into public.store_menus",
         "  (store_id, name, kind, sugar_g, calories, price_won, serving, note,"
         " source_url, confidence, sort_order)",

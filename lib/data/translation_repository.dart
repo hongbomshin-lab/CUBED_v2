@@ -22,6 +22,11 @@ class TranslationDict {
 
   String menu(String? s) => of('menu', s);
 
+  /// 저당맵 매장 이름 / 매장 대표 메뉴 / 메뉴 비고.
+  String store(String? s) => of('store', s);
+  String storeMenu(String? s) => of('store_menu', s);
+  String menuNote(String? s) => of('menu_note', s);
+
   /// 메뉴 표시명 번역 — 사전 키(기본명)로 찾고, 없으면 화면용 원문으로 폴백.
   String menuName(String display, String key) {
     if (!lang.needsTranslation) return display;

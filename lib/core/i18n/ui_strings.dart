@@ -145,6 +145,74 @@ const Map<String, Map<AppLang, String>> _strings = {
     AppLang.ja: 'カフェイン',
     AppLang.zh: '咖啡因',
   },
+  // 저당맵 (매장 지도)
+  'storeSearchHint': {
+    AppLang.ko: '저당 매장 이름 검색',
+    AppLang.en: 'Search store name',
+    AppLang.ja: '店舗名を検索',
+    AppLang.zh: '搜索门店名称',
+  },
+  'typeCafe': {
+    AppLang.ko: '카페·베이커리',
+    AppLang.en: 'Cafe & Bakery',
+    AppLang.ja: 'カフェ・ベーカリー',
+    AppLang.zh: '咖啡·烘焙',
+  },
+  'typeRestaurant': {
+    AppLang.ko: '음식점',
+    AppLang.en: 'Restaurant',
+    AppLang.ja: 'レストラン',
+    AppLang.zh: '餐厅',
+  },
+  'typeZeroStore': {
+    AppLang.ko: '제로스토어',
+    AppLang.en: 'Zero Store',
+    AppLang.ja: 'ゼロストア',
+    AppLang.zh: '零糖商店',
+  },
+  'typeDelivery': {
+    AppLang.ko: '배달',
+    AppLang.en: 'Delivery',
+    AppLang.ja: 'デリバリー',
+    AppLang.zh: '外送',
+  },
+  'noSearchResult': {
+    AppLang.ko: '검색 결과가 없어요',
+    AppLang.en: 'No stores found',
+    AppLang.ja: '検索結果がありません',
+    AppLang.zh: '没有搜索结果',
+  },
+  // 매장 상세 — 대표 메뉴
+  'featuredMenu': {
+    AppLang.ko: '대표 메뉴',
+    AppLang.en: 'Featured menu',
+    AppLang.ja: 'おすすめメニュー',
+    AppLang.zh: '招牌菜单',
+  },
+  'lowSugarMenu': {
+    AppLang.ko: '저당 메뉴',
+    AppLang.en: 'Low sugar',
+    AppLang.ja: '低糖メニュー',
+    AppLang.zh: '低糖菜单',
+  },
+  'signatureMenu': {
+    AppLang.ko: '시그니처',
+    AppLang.en: 'Signature',
+    AppLang.ja: 'シグネチャー',
+    AppLang.zh: '招牌',
+  },
+  'sugarUnknown': {
+    AppLang.ko: '정보 준비 중',
+    AppLang.en: 'Data pending',
+    AppLang.ja: '準備中',
+    AppLang.zh: '信息准备中',
+  },
+  'estimated': {
+    AppLang.ko: '추정',
+    AppLang.en: 'Est.',
+    AppLang.ja: '推定',
+    AppLang.zh: '估算',
+  },
   // 모드 토글
   'modeMap': {
     AppLang.ko: '매장 지도',

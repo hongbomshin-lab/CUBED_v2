@@ -4,9 +4,12 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../../../core/location_cache.dart';
+import '../../../core/i18n/app_lang.dart';
+import '../../../core/i18n/ui_strings.dart';
 import '../../../core/theme.dart';
 import '../../../data/models/store.dart';
 import '../../../data/models/store_menu.dart';
+import '../../../data/translation_repository.dart';
 import '../../../data/models/store_review.dart';
 import '../../../providers/providers.dart';
 import '../../auth/login_screen.dart';
@@ -249,12 +252,14 @@ class _StoreDetailSheetState extends ConsumerState<StoreDetailSheet>
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Expanded(
-                            child: Text(s.name,
+                            child: Text(ref.watch(dictProvider).store(s.name),
                                 style: const TextStyle(
                                     fontSize: 20, fontWeight: FontWeight.w800)),
                           ),
                           const SizedBox(width: 8),
-                          _TypeBadge(type: s.type),
+                          _TypeBadge(
+                              type: s.type,
+                              lang: ref.watch(menuLangProvider)),
                           const SizedBox(width: 4),
                           _FavoriteButton(
                             isFavorite: ref
@@ -473,6 +478,8 @@ class _MenuSection extends ConsumerWidget {
     final async = ref.watch(storeMenusProvider(storeId));
     final menus = async.valueOrNull ?? const <StoreMenu>[];
     if (menus.isEmpty) return const SizedBox.shrink();
+    final lang = ref.watch(menuLangProvider);
+    final dict = ref.watch(dictProvider);
 
     final lowSugar = menus.where((m) => m.isLowSugar).toList();
     final signature = menus.where((m) => !m.isLowSugar).toList();
@@ -481,25 +488,27 @@ class _MenuSection extends ConsumerWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         const SizedBox(height: 14),
-        const Text('대표 메뉴',
-            style: TextStyle(fontSize: 15, fontWeight: FontWeight.w800)),
+        Text(uiText('featuredMenu', lang),
+            style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w800)),
         const SizedBox(height: 10),
         if (lowSugar.isNotEmpty) ...[
-          const _MenuGroupLabel(
+          _MenuGroupLabel(
             icon: Icons.eco_rounded,
-            label: '저당 메뉴',
+            label: uiText('lowSugarMenu', lang),
             color: CubedColors.brand,
           ),
-          for (final m in lowSugar) _MenuTile(menu: m),
+          for (final m in lowSugar)
+            _MenuTile(menu: m, dict: dict, lang: lang),
         ],
         if (signature.isNotEmpty) ...[
           if (lowSugar.isNotEmpty) const SizedBox(height: 10),
-          const _MenuGroupLabel(
+          _MenuGroupLabel(
             icon: Icons.star_rounded,
-            label: '시그니처',
-            color: Color(0xFFE0A100),
+            label: uiText('signatureMenu', lang),
+            color: const Color(0xFFE0A100),
           ),
-          for (final m in signature) _MenuTile(menu: m),
+          for (final m in signature)
+            _MenuTile(menu: m, dict: dict, lang: lang),
         ],
         const SizedBox(height: 14),
         const Divider(color: CubedColors.line),
@@ -534,8 +543,14 @@ class _MenuGroupLabel extends StatelessWidget {
 }
 
 class _MenuTile extends StatelessWidget {
-  const _MenuTile({required this.menu});
+  const _MenuTile({
+    required this.menu,
+    required this.dict,
+    required this.lang,
+  });
   final StoreMenu menu;
+  final TranslationDict dict;
+  final AppLang lang;
 
   @override
   Widget build(BuildContext context) {
@@ -557,7 +572,7 @@ class _MenuTile extends StatelessWidget {
               children: [
                 Row(children: [
                   Flexible(
-                    child: Text(menu.name,
+                    child: Text(dict.storeMenu(menu.name),
                         maxLines: 2,
                         overflow: TextOverflow.ellipsis,
                         style: const TextStyle(
@@ -565,13 +580,16 @@ class _MenuTile extends StatelessWidget {
                   ),
                   if (menu.isEstimated) ...[
                     const SizedBox(width: 6),
-                    const _TinyBadge(text: '추정'),
+                    _TinyBadge(text: uiText('estimated', lang)),
                   ],
                 ]),
                 if (sub.isNotEmpty || menu.note != null) ...[
                   const SizedBox(height: 2),
                   Text(
-                    [sub.join(' · '), if (menu.note != null) menu.note!]
+                    [
+                      sub.join(' · '),
+                      if (menu.note != null) dict.menuNote(menu.note!),
+                    ]
                         .where((s) => s.isNotEmpty)
                         .join(' · '),
                     maxLines: 2,
@@ -586,8 +604,8 @@ class _MenuTile extends StatelessWidget {
           const SizedBox(width: 10),
           // 당류 — 미공개면 수치 대신 안내 문구(추정값을 지어내지 않는다).
           if (menu.sugarUnknown)
-            const Text('정보 준비 중',
-                style: TextStyle(
+            Text(uiText('sugarUnknown', lang),
+                style: const TextStyle(
                     fontSize: 11,
                     fontWeight: FontWeight.w600,
                     color: CubedColors.inkSoft))
@@ -796,8 +814,17 @@ class _FavoriteButton extends StatelessWidget {
 }
 
 class _TypeBadge extends StatelessWidget {
-  const _TypeBadge({required this.type});
+  const _TypeBadge({required this.type, required this.lang});
   final StoreType type;
+  final AppLang lang;
+
+  /// StoreType.label 은 한국어 고정이라 표시 언어로 갈아끼운다.
+  static const _typeKeys = {
+    StoreType.cafe: 'typeCafe',
+    StoreType.restaurant: 'typeRestaurant',
+    StoreType.zeroStore: 'typeZeroStore',
+    StoreType.delivery: 'typeDelivery',
+  };
   @override
   Widget build(BuildContext context) => Container(
         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
@@ -805,7 +832,7 @@ class _TypeBadge extends StatelessWidget {
           color: type.markerColor.withValues(alpha: 0.12),
           borderRadius: BorderRadius.circular(20),
         ),
-        child: Text(type.label,
+        child: Text(uiText(_typeKeys[type]!, lang),
             style: TextStyle(
                 color: type.markerColor,
                 fontSize: 12,
