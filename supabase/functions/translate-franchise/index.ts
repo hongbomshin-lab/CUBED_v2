@@ -67,6 +67,74 @@ const GLOSSARY: Record<string, Record<string, string>> = {
   },
 };
 
+/**
+ * 재료 정합성 규칙 — 원문에 왼쪽 낱말이 있으면 번역문에 오른쪽 후보 중
+ * 하나가 반드시 있어야 한다. 메뉴 번역에서 가장 치명적인 오류가
+ * '재료 바꿔치기'(딸기→체리, 바닐라→초콜릿)라 기계적으로 걸러낸다.
+ * 검증 실패분은 적재하지 않고 1건씩 재요청한다.
+ */
+const INGREDIENTS: Array<[string[], string[], string[], string[]]> = [
+  [["레몬"], ["lemon"], ["レモン"], ["柠檬"]],
+  [["자몽"], ["grapefruit"], ["グレープフルーツ"], ["西柚", "葡萄柚"]],
+  [["딸기"], ["strawberry"], ["ストロベリー", "いちご", "イチゴ"], ["草莓"]],
+  [["초코", "초콜릿", "쇼콜라"], ["choco"], ["チョコ", "ショコラ"], ["巧克力"]],
+  [["망고"], ["mango"], ["マンゴー"], ["芒果"]],
+  [["바나나"], ["banana"], ["バナナ"], ["香蕉"]],
+  [["복숭아", "피치"], ["peach"], ["ピーチ", "桃"], ["桃"]],
+  [["블루베리"], ["blueberry"], ["ブルーベリー"], ["蓝莓"]],
+  [["사과", "애플"], ["apple"], ["アップル", "りんご", "リンゴ"], ["苹果"]],
+  [["포도", "그레이프"], ["grape"], ["グレープ", "ぶどう"], ["葡萄"]],
+  [["유자"], ["yuzu", "citron"], ["ゆず", "ユズ", "柚子"], ["柚子"]],
+  [["생강"], ["ginger"], ["生姜", "ジンジャー", "しょうが"], ["生姜", "姜"]],
+  [["녹차", "그린티", "말차"], ["green tea", "matcha"], ["抹茶", "緑茶", "グリーンティー"], ["绿茶", "抹茶"]],
+  [["홍차", "블랙티"], ["black tea"], ["紅茶", "ブラックティー"], ["红茶"]],
+  [["고구마"], ["sweet potato"], ["さつまいも", "スイートポテト"], ["红薯", "地瓜", "番薯"]],
+  [["감자"], ["potato"], ["じゃがいも", "ポテト"], ["土豆", "马铃薯"]],
+  [["우베", "타로"], ["ube", "taro"], ["ウベ", "タロ"], ["芋", "紫薯"]],
+  [["오트", "귀리"], ["oat"], ["オート", "オーツ"], ["燕麦"]],
+  [["아몬드"], ["almond"], ["アーモンド"], ["杏仁"]],
+  [["땅콩"], ["peanut"], ["ピーナッツ", "落花生"], ["花生"]],
+  [["코코넛"], ["coconut"], ["ココナッツ"], ["椰"]],
+  [["레드빈", "팥"], ["red bean"], ["あずき", "小豆", "レッドビーン"], ["红豆"]],
+  [["옥수수"], ["corn"], ["コーン", "とうもろこし"], ["玉米"]],
+  [["흑임자", "검은깨"], ["black sesame"], ["黒ごま", "ブラックセサミ"], ["黑芝麻"]],
+  [["수박"], ["watermelon"], ["スイカ", "西瓜"], ["西瓜"]],
+  [["파인애플"], ["pineapple"], ["パイナップル"], ["菠萝", "凤梨"]],
+  [["오렌지"], ["orange"], ["オレンジ"], ["橙", "橘"]],
+  [["라임"], ["lime"], ["ライム"], ["青柠", "莱姆"]],
+  [["체리"], ["cherry"], ["チェリー", "さくらんぼ"], ["樱桃"]],
+  [["멜론"], ["melon"], ["メロン"], ["蜜瓜", "甜瓜"]],
+  [["자두"], ["plum"], ["プラム", "すもも"], ["李", "梅"]],
+  [["대추"], ["jujube", "date"], ["なつめ"], ["红枣", "枣"]],
+  [["인절미"], ["injeolmi", "rice cake"], ["きなこ", "インジョルミ"], ["黄豆粉", "打糕"]],
+  [["카라멜", "캬라멜"], ["caramel"], ["キャラメル", "カラメル"], ["焦糖", "卡拉"]],
+  [["바닐라"], ["vanilla"], ["バニラ"], ["香草", "云呢拿"]],
+  [["헤이즐넛"], ["hazelnut"], ["ヘーゼルナッツ"], ["榛果", "榛子"]],
+  [["민트"], ["mint"], ["ミント"], ["薄荷"]],
+  [["복분자"], ["bokbunja", "raspberry"], ["ラズベリー", "ボクブンジャ"], ["覆盆子", "树莓"]],
+  [["요거트", "요구르트"], ["yogurt", "yoghurt"], ["ヨーグルト"], ["酸奶", "优格"]],
+  [["치즈"], ["cheese"], ["チーズ"], ["奶酪", "芝士"]],
+];
+
+const LANG_COL: Record<string, number> = { en: 1, ja: 2, zh: 3 };
+
+/** 재료가 뒤바뀌지 않았는지 검사. 문제가 없으면 null, 있으면 기대 후보 목록. */
+function ingredientMiss(
+  lang: string,
+  source: string,
+  value: string,
+): string[] | null {
+  const col = LANG_COL[lang];
+  if (!col) return null;
+  const low = value.toLowerCase();
+  for (const rule of INGREDIENTS) {
+    if (!rule[0].some((k) => source.includes(k))) continue;
+    const expected = rule[col] as string[];
+    if (!expected.some((e) => low.includes(e.toLowerCase()))) return expected;
+  }
+  return null;
+}
+
 function systemPrompt(lang: string): string {
   const glossary = Object.entries(GLOSSARY[lang] ?? {})
     .map(([ko, t]) => `  ${ko} = ${t}`)
@@ -142,6 +210,38 @@ async function translateBatch(
   return out;
 }
 
+/**
+ * 배치 번역 + 재료 검증. 검증에 걸린 건은 1건씩 다시 물어보고,
+ * 그래도 틀리면 결과에서 뺀다(잘못된 번역을 적재하는 것보다 없는 편이 낫다).
+ */
+async function translateChecked(
+  lang: string,
+  names: string[],
+): Promise<{ ok: Map<string, string>; rejected: string[] }> {
+  const first = await translateBatch(lang, names);
+  const ok = new Map<string, string>();
+  const suspect: string[] = [];
+
+  for (const [source, value] of first) {
+    if (ingredientMiss(lang, source, value)) suspect.push(source);
+    else ok.set(source, value);
+  }
+
+  const rejected: string[] = [];
+  for (const source of suspect) {
+    try {
+      // 1건만 주면 배치 내 위치 밀림·재료 혼선이 사라져 대부분 바로잡힌다.
+      const retry = await translateBatch(lang, [source]);
+      const value = retry.get(source);
+      if (value && !ingredientMiss(lang, source, value)) ok.set(source, value);
+      else rejected.push(source);
+    } catch {
+      rejected.push(source);
+    }
+  }
+  return { ok, rejected };
+}
+
 Deno.serve(async (req) => {
   // 인증 — crawl-deals 와 동일한 fail-closed 패턴
   const secret = Deno.env.get("CRAWL_SECRET");
@@ -163,13 +263,90 @@ Deno.serve(async (req) => {
 
   const startedAt = Date.now();
   const langs = onlyLang ? [onlyLang] : ["en", "ja", "zh"];
-  const result: Record<string, { done: number; failed: number; errors: string[] }> = {};
   let processed = 0;
   let timedOut = false;
 
+  // ── 보수 모드: 이미 적재된 번역 중 재료가 어긋난 것만 다시 번역해 덮어쓴다.
+  //    (초기 대량 번역분에 딸기→체리, 바닐라→초콜릿 같은 재료 바꿔치기가 섞였다)
+  if (url.searchParams.get("mode") === "repair") {
+    const repaired: Record<string, unknown> = {};
+    for (const lang of langs) {
+      if (!LANG_LABEL[lang]) continue;
+
+      // 언어별 전체를 받아 규칙 위반분만 추린다(언어당 1,000건 미만).
+      const rows: Array<{ source: string; value: string }> = [];
+      for (let from = 0; ; from += 1000) {
+        const { data, error } = await supabase
+          .from("franchise_translations")
+          .select("source, value")
+          .eq("kind", "menu")
+          .eq("lang", lang)
+          .range(from, from + 999);
+        if (error) {
+          return new Response(JSON.stringify({ error: error.message }), {
+            status: 500,
+            headers: { "Content-Type": "application/json" },
+          });
+        }
+        rows.push(...(data ?? []));
+        if ((data?.length ?? 0) < 1000) break;
+      }
+
+      const broken = rows
+        .filter((r) => ingredientMiss(lang, r.source, r.value))
+        .map((r) => r.source);
+
+      let fixed = 0;
+      let stillBad = 0;
+      for (let i = 0; i < broken.length; i += BATCH) {
+        if (Date.now() - startedAt > TIME_BUDGET_MS) {
+          timedOut = true;
+          break;
+        }
+        const slice = broken.slice(i, i + BATCH);
+        try {
+          const { ok, rejected } = await translateChecked(lang, slice);
+          stillBad += rejected.length;
+          const upserts = [...ok.entries()].map(([source, value]) => ({
+            kind: "menu",
+            source,
+            lang,
+            value,
+            is_reviewed: false,
+          }));
+          if (upserts.length > 0) {
+            const { error: upErr } = await supabase
+              .from("franchise_translations")
+              .upsert(upserts, { onConflict: "kind,source,lang" });
+            if (upErr) throw upErr;
+            fixed += upserts.length;
+          }
+        } catch (err) {
+          console.error(`[${lang}] 보수 배치 실패:`, String(err));
+          stillBad += slice.length;
+        }
+        processed += slice.length;
+      }
+      repaired[lang] = { detected: broken.length, fixed, still_bad: stillBad };
+      if (timedOut) break;
+    }
+    return new Response(
+      JSON.stringify(
+        { mode: "repair", repaired, processed, timed_out: timedOut, duration_ms: Date.now() - startedAt },
+        null,
+        2,
+      ),
+      { headers: { "Content-Type": "application/json" } },
+    );
+  }
+  const result: Record<
+    string,
+    { done: number; failed: number; rejected: number; errors: string[] }
+  > = {};
+
   for (const lang of langs) {
     if (!LANG_LABEL[lang]) continue;
-    result[lang] = { done: 0, failed: 0, errors: [] };
+    result[lang] = { done: 0, failed: 0, rejected: 0, errors: [] };
 
     // 실패한 배치를 건너뛰기 위한 오프셋.
     // 성공분은 todo 뷰에서 빠지므로 정상 흐름에선 0 유지.
@@ -191,7 +368,11 @@ Deno.serve(async (req) => {
       if (names.length === 0) break; // 이 언어는 완료
 
       try {
-        const map = await translateBatch(lang, names);
+        const { ok: map, rejected } = await translateChecked(lang, names);
+        if (rejected.length > 0) {
+          result[lang].rejected += rejected.length;
+          console.warn(`[${lang}] 재료 검증 탈락 ${rejected.length}건:`, rejected.join(", "));
+        }
         const rows = [...map.entries()].map(([source, value]) => ({
           kind: "menu",
           source,
@@ -207,6 +388,8 @@ Deno.serve(async (req) => {
         }
         result[lang].done += rows.length;
         result[lang].failed += names.length - rows.length;
+        // 검증 탈락분은 todo 에 남아 무한 재시도가 되므로 건너뛴다.
+        offset += rejected.length;
         // 한 건도 못 얻은 배치는 건너뛴다(같은 배치 무한 재시도 방지)
         if (rows.length === 0) {
           if (result[lang].errors.length < 3) result[lang].errors.push("매칭 0건(모델 응답 형식 확인 필요)");
