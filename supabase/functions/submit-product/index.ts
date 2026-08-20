@@ -1,5 +1,6 @@
 // ZERO DOT 제보 Edge Function (Deno, service_role).
 // 입력: { images:{full,ingredients,nutrition}(base64), barcode? }
+//   또는 { quick:true, images:{full} } — 전면 1장 빠른 매칭 (파싱·제보 없음).
 // 처리: Gemini 파싱 → submission-images 업로드 → user_submissions insert → 파싱 반환.
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { createClient, type SupabaseClient } from "jsr:@supabase/supabase-js@2";
@@ -35,7 +36,25 @@ function b64ToBytes(b64: string): Uint8Array {
 Deno.serve(async (req: Request) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: CORS });
   try {
-    const { images, barcode } = await req.json();
+    const { images, barcode, quick } = await req.json();
+
+    // 빠른 매칭 모드: 전면 1장으로 등록 제품/가격 카탈로그 매칭만 시도.
+    // 실패는 비치명 — null을 돌려주고 앱은 3장 플로우로 계속한다.
+    if (quick) {
+      if (!images?.full) return json({ error: "images.full 필요" }, 400);
+      const db = createClient(SUPABASE_URL, SERVICE_ROLE);
+      try {
+        const match = await matchRegisteredIdentity(db, images.full);
+        return json({
+          matched_product: match.matchedProduct,
+          price_match: match.priceMatch,
+        }, 200);
+      } catch (e) {
+        console.error("submit-product quick 매칭 실패(비치명):", String(e));
+        return json({ matched_product: null, price_match: null }, 200);
+      }
+    }
+
     if (!images?.full || !images?.ingredients || !images?.nutrition) {
       return json({ error: "images.full/ingredients/nutrition 3장 필요" }, 400);
     }
@@ -52,7 +71,7 @@ Deno.serve(async (req: Request) => {
     let matchedProduct: Record<string, unknown> | null = null;
     let priceMatch: Record<string, unknown> | null = null;
     try {
-      const match = await matchLalasweetIdentity(
+      const match = await matchRegisteredIdentity(
         db,
         images.full,
       );
@@ -60,7 +79,7 @@ Deno.serve(async (req: Request) => {
       priceMatch = match.priceMatch;
     } catch (recognitionError) {
       console.error(
-        "submit-product 라라스윗 매칭 실패(비치명):",
+        "submit-product 제품 매칭 실패(비치명):",
         String(recognitionError),
       );
     }
@@ -115,7 +134,8 @@ Deno.serve(async (req: Request) => {
   }
 });
 
-async function matchLalasweetIdentity(
+// 등록 제품 전체 + 라라스윗 가격 카탈로그(특가 연동용)를 후보로 앞면 사진을 매칭한다.
+async function matchRegisteredIdentity(
   db: SupabaseClient,
   imageBase64: string,
 ): Promise<{
@@ -123,7 +143,7 @@ async function matchLalasweetIdentity(
   priceMatch: Record<string, unknown> | null;
 }> {
   const [productsResult, pricesResult] = await Promise.all([
-    db.from("products").select("product_id,name").eq("brand", "라라스윗"),
+    db.from("products").select("product_id,name,brand"),
     db.from("product_prices")
       .select("product_id,catalog_product_key,catalog_name,aliases")
       .eq("brand", "라라스윗")
@@ -133,8 +153,16 @@ async function matchLalasweetIdentity(
   if (productsResult.error) throw productsResult.error;
   if (pricesResult.error) throw pricesResult.error;
 
+  // 후보 표시명에 브랜드를 붙여 동명 제품·유사 패키지 오인을 줄인다.
+  const products = (productsResult.data ?? []).map(
+    (p: { product_id: string; name: string; brand: string | null }) => ({
+      product_id: p.product_id,
+      name: p.brand ? `${p.brand} ${p.name}` : p.name,
+    }),
+  );
+
   const identitySet = buildProductIdentitySet(
-    (productsResult.data ?? []) as RegisteredProductCandidate[],
+    products as RegisteredProductCandidate[],
     (pricesResult.data ?? []) as PriceCatalogRow[],
   );
   if (identitySet.candidates.length === 0) {

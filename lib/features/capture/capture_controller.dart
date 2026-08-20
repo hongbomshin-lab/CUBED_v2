@@ -21,8 +21,13 @@ extension CaptureSlotLabel on CaptureSlot {
 class CaptureState {
   final Map<CaptureSlot, Uint8List> images;
   final bool submitting;
+  final bool quickMatching; // 전면 1장 빠른 매칭 진행 중
   final String? error;
-  const CaptureState({this.images = const {}, this.submitting = false, this.error});
+  const CaptureState(
+      {this.images = const {},
+      this.submitting = false,
+      this.quickMatching = false,
+      this.error});
 
   bool get isComplete => CaptureSlot.values.every(images.containsKey);
   int get count => images.length;
@@ -30,11 +35,13 @@ class CaptureState {
   CaptureState copyWith({
     Map<CaptureSlot, Uint8List>? images,
     bool? submitting,
+    bool? quickMatching,
     Object? error = _sentinel,
   }) {
     return CaptureState(
       images: images ?? this.images,
       submitting: submitting ?? this.submitting,
+      quickMatching: quickMatching ?? this.quickMatching,
       error: identical(error, _sentinel) ? this.error : error as String?,
     );
   }
@@ -55,6 +62,7 @@ class CaptureController extends StateNotifier<CaptureState> {
   }
 
   void setSubmitting(bool v) => state = state.copyWith(submitting: v);
+  void setQuickMatching(bool v) => state = state.copyWith(quickMatching: v);
   void setError(String? e) => state = state.copyWith(error: e, submitting: false);
   void reset() => state = const CaptureState();
 }

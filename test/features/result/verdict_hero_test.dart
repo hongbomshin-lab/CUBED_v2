@@ -1,6 +1,8 @@
 // test/features/result/verdict_hero_test.dart
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:cubed_app/core/rulebook.dart';
 import 'package:cubed_app/data/models/product.dart';
 import 'package:cubed_app/data/models/sweetener.dart';
@@ -33,8 +35,9 @@ ReferenceData refData() => ReferenceData(
       comboRules: const [],
     );
 
-Widget host(Interpretation it) =>
-    MaterialApp(home: Scaffold(body: SingleChildScrollView(child: VerdictHero(it: it))));
+Widget host(Interpretation it) => ProviderScope(
+    child: MaterialApp(
+        home: Scaffold(body: SingleChildScrollView(child: VerdictHero(it: it)))));
 
 void main() {
   testWidgets('반전 케이스: 라벨 vs 실제 스트립 표시', (tester) async {
@@ -63,5 +66,18 @@ void main() {
     final p = product(sugar: 1, carb: 5, kcal: 20, serving: 100, category: '과자');
     await tester.pumpWidget(host(Interpretation.of(p, refData())));
     expect(find.text('혈당을 거의 올리지 않아요.'), findsOneWidget);
+  });
+
+  testWidgets('프로필 설정 시: 개인 당류 판정 히어로 + 게이지 + 제로 스트립 유지', (tester) async {
+    // 체중 목표 미입력(2000kcal·3끼) → 한 끼 한도 13g. 말티톨 30g × 0.5 = 15g → 피하세요
+    SharedPreferences.setMockInitialValues(
+        {'sugar_profile': '{"goal":"weight","weightKg":null,"mealsPerDay":null}'});
+    final p = product(carb: 40, sa: 30, kcal: 200, serving: 50, category: '과자',
+        sweeteners: const [ProductSweetener(slug: 'maltitol', sortOrder: 0)]);
+    await tester.pumpWidget(host(Interpretation.of(p, refData())));
+    await tester.pumpAndSettle();
+    expect(find.text('피하세요'), findsOneWidget);
+    expect(find.textContaining('내 한 끼 한도 13g 중 15g'), findsOneWidget);
+    expect(find.text('무설탕·제로'), findsOneWidget); // zeroBusted 스트립 유지
   });
 }

@@ -27,19 +27,9 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
             child: TextField(
               autofocus: true,
               onChanged: (v) => setState(() => _q = v),
-              decoration: InputDecoration(
+              decoration: const InputDecoration(
                 hintText: '제품명 또는 브랜드 (예: 제로콜라, 라라스윗)',
-                prefixIcon: const Icon(Icons.search_rounded),
-                filled: true,
-                fillColor: CubedColors.surface,
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(16),
-                  borderSide: const BorderSide(color: CubedColors.line),
-                ),
-                enabledBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(16),
-                  borderSide: const BorderSide(color: CubedColors.line),
-                ),
+                prefixIcon: Icon(Icons.search_rounded),
               ),
             ),
           ),

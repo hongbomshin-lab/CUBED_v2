@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/theme.dart';
+import '../../../providers/providers.dart';
 
 /// 배수 → 표시 문자열 (순수 함수, 테스트 대상). kcal은 정수 반올림, 순탄수는 소수 1자리.
 ///
@@ -20,24 +22,25 @@ String portionSummary({required double factor, required double netCarb, required
 
 /// "이만큼 먹으면?" — 0.5~3회분 슬라이더로 순탄수·열량 총량을 즉시 재계산.
 /// 등급은 농도(100당) 기준이라 바뀌지 않는다 — 총량 정보만 제공.
-class PortionSlider extends StatefulWidget {
-  const PortionSlider({super.key, required this.netCarb, required this.kcal, required this.unitDesc});
+/// 배수는 portionFactorProvider(제품별) 공유 상태 — 개인 당류 판정 히어로가 실시간 연동된다.
+class PortionSlider extends ConsumerWidget {
+  const PortionSlider(
+      {super.key,
+      required this.productId,
+      required this.netCarb,
+      required this.kcal,
+      required this.unitDesc});
+  final String productId;
   final double netCarb;
   final double kcal;
   final String unitDesc; // "1회분(355ml)"
 
   @override
-  State<PortionSlider> createState() => _PortionSliderState();
-}
-
-class _PortionSliderState extends State<PortionSlider> {
-  double _factor = 1;
-
-  @override
-  Widget build(BuildContext context) {
-    final f = _factor == _factor.roundToDouble()
-        ? _factor.toInt().toString()
-        : _factor.toString();
+  Widget build(BuildContext context, WidgetRef ref) {
+    final factor = ref.watch(portionFactorProvider(productId));
+    final f = factor == factor.roundToDouble()
+        ? factor.toInt().toString()
+        : factor.toString();
     return Container(
       padding: const EdgeInsets.fromLTRB(16, 14, 16, 6),
       decoration: BoxDecoration(
@@ -54,7 +57,7 @@ class _PortionSliderState extends State<PortionSlider> {
               const Text('이만큼 먹으면?',
                   style: TextStyle(fontWeight: FontWeight.w700, fontSize: 14)),
               Flexible(
-                child: Text('${widget.unitDesc} × $f',
+                child: Text('$unitDesc × $f',
                     overflow: TextOverflow.ellipsis,
                     textAlign: TextAlign.right,
                     style: const TextStyle(color: CubedColors.inkSoft, fontSize: 12)),
@@ -63,18 +66,19 @@ class _PortionSliderState extends State<PortionSlider> {
           ),
           const SizedBox(height: 4),
           Text(
-            portionSummary(factor: _factor, netCarb: widget.netCarb, kcal: widget.kcal),
+            portionSummary(factor: factor, netCarb: netCarb, kcal: kcal),
             style: const TextStyle(
                 fontWeight: FontWeight.w800, fontSize: 16, color: CubedColors.ink),
           ),
           Slider(
-            value: _factor,
+            value: factor,
             min: 0.5,
             max: 3,
             divisions: 5,
             activeColor: CubedColors.brand,
             label: '×$f',
-            onChanged: (v) => setState(() => _factor = v),
+            onChanged: (v) =>
+                ref.read(portionFactorProvider(productId).notifier).state = v,
           ),
         ],
       ),

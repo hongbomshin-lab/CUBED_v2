@@ -14,6 +14,10 @@ class OcrResult {
   final List<String> unknownSweeteners;
   final String? rawText;
   final String? imagePath; // submission-images 폴더 uuid (서버 저장 실패 시 null)
+
+  /// OCR이 당류를 못 읽어 null이었던 임시 제품 (Product.sugar는 0으로 들어감).
+  /// 진짜 0g과 구분해 개인 당류 판정을 ⚪로 처리하기 위한 플래그.
+  final bool sugarUnknown;
   const OcrResult(
       {required this.product,
       this.priceCatalogKey,
@@ -21,7 +25,8 @@ class OcrResult {
       this.priceMatchConfidence,
       this.unknownSweeteners = const [],
       this.rawText,
-      this.imagePath});
+      this.imagePath,
+      this.sugarUnknown = false});
 
   /// 파싱 결과 맵 → OcrResult (순수 변환; 네트워크 무관). ocr-parse/submit-product 응답 공용.
   factory OcrResult.fromParsed(Map<String, dynamic> m, {String? barcode}) {
@@ -76,6 +81,8 @@ class OcrResult {
           ((m['unknown_sweeteners'] as List?) ?? const []).cast<String>(),
       rawText: m['ingredients_raw'] as String?,
       imagePath: m['image_path'] as String?,
+      // DB 매칭 제품은 당류가 확인된 값 — 파싱 제품만 미확인 가능
+      sugarUnknown: matched is! Map && m['sugar'] == null,
     );
   }
 }
@@ -107,5 +114,29 @@ class OcrService {
     final m = Map<String, dynamic>.from(data as Map);
     if (m['error'] != null) throw Exception('분석 실패: ${m['error']}');
     return OcrResult.fromParsed(m, barcode: barcode);
+  }
+
+  /// 전면 1장 빠른 매칭 — 등록 제품/가격 카탈로그 매칭만 시도(파싱·제보 없음).
+  /// 매칭 실패·오류 시 null → 호출부는 현행 3장 플로우로 계속.
+  Future<OcrResult?> quickMatch({required String fullB64}) async {
+    final res = await _db.functions.invoke('submit-product', body: {
+      'quick': true,
+      'images': {'full': fullB64},
+    });
+    if (res.status != 200 || res.data == null) return null;
+    final data = res.data is String ? jsonDecode(res.data as String) : res.data;
+    final m = Map<String, dynamic>.from(data as Map);
+    final matched = m['matched_product'];
+    if (matched is! Map) return null;
+    final priceMatch = m['price_match'];
+    final priceMatchMap = priceMatch is Map
+        ? Map<String, dynamic>.from(priceMatch)
+        : const <String, dynamic>{};
+    return OcrResult(
+      product: Product.fromMap(Map<String, dynamic>.from(matched)),
+      priceCatalogKey: priceMatchMap['catalog_product_key'] as String?,
+      priceCatalogName: priceMatchMap['catalog_name'] as String?,
+      priceMatchConfidence: (priceMatchMap['confidence'] as num?)?.toDouble(),
+    );
   }
 }
