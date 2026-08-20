@@ -217,10 +217,14 @@ async function translateBatch(
 async function translateChecked(
   lang: string,
   names: string[],
-): Promise<{ ok: Map<string, string>; rejected: string[] }> {
+): Promise<{ ok: Map<string, string>; rejected: string[]; notes: string[] }> {
+  const notes: string[] = [];
   const first = await translateBatch(lang, names);
   const ok = new Map<string, string>();
   const suspect: string[] = [];
+
+  // 배치 응답에서 아예 빠진 항목도 재시도 대상.
+  for (const n of names) if (!first.has(n)) suspect.push(n);
 
   for (const [source, value] of first) {
     if (ingredientMiss(lang, source, value)) suspect.push(source);
@@ -233,13 +237,26 @@ async function translateChecked(
       // 1건만 주면 배치 내 위치 밀림·재료 혼선이 사라져 대부분 바로잡힌다.
       const retry = await translateBatch(lang, [source]);
       const value = retry.get(source);
-      if (value && !ingredientMiss(lang, source, value)) ok.set(source, value);
-      else rejected.push(source);
-    } catch {
+      if (value && !ingredientMiss(lang, source, value)) {
+        ok.set(source, value);
+      } else {
+        rejected.push(source);
+        // 왜 탈락했는지 몇 건만 남긴다 — 모델 문제인지 규칙 문제인지 구분용.
+        if (notes.length < 8) {
+          const miss = value ? ingredientMiss(lang, source, value) : null;
+          notes.push(
+            value
+              ? `${source} → ${value} (기대: ${miss?.join("/") ?? "?"})`
+              : `${source} → (응답 없음)`,
+          );
+        }
+      }
+    } catch (err) {
       rejected.push(source);
+      if (notes.length < 8) notes.push(`${source} → 호출실패: ${String(err).slice(0, 120)}`);
     }
   }
-  return { ok, rejected };
+  return { ok, rejected, notes };
 }
 
 Deno.serve(async (req) => {
@@ -298,6 +315,7 @@ Deno.serve(async (req) => {
 
       let fixed = 0;
       let stillBad = 0;
+      const notes: string[] = [];
       for (let i = 0; i < broken.length; i += BATCH) {
         if (Date.now() - startedAt > TIME_BUDGET_MS) {
           timedOut = true;
@@ -305,8 +323,9 @@ Deno.serve(async (req) => {
         }
         const slice = broken.slice(i, i + BATCH);
         try {
-          const { ok, rejected } = await translateChecked(lang, slice);
+          const { ok, rejected, notes: n } = await translateChecked(lang, slice);
           stillBad += rejected.length;
+          for (const x of n) if (notes.length < 12) notes.push(x);
           const upserts = [...ok.entries()].map(([source, value]) => ({
             kind: "menu",
             source,
@@ -324,10 +343,16 @@ Deno.serve(async (req) => {
         } catch (err) {
           console.error(`[${lang}] 보수 배치 실패:`, String(err));
           stillBad += slice.length;
+          if (notes.length < 12) notes.push(`배치실패: ${String(err).slice(0, 160)}`);
         }
         processed += slice.length;
       }
-      repaired[lang] = { detected: broken.length, fixed, still_bad: stillBad };
+      repaired[lang] = {
+        detected: broken.length,
+        fixed,
+        still_bad: stillBad,
+        notes,
+      };
       if (timedOut) break;
     }
     return new Response(
