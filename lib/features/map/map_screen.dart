@@ -4,12 +4,15 @@ import 'package:flutter/material.dart';
 import 'package:flutter_naver_map/flutter_naver_map.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../core/i18n/app_lang.dart';
+import '../../core/i18n/ui_strings.dart';
 import '../../core/location_cache.dart';
 import '../../core/theme.dart';
 import '../../data/models/store.dart';
 import '../../providers/providers.dart';
 import '../auth/login_screen.dart';
 import '../franchise/franchise_browser.dart';
+import '../franchise/language_fab.dart';
 import '../report/store_report_sheet.dart';
 import 'widgets/store_detail_sheet.dart';
 
@@ -234,7 +237,8 @@ class _MapScreenState extends ConsumerState<MapScreen> {
               label: const Text('매장 제보',
                   style: TextStyle(fontWeight: FontWeight.w800)),
             )
-          : null,
+          // 메뉴 정보 모드에서는 같은 자리에 언어 선택 버튼.
+          : const LanguageFab(),
       body: SafeArea(
         bottom: false,
         child: Column(
@@ -242,6 +246,7 @@ class _MapScreenState extends ConsumerState<MapScreen> {
             _ModeToggle(
               mode: _mode,
               onChanged: (m) => setState(() => _mode = m),
+              lang: ref.watch(menuLangProvider),
             ),
             // IndexedStack으로 두 모드를 모두 살려두어 지도 상태(카메라·마커) 보존.
             Expanded(
@@ -316,9 +321,14 @@ class _MapScreenState extends ConsumerState<MapScreen> {
 
 /// 지도 / 메뉴 당류 모드 전환 세그먼트.
 class _ModeToggle extends StatelessWidget {
-  const _ModeToggle({required this.mode, required this.onChanged});
+  const _ModeToggle({
+    required this.mode,
+    required this.onChanged,
+    required this.lang,
+  });
   final _MapMode mode;
   final ValueChanged<_MapMode> onChanged;
+  final AppLang lang;
 
   @override
   Widget build(BuildContext context) {
@@ -334,8 +344,9 @@ class _ModeToggle extends StatelessWidget {
           border: Border.all(color: CubedColors.line),
         ),
         child: Row(children: [
-          _seg('매장 지도', Icons.map_rounded, _MapMode.store),
-          _seg('메뉴 정보', Icons.local_cafe_rounded, _MapMode.menu),
+          _seg(uiText('modeMap', lang), Icons.map_rounded, _MapMode.store),
+          _seg(uiText('modeMenu', lang), Icons.local_cafe_rounded,
+              _MapMode.menu),
         ]),
       ),
     );

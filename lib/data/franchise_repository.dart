@@ -1,6 +1,7 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'models/franchise_drink.dart';
+import 'translation_repository.dart';
 
 /// 프랜차이즈 검색 파라미터 — provider family 키(불변·값 동등성).
 /// [brand] null이면 전체. 단일 브랜드 선택.
@@ -80,6 +81,37 @@ class FranchiseRepository {
     }
 
     return _sorted(_grouped(drinks), sort);
+  }
+
+  /// 표시 언어 기준 텍스트 필터.
+  ///
+  /// 외국어로 볼 때는 사용자가 화면에 보이는 말(Americano)로 검색하므로
+  /// 서버의 한국어 컬럼 검색만으로는 걸리지 않는다. 번역명·원문 양쪽을 대상으로
+  /// 클라이언트에서 토큰 AND 부분일치로 거른다(메뉴 약 1,000건 규모라 부담 없음).
+  static List<FranchiseMenu> filterByText(
+    List<FranchiseMenu> menus,
+    String query,
+    TranslationDict dict,
+  ) {
+    final tokens = query
+        .trim()
+        .toLowerCase()
+        .split(RegExp(r'\s+'))
+        .where((t) => t.isNotEmpty)
+        .toList();
+    if (tokens.isEmpty) return menus;
+
+    return menus.where((m) {
+      final hay = [
+        dict.menu(m.displayName),
+        m.displayName,
+        m.representative.nameClean,
+        m.representative.name,
+        dict.brand(m.brand),
+        m.brand,
+      ].join(' ').toLowerCase();
+      return tokens.every(hay.contains);
+    }).toList();
   }
 
   /// (브랜드, 기본명)별로 변형을 묶어 FranchiseMenu 생성.
