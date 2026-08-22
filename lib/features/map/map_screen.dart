@@ -356,21 +356,26 @@ class _MapScreenState extends ConsumerState<MapScreen> {
                 },
                 onCameraIdle: _scheduleFetch,
               ),
-              if (_fetching)
-                const Positioned(
-                  top: 12,
-                  right: 12,
-                  child: _FetchingChip(),
-                ),
               // 프랜차이즈 토글 — 칩 줄 끝에 두면 스와이프해야 보여서 지도 위로 뺐다.
+              // 토글을 위에 고정하고 '조회 중'은 그 아래에 붙인다.
+              // (예전처럼 조회 여부로 top 을 바꾸면 매번 버튼이 아래로 밀려 눌리기 어렵다)
               Positioned(
-                top: _fetching ? 56 : 12,
+                top: 12,
                 right: 12,
-                child: _FranchiseChip(
-                  active: ref.watch(showFranchiseProvider),
-                  lang: ref.watch(menuLangProvider),
-                  onTap: () =>
-                      _onToggleFranchise(!ref.read(showFranchiseProvider)),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  children: [
+                    _FranchiseChip(
+                      active: ref.watch(showFranchiseProvider),
+                      lang: ref.watch(menuLangProvider),
+                      onTap: () =>
+                          _onToggleFranchise(!ref.read(showFranchiseProvider)),
+                    ),
+                    if (_fetching) ...[
+                      const SizedBox(height: 8),
+                      const _FetchingChip(),
+                    ],
+                  ],
                 ),
               ),
               // 검색 결과 오버레이
@@ -749,15 +754,23 @@ class _FranchiseChip extends StatelessWidget {
           height: 36,
           padding: const EdgeInsets.symmetric(horizontal: 12),
           alignment: Alignment.center,
+          // 지도 위에 얹히므로 반투명 — 아래 지형·상호가 비쳐 보이게 한다.
+          // 글자는 불투명하게 두어 가독성은 유지.
           decoration: BoxDecoration(
-            color: active ? color : CubedColors.surface,
+            color: active
+                ? color.withValues(alpha: 0.78)
+                : CubedColors.surface.withValues(alpha: 0.72),
             borderRadius: BorderRadius.circular(18),
-            border: Border.all(color: active ? color : CubedColors.line),
+            border: Border.all(
+              color: active
+                  ? color.withValues(alpha: 0.5)
+                  : CubedColors.line.withValues(alpha: 0.6),
+            ),
             boxShadow: [
               BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.15),
-                  blurRadius: 6,
-                  offset: const Offset(0, 2)),
+                  color: Colors.black.withValues(alpha: 0.08),
+                  blurRadius: 4,
+                  offset: const Offset(0, 1)),
             ],
           ),
           child: Row(
