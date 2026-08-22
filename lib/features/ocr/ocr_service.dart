@@ -1,5 +1,6 @@
 import 'dart:convert';
 
+import 'package:flutter/foundation.dart' show debugPrint;
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../data/models/product.dart';
@@ -123,11 +124,17 @@ class OcrService {
       'quick': true,
       'images': {'full': fullB64},
     });
-    if (res.status != 200 || res.data == null) return null;
+    if (res.status != 200 || res.data == null) {
+      debugPrint('quickMatch: HTTP ${res.status} — ${res.data}');
+      return null;
+    }
     final data = res.data is String ? jsonDecode(res.data as String) : res.data;
     final m = Map<String, dynamic>.from(data as Map);
     final matched = m['matched_product'];
-    if (matched is! Map) return null;
+    if (matched is! Map) {
+      debugPrint('quickMatch: 매칭 없음 (matched_product null)');
+      return null;
+    }
     final priceMatch = m['price_match'];
     final priceMatchMap = priceMatch is Map
         ? Map<String, dynamic>.from(priceMatch)
