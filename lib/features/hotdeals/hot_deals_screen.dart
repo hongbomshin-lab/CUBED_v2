@@ -6,6 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../../core/theme.dart';
+import '../points/points_shop.dart';
 import '../../data/deal_repository.dart';
 import '../../data/models/brand_deal.dart';
 import '../../providers/providers.dart';
@@ -19,7 +20,12 @@ class HotDealsScreen extends ConsumerStatefulWidget {
   ConsumerState<HotDealsScreen> createState() => _HotDealsScreenState();
 }
 
+/// 핫딜 탭 모드: 특가 / 포인트 상점.
+enum _DealMode { deals, shop }
+
 class _HotDealsScreenState extends ConsumerState<HotDealsScreen> {
+  _DealMode _mode = _DealMode.deals;
+
   final _searchCtrl = TextEditingController();
   Timer? _debounce;
 
@@ -136,8 +142,29 @@ class _HotDealsScreenState extends ConsumerState<HotDealsScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            _ModeToggle(
+              mode: _mode,
+              onChanged: (m) => setState(() => _mode = m),
+            ),
+            if (_mode == _DealMode.shop) ...[
+              const Padding(
+                padding: EdgeInsets.fromLTRB(20, 6, 20, 2),
+                child: Text('포인트 상점 🎁',
+                    style: TextStyle(
+                        fontSize: 22,
+                        fontWeight: FontWeight.w900,
+                        letterSpacing: -0.5)),
+              ),
+              const Padding(
+                padding: EdgeInsets.fromLTRB(20, 0, 20, 8),
+                child: Text('모은 포인트로 저당 제품을 더 싸게',
+                    style:
+                        TextStyle(color: CubedColors.inkSoft, fontSize: 13)),
+              ),
+              const Expanded(child: PointsShop()),
+            ] else ...[
             const Padding(
-              padding: EdgeInsets.fromLTRB(20, 14, 20, 2),
+              padding: EdgeInsets.fromLTRB(20, 6, 20, 2),
               child: Text('오늘의 저당 특가 🔥',
                   style: TextStyle(
                       fontSize: 22,
@@ -254,6 +281,7 @@ class _HotDealsScreenState extends ConsumerState<HotDealsScreen> {
               child: Text('가격·재고는 수집 시점 기준이며 실제와 다를 수 있어요. 구매는 브랜드몰에서 진행돼요.',
                   style: TextStyle(fontSize: 11, color: CubedColors.inkSoft)),
             ),
+            ],
           ],
         ),
       ),
@@ -316,6 +344,65 @@ class _HotDealsScreenState extends ConsumerState<HotDealsScreen> {
             ),
           ),
       ],
+    );
+  }
+}
+
+/// 특가 / 포인트 상점 전환 — 저당맵의 모드 토글과 같은 패턴.
+class _ModeToggle extends StatelessWidget {
+  const _ModeToggle({required this.mode, required this.onChanged});
+  final _DealMode mode;
+  final ValueChanged<_DealMode> onChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      color: CubedColors.bg,
+      padding: const EdgeInsets.fromLTRB(12, 10, 12, 4),
+      child: Container(
+        height: 40,
+        padding: const EdgeInsets.all(3),
+        decoration: BoxDecoration(
+          color: CubedColors.surface,
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(color: CubedColors.line),
+        ),
+        child: Row(children: [
+          _seg('특가', Icons.local_fire_department_rounded, _DealMode.deals),
+          _seg('포인트 상점', Icons.savings_rounded, _DealMode.shop),
+        ]),
+      ),
+    );
+  }
+
+  Widget _seg(String label, IconData icon, _DealMode m) {
+    final selected = mode == m;
+    return Expanded(
+      child: GestureDetector(
+        onTap: () => onChanged(m),
+        child: Container(
+          alignment: Alignment.center,
+          decoration: BoxDecoration(
+            color: selected ? CubedColors.brand : Colors.transparent,
+            borderRadius: BorderRadius.circular(17),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(icon,
+                  size: 16,
+                  color: selected ? Colors.white : CubedColors.inkSoft),
+              const SizedBox(width: 6),
+              Text(label,
+                  style: TextStyle(
+                    fontSize: 13.5,
+                    fontWeight: FontWeight.w800,
+                    color: selected ? Colors.white : CubedColors.inkSoft,
+                  )),
+            ],
+          ),
+        ),
+      ),
     );
   }
 }

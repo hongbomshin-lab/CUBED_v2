@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/theme.dart';
+import '../points/point_card.dart';
 import '../../providers/providers.dart';
 import '../auth/login_screen.dart';
 import '../result/widgets/sugar_profile_sheet.dart';
@@ -146,6 +147,9 @@ class _LoggedIn extends ConsumerWidget {
           ]),
         ),
         const SizedBox(height: 12),
+
+        // 포인트 — 마이페이지에서 가장 먼저 보이게 한다.
+        const PointCard(),
 
         // 메뉴
         _MenuTile(

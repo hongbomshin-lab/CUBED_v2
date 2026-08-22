@@ -7,6 +7,7 @@ import '../../core/theme.dart';
 import '../../data/models/product.dart';
 import '../../providers/providers.dart';
 import '../auth/login_screen.dart';
+import '../points/points_controller.dart';
 
 /// '오늘 이거 먹었어요' 토글 — DB 제품/촬영 제품 공용. 카카오 로그인 필요.
 class EatenTodayButton extends ConsumerWidget {
@@ -51,10 +52,23 @@ class EatenTodayButton extends ConsumerWidget {
               grade: grade.name,
               imagePath: submissionImagePath,
             );
+        // 기록이 추가된 순간에만 적립한다(취소는 회수하지 않는다 —
+        // 취소로 포인트가 왔다갔다 하면 원장이 지저분해진다).
+        var earned = 0;
+        if (added) {
+          earned = container.read(pointLedgerProvider.notifier).earnForLog(
+                grade: grade.name,
+                productName: product.name,
+              );
+        }
         if (context.mounted) {
           ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-            content: Text(added ? '오늘 먹은 기록에 추가했어요' : '기록을 취소했어요'),
-            duration: const Duration(seconds: 1),
+            content: Text(!added
+                ? '기록을 취소했어요'
+                : earned > 0
+                    ? '기록 완료 · +${earned}P 적립'
+                    : '오늘 먹은 기록에 추가했어요'),
+            duration: const Duration(seconds: 2),
           ));
         }
       } on PostgrestException catch (e) {
