@@ -1,9 +1,13 @@
+import 'dart:math' as math;
 import 'dart:typed_data';
 
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import '../core/location_cache.dart';
+import 'models/franchise_drink.dart';
 import 'models/my_review.dart';
 import 'models/store.dart';
+import 'models/store_menu.dart';
 import 'models/store_review.dart';
 
 /// 매장 데이터 접근 (stores + store_photos).
@@ -16,6 +20,10 @@ class StoreRepository {
 
   /// 현재 지도 영역(bounding box) 안의 활성 매장을 조회.
   /// [types] 가 비어 있으면 전체, 아니면 해당 store_type 만 필터.
+  ///
+  /// 프랜차이즈는 항상 제외한다 — 같은 stores 테이블에 있지만 저당맵의
+  /// 주인공이 아니고, 표시 여부·반경을 franchiseStoresNear 로 따로 통제한다.
+  /// (이걸 빼면 '전체' 필터에 프랜차이즈 191곳이 딸려와 토글이 무의미해진다)
   Future<List<Store>> storesInBounds({
     required double south,
     required double north,
@@ -38,10 +46,69 @@ class StoreRepository {
         'store_type',
         types.map((t) => t.dbValue).toList(),
       );
+    } else {
+      query = query.neq('store_type', StoreType.franchise.dbValue);
     }
 
     final rows = await query.limit(limit);
     return rows.map((m) => Store.fromMap(m)).toList();
+  }
+
+  /// 내 위치 반경 [radiusM] 안의 프랜차이즈 카페.
+  ///
+  /// 전주만 해도 200곳 가까이라 전부 그리면 저당 전문 매장이 묻힌다.
+  /// 위경도 박스로 1차 좁힌 뒤 실제 거리로 거른다(박스는 원의 외접 사각형).
+  Future<List<Store>> franchiseStoresNear({
+    required LatLng center,
+    double radiusM = 500,
+    int limit = 200,
+  }) async {
+    // 위도 1도 ≈ 111km. 경도는 위도가 올라갈수록 좁아지므로 cos 보정.
+    final dLat = radiusM / 111000;
+    final dLng = radiusM / (111000 * math.cos(center.lat * math.pi / 180));
+
+    final rows = await _db
+        .from('stores')
+        .select(_cols)
+        .eq('is_active', true)
+        .eq('store_type', 'franchise')
+        .gte('lat', center.lat - dLat)
+        .lte('lat', center.lat + dLat)
+        .gte('lng', center.lng - dLng)
+        .lte('lng', center.lng + dLng)
+        .limit(limit);
+
+    return rows
+        .map((m) => Store.fromMap(m))
+        .where((s) =>
+            LocationService.distanceMeters(center, LatLng(s.lat, s.lng)) <=
+            radiusM)
+        .toList();
+  }
+
+  /// 이 브랜드에서 당류가 낮은 메뉴 [limit]개 (당류 미상은 제외).
+  /// 프랜차이즈 매장 상세에서 '여기선 이걸 드세요'로 보여준다.
+  Future<List<FranchiseDrink>> lowSugarMenusFor(
+    String brand, {
+    int limit = 5,
+  }) async {
+    final rows = await _db
+        .from('franchise_drinks')
+        .select()
+        .eq('brand', brand)
+        .not('sugar_g', 'is', null)
+        .order('sugar_g', ascending: true)
+        .limit(limit * 4); // 같은 메뉴의 사이즈 변형을 걷어내려고 넉넉히 받는다
+
+    // 같은 기본명(온도·사이즈 변형)은 당류가 가장 낮은 것 하나만 남긴다.
+    final seen = <String>{};
+    final out = <FranchiseDrink>[];
+    for (final m in rows) {
+      final d = FranchiseDrink.fromMap(m);
+      if (seen.add(d.baseName)) out.add(d);
+      if (out.length >= limit) break;
+    }
+    return out;
   }
 
   /// 이름으로 매장 검색 (부분일치, 최신 등록순). 지도 검색바용.
@@ -104,6 +171,17 @@ class StoreRepository {
         .order('created_at', ascending: false)
         .limit(limit);
     return rows.map((m) => StoreReview.fromMap(m)).toList();
+  }
+
+  /// 매장 대표 메뉴 (저당 + 시그니처). 저당 메뉴를 먼저, 그 안에서 sort_order 순.
+  Future<List<StoreMenu>> menus(String storeId) async {
+    final rows = await _db
+        .from('store_menus')
+        .select()
+        .eq('store_id', storeId)
+        .order('kind', ascending: true) // low_sugar < signature (사전순)
+        .order('sort_order', ascending: true);
+    return rows.map((m) => StoreMenu.fromMap(m)).toList();
   }
 
   /// 내가 즐겨찾기한 store_id 집합 (하트 상태 표시용).

@@ -1,7 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../core/i18n/app_lang.dart';
+import '../../core/i18n/ui_strings.dart';
 import '../../core/theme.dart';
 import '../../data/models/franchise_drink.dart';
+import '../../providers/providers.dart';
 import 'franchise_ui.dart';
 
 /// 프랜차이즈 음료 상세 바텀시트. 같은 메뉴의 온도/사이즈 변형을 탭으로 전환.
@@ -18,15 +22,16 @@ Future<void> showFranchiseDetailSheet(
   );
 }
 
-class _FranchiseDetailSheet extends StatefulWidget {
+class _FranchiseDetailSheet extends ConsumerStatefulWidget {
   const _FranchiseDetailSheet({required this.menu});
   final FranchiseMenu menu;
 
   @override
-  State<_FranchiseDetailSheet> createState() => _FranchiseDetailSheetState();
+  ConsumerState<_FranchiseDetailSheet> createState() =>
+      _FranchiseDetailSheetState();
 }
 
-class _FranchiseDetailSheetState extends State<_FranchiseDetailSheet> {
+class _FranchiseDetailSheetState extends ConsumerState<_FranchiseDetailSheet> {
   late String? _temp;
   late String? _size;
 
@@ -58,6 +63,8 @@ class _FranchiseDetailSheetState extends State<_FranchiseDetailSheet> {
     final cubes = d.sugarCubes ?? (d.sugarG == null ? null : d.sugarG! / 3.3);
     final temps = menu.temperatures;
     final sizes = menu.sizes;
+    final lang = ref.watch(menuLangProvider);
+    final dict = ref.watch(dictProvider);
 
     return SafeArea(
       top: false,
@@ -85,13 +92,13 @@ class _FranchiseDetailSheetState extends State<_FranchiseDetailSheet> {
             ),
 
             // 브랜드 + 메뉴명
-            Text(menu.brand,
+            Text(dict.brand(menu.brand),
                 style: const TextStyle(
                     fontSize: 13,
                     fontWeight: FontWeight.w700,
                     color: CubedColors.inkSoft)),
             const SizedBox(height: 4),
-            Text(menu.displayName,
+            Text(dict.menuName(menu.displayName, menu.translationKey),
                 style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w800)),
             if (d.volumeMl != null) ...[
               const SizedBox(height: 4),
@@ -105,7 +112,11 @@ class _FranchiseDetailSheetState extends State<_FranchiseDetailSheet> {
             if (temps.length > 1)
               _Segment(
                 options: [
-                  for (final t in temps) (value: t, label: t == 'ICE' ? '아이스' : '핫'),
+                  for (final t in temps)
+                    (
+                      value: t,
+                      label: uiText(t == 'ICE' ? 'iced' : 'hot', lang)
+                    ),
                 ],
                 selected: _temp,
                 onChanged: (v) => setState(() => _temp = v),
@@ -115,7 +126,9 @@ class _FranchiseDetailSheetState extends State<_FranchiseDetailSheet> {
             // 사이즈 탭
             if (sizes.length > 1)
               _Segment(
-                options: [for (final s in sizes) (value: s, label: s)],
+                options: [
+                  for (final s in sizes) (value: s, label: dict.size(s)),
+                ],
                 selected: _size,
                 onChanged: (v) => setState(() => _size = v),
               ),
@@ -133,8 +146,8 @@ class _FranchiseDetailSheetState extends State<_FranchiseDetailSheet> {
               ),
               child: Column(
                 children: [
-                  const Text('당류',
-                      style: TextStyle(
+                  Text(uiText('sugar', lang),
+                      style: const TextStyle(
                           fontSize: 13,
                           fontWeight: FontWeight.w700,
                           color: CubedColors.inkSoft)),
@@ -159,7 +172,7 @@ class _FranchiseDetailSheetState extends State<_FranchiseDetailSheet> {
                   ),
                   if (cubes != null) ...[
                     const SizedBox(height: 8),
-                    _CubeRow(cubes: cubes, color: color),
+                    _CubeRow(cubes: cubes, color: color, lang: lang),
                   ],
                 ],
               ),
@@ -170,7 +183,7 @@ class _FranchiseDetailSheetState extends State<_FranchiseDetailSheet> {
             Row(children: [
               Expanded(
                 child: _StatBox(
-                  label: '칼로리',
+                  label: uiText('calories', lang),
                   value: d.calories == null
                       ? '-'
                       : '${fmtNum(d.calories)} kcal',
@@ -178,8 +191,11 @@ class _FranchiseDetailSheetState extends State<_FranchiseDetailSheet> {
               ),
               if (d.hasZeroOption) ...[
                 const SizedBox(width: 10),
-                const Expanded(
-                  child: _StatBox(label: '제로 옵션', value: '있음'),
+                Expanded(
+                  child: _StatBox(
+                    label: uiText('zeroOption', lang),
+                    value: uiText('available', lang),
+                  ),
                 ),
               ],
             ]),
@@ -188,14 +204,14 @@ class _FranchiseDetailSheetState extends State<_FranchiseDetailSheet> {
               const SizedBox(height: 12),
               _InfoLine(
                 icon: Icons.eco_rounded,
-                label: '대체 감미료',
+                label: uiText('altSweetener', lang),
                 value: d.altSweetener!,
               ),
             ],
 
             const SizedBox(height: 20),
             // 나머지 영양성분 (기본 접힘)
-            _NutritionExpand(drink: d),
+            _NutritionExpand(drink: d, lang: lang),
           ],
         ),
       ),
@@ -263,9 +279,14 @@ class _Segment extends StatelessWidget {
 }
 
 class _CubeRow extends StatelessWidget {
-  const _CubeRow({required this.cubes, required this.color});
+  const _CubeRow({
+    required this.cubes,
+    required this.color,
+    required this.lang,
+  });
   final double cubes;
   final Color color;
+  final AppLang lang;
 
   @override
   Widget build(BuildContext context) {
@@ -283,7 +304,9 @@ class _CubeRow extends StatelessWidget {
             ],
           ),
         const SizedBox(height: 4),
-        Text('각설탕 약 ${cubes.toStringAsFixed(1)}개',
+        Text(
+            uiText('sugarCubes', lang)
+                .replaceFirst('{n}', cubes.toStringAsFixed(1)),
             style: TextStyle(
                 fontSize: 13, fontWeight: FontWeight.w700, color: color)),
       ],
@@ -347,17 +370,27 @@ class _InfoLine extends StatelessWidget {
 
 /// 나머지 영양성분 — 기본 접힘.
 class _NutritionExpand extends StatelessWidget {
-  const _NutritionExpand({required this.drink});
+  const _NutritionExpand({required this.drink, required this.lang});
   final FranchiseDrink drink;
+  final AppLang lang;
 
   @override
   Widget build(BuildContext context) {
     final rows = <({String label, String value})>[
-      (label: '탄수화물', value: fmtNum(drink.carbsG, unit: ' g')),
-      (label: '단백질', value: fmtNum(drink.proteinG, unit: ' g')),
-      (label: '지방', value: fmtNum(drink.fatG, unit: ' g')),
-      (label: '나트륨', value: fmtNum(drink.sodiumMg, unit: ' mg')),
-      (label: '카페인', value: fmtNum(drink.caffeineMg, unit: ' mg')),
+      (label: uiText('carbs', lang), value: fmtNum(drink.carbsG, unit: ' g')),
+      (
+        label: uiText('protein', lang),
+        value: fmtNum(drink.proteinG, unit: ' g')
+      ),
+      (label: uiText('fat', lang), value: fmtNum(drink.fatG, unit: ' g')),
+      (
+        label: uiText('sodium', lang),
+        value: fmtNum(drink.sodiumMg, unit: ' mg')
+      ),
+      (
+        label: uiText('caffeine', lang),
+        value: fmtNum(drink.caffeineMg, unit: ' mg')
+      ),
     ];
     return Theme(
       data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
@@ -367,8 +400,9 @@ class _NutritionExpand extends StatelessWidget {
           tilePadding: const EdgeInsets.symmetric(horizontal: 16),
           backgroundColor: CubedColors.bg,
           collapsedBackgroundColor: CubedColors.bg,
-          title: const Text('영양성분 전체',
-              style: TextStyle(fontSize: 14, fontWeight: FontWeight.w700)),
+          title: Text(uiText('nutritionAll', lang),
+              style:
+                  const TextStyle(fontSize: 14, fontWeight: FontWeight.w700)),
           childrenPadding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
           children: [
             for (final r in rows)

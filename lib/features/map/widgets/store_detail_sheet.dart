@@ -4,8 +4,12 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../../../core/location_cache.dart';
+import '../../../core/i18n/app_lang.dart';
+import '../../../core/i18n/ui_strings.dart';
 import '../../../core/theme.dart';
 import '../../../data/models/store.dart';
+import '../../../data/models/store_menu.dart';
+import '../../../data/translation_repository.dart';
 import '../../../data/models/store_review.dart';
 import '../../../providers/providers.dart';
 import '../../auth/login_screen.dart';
@@ -202,6 +206,8 @@ class _StoreDetailSheetState extends ConsumerState<StoreDetailSheet>
         ? LocationService.formatDistance(userLoc, LatLng(s.lat, s.lng))
         : null;
 
+    final menuLang = ref.watch(menuLangProvider);
+
     // 리뷰 목록(실시간) — 작성/수정 후 카운트·목록 즉시 반영.
     final reviewsAsync = ref.watch(storeReviewsProvider(s.id));
     final liveReviews = reviewsAsync.valueOrNull;
@@ -248,12 +254,12 @@ class _StoreDetailSheetState extends ConsumerState<StoreDetailSheet>
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Expanded(
-                            child: Text(s.name,
+                            child: Text(ref.watch(dictProvider).store(s.name),
                                 style: const TextStyle(
                                     fontSize: 20, fontWeight: FontWeight.w800)),
                           ),
                           const SizedBox(width: 8),
-                          _TypeBadge(type: s.type),
+                          _TypeBadge(type: s.type, lang: menuLang),
                           const SizedBox(width: 4),
                           _FavoriteButton(
                             isFavorite: ref
@@ -274,8 +280,10 @@ class _StoreDetailSheetState extends ConsumerState<StoreDetailSheet>
                         const SizedBox(width: 4),
                         Text(
                           rate != null
-                              ? '추천 $rate%  ·  리뷰 $reviewCount개'
-                              : '리뷰 없음',
+                              ? uiText('reviewSummary', menuLang)
+                                  .replaceFirst('{rate}', '$rate')
+                                  .replaceFirst('{n}', '$reviewCount')
+                              : uiText('noReview', menuLang),
                           style: const TextStyle(
                               fontSize: 13, color: CubedColors.inkSoft),
                         ),
@@ -331,6 +339,12 @@ class _StoreDetailSheetState extends ConsumerState<StoreDetailSheet>
 
                       const SizedBox(height: 16),
                       const Divider(color: CubedColors.line),
+
+                      // 대표 메뉴 — 탭에 묻히지 않도록 탭 위에 둔다.
+                      _MenuSection(storeId: s.id),
+
+                      // 프랜차이즈 매장이면 그 브랜드의 저당 메뉴를 추천한다.
+                      if (s.brand != null) _BrandMenuSection(brand: s.brand!),
                     ],
                   ),
                 ),
@@ -456,6 +470,303 @@ class _Handle extends StatelessWidget {
           ),
         ),
       );
+}
+
+/// 매장 대표 메뉴 — 저당 메뉴(당류 강조) + 시그니처 메뉴.
+/// 자료가 없는 매장에서는 섹션 자체를 감춘다(빈 껍데기를 보여주지 않는다).
+class _MenuSection extends ConsumerWidget {
+  const _MenuSection({required this.storeId});
+  final String storeId;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final async = ref.watch(storeMenusProvider(storeId));
+    final menus = async.valueOrNull ?? const <StoreMenu>[];
+    if (menus.isEmpty) return const SizedBox.shrink();
+    final lang = ref.watch(menuLangProvider);
+    final dict = ref.watch(dictProvider);
+
+    final lowSugar = menus.where((m) => m.isLowSugar).toList();
+    final signature = menus.where((m) => !m.isLowSugar).toList();
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const SizedBox(height: 14),
+        Text(uiText('featuredMenu', lang),
+            style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w800)),
+        const SizedBox(height: 10),
+        if (lowSugar.isNotEmpty) ...[
+          _MenuGroupLabel(
+            icon: Icons.eco_rounded,
+            label: uiText('lowSugarMenu', lang),
+            color: CubedColors.brand,
+          ),
+          for (final m in lowSugar)
+            _MenuTile(menu: m, dict: dict, lang: lang),
+        ],
+        if (signature.isNotEmpty) ...[
+          if (lowSugar.isNotEmpty) const SizedBox(height: 10),
+          _MenuGroupLabel(
+            icon: Icons.star_rounded,
+            label: uiText('signatureMenu', lang),
+            color: const Color(0xFFE0A100),
+          ),
+          for (final m in signature)
+            _MenuTile(menu: m, dict: dict, lang: lang),
+        ],
+        const SizedBox(height: 14),
+        const Divider(color: CubedColors.line),
+      ],
+    );
+  }
+}
+
+/// 프랜차이즈 매장용 — 그 브랜드에서 당류가 가장 낮은 메뉴 5개.
+/// 매장별 데이터가 아니라 브랜드 공통 영양정보(franchise_drinks)를 쓴다.
+class _BrandMenuSection extends ConsumerWidget {
+  const _BrandMenuSection({required this.brand});
+  final String brand;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final menus = ref.watch(brandLowSugarProvider(brand)).valueOrNull;
+    if (menus == null || menus.isEmpty) return const SizedBox.shrink();
+
+    final lang = ref.watch(menuLangProvider);
+    final dict = ref.watch(dictProvider);
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const SizedBox(height: 14),
+        Row(children: [
+          const Icon(Icons.eco_rounded, size: 16, color: CubedColors.brand),
+          const SizedBox(width: 6),
+          Text(uiText('brandLowSugar', lang),
+              style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w800)),
+        ]),
+        const SizedBox(height: 8),
+        for (final d in menus)
+          Padding(
+            padding: const EdgeInsets.symmetric(vertical: 6),
+            child: Row(
+              children: [
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        dict.menuName(d.nameClean, d.baseName),
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                            fontSize: 14, fontWeight: FontWeight.w700),
+                      ),
+                      if (d.size != null || d.calories != null) ...[
+                        const SizedBox(height: 2),
+                        Text(
+                          [
+                            if (d.size != null) dict.size(d.size),
+                            if (d.calories != null)
+                              '${d.calories!.round()} kcal',
+                          ].join(' · '),
+                          style: const TextStyle(
+                              fontSize: 12, color: CubedColors.inkSoft),
+                        ),
+                      ],
+                    ],
+                  ),
+                ),
+                const SizedBox(width: 10),
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.baseline,
+                  textBaseline: TextBaseline.alphabetic,
+                  children: [
+                    Text('${uiText('sugar', lang)} ',
+                        style: const TextStyle(
+                            fontSize: 11,
+                            fontWeight: FontWeight.w700,
+                            color: CubedColors.brand)),
+                    Text(
+                      _MenuTile._fmt(d.sugarG ?? 0),
+                      style: const TextStyle(
+                          fontSize: 17,
+                          fontWeight: FontWeight.w900,
+                          height: 1,
+                          color: CubedColors.brand),
+                    ),
+                    const Text('g',
+                        style: TextStyle(
+                            fontSize: 11,
+                            fontWeight: FontWeight.w700,
+                            color: CubedColors.brand)),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        const SizedBox(height: 14),
+        const Divider(color: CubedColors.line),
+      ],
+    );
+  }
+}
+
+class _MenuGroupLabel extends StatelessWidget {
+  const _MenuGroupLabel({
+    required this.icon,
+    required this.label,
+    required this.color,
+  });
+  final IconData icon;
+  final String label;
+  final Color color;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 6),
+      child: Row(children: [
+        Icon(icon, size: 15, color: color),
+        const SizedBox(width: 5),
+        Text(label,
+            style: TextStyle(
+                fontSize: 12.5, fontWeight: FontWeight.w800, color: color)),
+      ]),
+    );
+  }
+}
+
+class _MenuTile extends StatelessWidget {
+  const _MenuTile({
+    required this.menu,
+    required this.dict,
+    required this.lang,
+  });
+  final StoreMenu menu;
+  final TranslationDict dict;
+  final AppLang lang;
+
+  @override
+  Widget build(BuildContext context) {
+    // 보조 정보(칼로리·가격·기준량)는 있는 것만 이어 붙인다.
+    final sub = <String>[
+      if (menu.serving != null) menu.serving!,
+      if (menu.calories != null) '${_fmt(menu.calories!)} kcal',
+      if (menu.priceWon != null) '${_won(menu.priceWon!)}원',
+    ];
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 6),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(children: [
+                  Flexible(
+                    child: Text(dict.storeMenu(menu.name),
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                            fontSize: 14, fontWeight: FontWeight.w700)),
+                  ),
+                  if (menu.isEstimated) ...[
+                    const SizedBox(width: 6),
+                    _TinyBadge(text: uiText('estimated', lang)),
+                  ],
+                ]),
+                if (sub.isNotEmpty || menu.note != null) ...[
+                  const SizedBox(height: 2),
+                  Text(
+                    [
+                      sub.join(' · '),
+                      if (menu.note != null) dict.menuNote(menu.note!),
+                    ]
+                        .where((s) => s.isNotEmpty)
+                        .join(' · '),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
+                        fontSize: 12, color: CubedColors.inkSoft),
+                  ),
+                ],
+              ],
+            ),
+          ),
+          const SizedBox(width: 10),
+          // 당류 — 미공개면 수치 대신 안내 문구(추정값을 지어내지 않는다).
+          if (menu.sugarUnknown)
+            Text(uiText('sugarUnknown', lang),
+                style: const TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w600,
+                    color: CubedColors.inkSoft))
+          else
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.baseline,
+              textBaseline: TextBaseline.alphabetic,
+              children: [
+                Text('${uiText('sugar', lang)} ',
+                    style: TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w700,
+                        color: _sugarColor(menu.sugarG!))),
+                Text(_fmt(menu.sugarG!),
+                    style: TextStyle(
+                        fontSize: 17,
+                        fontWeight: FontWeight.w900,
+                        height: 1,
+                        color: _sugarColor(menu.sugarG!))),
+                Text('g',
+                    style: TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w700,
+                        color: _sugarColor(menu.sugarG!))),
+              ],
+            ),
+        ],
+      ),
+    );
+  }
+
+  static String _fmt(double v) =>
+      v == v.roundToDouble() ? v.toInt().toString() : v.toStringAsFixed(1);
+
+  static String _won(int v) =>
+      v.toString().replaceAllMapped(RegExp(r'(\d)(?=(\d{3})+$)'), (m) => '${m[1]},');
+
+  /// 저당맵 기준과 같은 색 구간 (프랜차이즈 메뉴 카드와 일관).
+  static Color _sugarColor(double g) {
+    if (g <= 5) return CubedColors.brand;
+    if (g <= 15) return const Color(0xFFE0A100);
+    return const Color(0xFFD9534F);
+  }
+}
+
+class _TinyBadge extends StatelessWidget {
+  const _TinyBadge({required this.text});
+  final String text;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
+      decoration: BoxDecoration(
+        color: CubedColors.bg,
+        borderRadius: BorderRadius.circular(4),
+        border: Border.all(color: CubedColors.line),
+      ),
+      child: Text(text,
+          style: const TextStyle(
+              fontSize: 10,
+              fontWeight: FontWeight.w700,
+              color: CubedColors.inkSoft)),
+    );
+  }
 }
 
 class _InfoRow extends StatelessWidget {
@@ -599,8 +910,18 @@ class _FavoriteButton extends StatelessWidget {
 }
 
 class _TypeBadge extends StatelessWidget {
-  const _TypeBadge({required this.type});
+  const _TypeBadge({required this.type, required this.lang});
   final StoreType type;
+  final AppLang lang;
+
+  /// StoreType.label 은 한국어 고정이라 표시 언어로 갈아끼운다.
+  static const _typeKeys = {
+    StoreType.cafe: 'typeCafe',
+    StoreType.restaurant: 'typeRestaurant',
+    StoreType.zeroStore: 'typeZeroStore',
+    StoreType.delivery: 'typeDelivery',
+    StoreType.franchise: 'franchiseToggle',
+  };
   @override
   Widget build(BuildContext context) => Container(
         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
@@ -608,7 +929,7 @@ class _TypeBadge extends StatelessWidget {
           color: type.markerColor.withValues(alpha: 0.12),
           borderRadius: BorderRadius.circular(20),
         ),
-        child: Text(type.label,
+        child: Text(uiText(_typeKeys[type] ?? 'typeRestaurant', lang),
             style: TextStyle(
                 color: type.markerColor,
                 fontSize: 12,

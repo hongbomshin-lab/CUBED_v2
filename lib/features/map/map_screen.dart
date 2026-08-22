@@ -4,12 +4,16 @@ import 'package:flutter/material.dart';
 import 'package:flutter_naver_map/flutter_naver_map.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../core/i18n/app_lang.dart';
+import '../../core/i18n/ui_strings.dart';
 import '../../core/location_cache.dart';
 import '../../core/theme.dart';
 import '../../data/models/store.dart';
+import '../../data/translation_repository.dart';
 import '../../providers/providers.dart';
 import '../auth/login_screen.dart';
 import '../franchise/franchise_browser.dart';
+import '../franchise/language_fab.dart';
 import '../report/store_report_sheet.dart';
 import 'widgets/store_detail_sheet.dart';
 
@@ -42,6 +46,12 @@ class _MapScreenState extends ConsumerState<MapScreen> {
 
   // 화면 모드 (지도 / 메뉴 당류)
   _MapMode _mode = _MapMode.store;
+
+  /// 마지막으로 그린 매장 — 언어가 바뀌면 재조회 없이 캡션만 다시 그린다.
+  List<Store> _lastStores = const [];
+
+  /// 내 위치 반경 안의 프랜차이즈 카페 (토글이 켜져 있을 때만 채워진다).
+  List<Store> _franchise = const [];
 
   // 위치 확인 불가 시 기본 중심 (LocationService.fallback 과 동일)
   static const _fallbackCenter = NLatLng(37.58045239, 126.9971964);
@@ -139,12 +149,47 @@ class _MapScreenState extends ConsumerState<MapScreen> {
             types: _selected,
           );
       if (!mounted) return;
+      _lastStores = stores;
+      await _refreshFranchise();
+      if (!mounted) return;
       await _renderMarkers(c, stores);
     } catch (e) {
       debugPrint('매장 조회 실패: $e');
     } finally {
       if (mounted) setState(() => _fetching = false);
     }
+  }
+
+  /// 프랜차이즈 카페를 내 위치 반경 안에서만 가져온다.
+  /// 토글이 꺼져 있으면 목록을 비워 마커도 사라지게 한다.
+  Future<void> _refreshFranchise() async {
+    if (!ref.read(showFranchiseProvider)) {
+      _franchise = const [];
+      return;
+    }
+    final me = ref.read(userLocationProvider);
+    if (me == null) {
+      _franchise = const [];
+      return;
+    }
+    try {
+      _franchise = await ref.read(storeRepositoryProvider).franchiseStoresNear(
+            center: me,
+            radiusM: franchiseRadiusM,
+          );
+    } catch (e) {
+      debugPrint('프랜차이즈 조회 실패: \$e');
+      _franchise = const [];
+    }
+  }
+
+  /// 토글 변경 → 재조회 후 마커만 다시 그린다(지도 이동 없음).
+  Future<void> _onToggleFranchise(bool on) async {
+    ref.read(showFranchiseProvider.notifier).state = on;
+    await _refreshFranchise();
+    final c = _controller;
+    if (!mounted || c == null) return;
+    await _renderMarkers(c, _lastStores);
   }
 
   /// store_type별 커스텀 마커 아이콘(위젯 렌더링) — 캐시 활용.
@@ -162,15 +207,18 @@ class _MapScreenState extends ConsumerState<MapScreen> {
 
   Future<void> _renderMarkers(NaverMapController c, List<Store> stores) async {
     await c.clearOverlays(type: NOverlayType.marker);
+    // 마커 캡션도 선택 언어로. 번역이 없으면 원문(한국어)이 그대로 나온다.
+    final dict = ref.read(dictProvider);
     final markers = <NMarker>{};
-    for (final s in stores) {
+    // 프랜차이즈를 먼저 넣어 저당 전문 매장 마커가 위에 오도록 한다.
+    for (final s in [..._franchise, ...stores]) {
       final marker = NMarker(
         id: s.id,
         position: NLatLng(s.lat, s.lng),
         icon: await _iconFor(s.type),
         size: const Size(40, 48),
         caption: NOverlayCaption(
-          text: s.name,
+          text: dict.store(s.name),
           textSize: 12,
           color: CubedColors.ink,
           haloColor: Colors.white,
@@ -222,19 +270,36 @@ class _MapScreenState extends ConsumerState<MapScreen> {
 
   @override
   Widget build(BuildContext context) {
+    // 표시 언어(또는 로딩이 끝난 번역 사전)가 바뀌면 마커 캡션을 다시 그린다.
+    // 마커는 카메라 이동·필터 변경 때만 그려지므로 이게 없으면 이름이 한국어로 남는다.
+    ref.listen(dictProvider, (_, __) {
+      final c = _controller;
+      if (c != null && _lastStores.isNotEmpty) _renderMarkers(c, _lastStores);
+    });
+
     return Scaffold(
       // 매장 제보 버튼은 지도 모드에서만.
-      floatingActionButton: _mode == _MapMode.store
-          ? FloatingActionButton.extended(
+      // 언어 버튼은 두 모드 모두에서 쓸 수 있어야 한다 — 선택한 언어가
+      // 메뉴 정보뿐 아니라 지도의 매장 이름·메뉴에도 적용되기 때문.
+      floatingActionButton: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.end,
+        children: [
+          const LanguageFab(),
+          if (_mode == _MapMode.store) ...[
+            const SizedBox(height: 10),
+            FloatingActionButton.extended(
               heroTag: 'report',
               backgroundColor: CubedColors.brand,
               foregroundColor: Colors.white,
               onPressed: _onReportStore,
               icon: const Icon(Icons.add_location_alt_rounded),
-              label: const Text('매장 제보',
-                  style: TextStyle(fontWeight: FontWeight.w800)),
-            )
-          : null,
+              label: Text(uiText('reportStore', ref.watch(menuLangProvider)),
+                  style: const TextStyle(fontWeight: FontWeight.w800)),
+            ),
+          ],
+        ],
+      ),
       body: SafeArea(
         bottom: false,
         child: Column(
@@ -242,6 +307,7 @@ class _MapScreenState extends ConsumerState<MapScreen> {
             _ModeToggle(
               mode: _mode,
               onChanged: (m) => setState(() => _mode = m),
+              lang: ref.watch(menuLangProvider),
             ),
             // IndexedStack으로 두 모드를 모두 살려두어 지도 상태(카메라·마커) 보존.
             Expanded(
@@ -261,24 +327,28 @@ class _MapScreenState extends ConsumerState<MapScreen> {
 
   /// 매장 지도 모드 본문 (검색 + store_type 필터 + 지도).
   Widget _storeView() {
+    final lang = ref.watch(menuLangProvider);
     return Column(
       children: [
         _SearchBar(
           controller: _searchCtrl,
           onChanged: _onSearchChanged,
           onClear: _clearSearch,
+          hint: uiText('storeSearchHint', lang),
         ),
-        _FilterBar(selected: _selected, onTap: _toggleFilter),
+        _FilterBar(selected: _selected, onTap: _toggleFilter, lang: lang),
         Expanded(
           child: Stack(
             children: [
               NaverMap(
-                options: const NaverMapViewOptions(
-                  initialCameraPosition: NCameraPosition(
+                // 지도 라벨(도로·건물·상호)도 선택 언어로. NaverMapViewOptions 는
+                // == 비교로 변경을 감지하므로 locale 만 바꿔도 지도에 반영된다.
+                options: NaverMapViewOptions(
+                  initialCameraPosition: const NCameraPosition(
                     target: _fallbackCenter,
                     zoom: 11,
                   ),
-                  locale: Locale('ko'),
+                  locale: Locale(lang.code),
                   locationButtonEnable: true,
                 ),
                 onMapReady: (c) {
@@ -288,12 +358,28 @@ class _MapScreenState extends ConsumerState<MapScreen> {
                 },
                 onCameraIdle: _scheduleFetch,
               ),
-              if (_fetching)
-                const Positioned(
-                  top: 12,
-                  right: 12,
-                  child: _FetchingChip(),
+              // 프랜차이즈 토글 — 칩 줄 끝에 두면 스와이프해야 보여서 지도 위로 뺐다.
+              // 토글을 위에 고정하고 '조회 중'은 그 아래에 붙인다.
+              // (예전처럼 조회 여부로 top 을 바꾸면 매번 버튼이 아래로 밀려 눌리기 어렵다)
+              Positioned(
+                top: 12,
+                right: 12,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  children: [
+                    _FranchiseChip(
+                      active: ref.watch(showFranchiseProvider),
+                      lang: ref.watch(menuLangProvider),
+                      onTap: () =>
+                          _onToggleFranchise(!ref.read(showFranchiseProvider)),
+                    ),
+                    if (_fetching) ...[
+                      const SizedBox(height: 8),
+                      const _FetchingChip(),
+                    ],
+                  ],
                 ),
+              ),
               // 검색 결과 오버레이
               if (_searchOpen)
                 Positioned(
@@ -304,6 +390,8 @@ class _MapScreenState extends ConsumerState<MapScreen> {
                     results: _searchResults,
                     userLoc: ref.watch(userLocationProvider),
                     onTap: _onSearchResultTap,
+                    dict: ref.watch(dictProvider),
+                    lang: lang,
                   ),
                 ),
             ],
@@ -316,9 +404,14 @@ class _MapScreenState extends ConsumerState<MapScreen> {
 
 /// 지도 / 메뉴 당류 모드 전환 세그먼트.
 class _ModeToggle extends StatelessWidget {
-  const _ModeToggle({required this.mode, required this.onChanged});
+  const _ModeToggle({
+    required this.mode,
+    required this.onChanged,
+    required this.lang,
+  });
   final _MapMode mode;
   final ValueChanged<_MapMode> onChanged;
+  final AppLang lang;
 
   @override
   Widget build(BuildContext context) {
@@ -334,8 +427,9 @@ class _ModeToggle extends StatelessWidget {
           border: Border.all(color: CubedColors.line),
         ),
         child: Row(children: [
-          _seg('매장 지도', Icons.map_rounded, _MapMode.store),
-          _seg('메뉴 정보', Icons.local_cafe_rounded, _MapMode.menu),
+          _seg(uiText('modeMap', lang), Icons.map_rounded, _MapMode.store),
+          _seg(uiText('modeMenu', lang), Icons.local_cafe_rounded,
+              _MapMode.menu),
         ]),
       ),
     );
@@ -378,10 +472,12 @@ class _SearchBar extends StatelessWidget {
     required this.controller,
     required this.onChanged,
     required this.onClear,
+    required this.hint,
   });
   final TextEditingController controller;
   final ValueChanged<String> onChanged;
   final VoidCallback onClear;
+  final String hint;
 
   @override
   Widget build(BuildContext context) {
@@ -404,11 +500,12 @@ class _SearchBar extends StatelessWidget {
               controller: controller,
               onChanged: onChanged,
               textInputAction: TextInputAction.search,
-              decoration: const InputDecoration(
+              decoration: InputDecoration(
                 isCollapsed: true,
                 border: InputBorder.none,
-                hintText: '저당 매장 이름 검색',
-                hintStyle: TextStyle(color: CubedColors.inkSoft, fontSize: 14),
+                hintText: hint,
+                hintStyle: const TextStyle(
+                    color: CubedColors.inkSoft, fontSize: 14),
               ),
               style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
             ),
@@ -435,10 +532,14 @@ class _SearchResults extends StatelessWidget {
     required this.results,
     required this.userLoc,
     required this.onTap,
+    required this.dict,
+    required this.lang,
   });
   final List<Store> results;
   final LatLng? userLoc;
   final void Function(Store) onTap;
+  final TranslationDict dict;
+  final AppLang lang;
 
   @override
   Widget build(BuildContext context) {
@@ -456,12 +557,12 @@ class _SearchResults extends StatelessWidget {
         ],
       ),
       child: results.isEmpty
-          ? const Padding(
-              padding: EdgeInsets.symmetric(vertical: 20),
+          ? Padding(
+              padding: const EdgeInsets.symmetric(vertical: 20),
               child: Center(
-                child: Text('검색 결과가 없어요',
-                    style:
-                        TextStyle(color: CubedColors.inkSoft, fontSize: 13)),
+                child: Text(uiText('noSearchResult', lang),
+                    style: const TextStyle(
+                        color: CubedColors.inkSoft, fontSize: 13)),
               ),
             )
           : ListView.separated(
@@ -488,7 +589,7 @@ class _SearchResults extends StatelessWidget {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Text(s.name,
+                            Text(dict.store(s.name),
                                 maxLines: 1,
                                 overflow: TextOverflow.ellipsis,
                                 style: const TextStyle(
@@ -584,9 +685,23 @@ class _PinTailPainter extends CustomPainter {
 }
 
 class _FilterBar extends StatelessWidget {
-  const _FilterBar({required this.selected, required this.onTap});
+  const _FilterBar({
+    required this.selected,
+    required this.onTap,
+    required this.lang,
+  });
   final Set<StoreType> selected;
   final void Function(StoreType? type) onTap;
+  final AppLang lang;
+
+  /// StoreType → UI 문구 키. (enum 의 label 은 한국어 고정이라 여기서 갈아끼운다)
+  static const _typeKeys = {
+    StoreType.cafe: 'typeCafe',
+    StoreType.restaurant: 'typeRestaurant',
+    StoreType.zeroStore: 'typeZeroStore',
+    StoreType.delivery: 'typeDelivery',
+    StoreType.franchise: 'franchiseToggle',
+  };
 
   @override
   Widget build(BuildContext context) {
@@ -598,20 +713,93 @@ class _FilterBar extends StatelessWidget {
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
         children: [
           _Chip(
-            label: '전체',
+            label: uiText('all', lang),
             color: CubedColors.ink,
             active: selected.isEmpty,
             onTap: () => onTap(null),
           ),
+          // 프랜차이즈는 유형 필터가 아니라 별도 토글이라 여기서 제외한다.
           for (final t in StoreType.values)
-            _Chip(
-              label: t.label,
-              color: t.markerColor,
-              active: selected.contains(t),
-              onTap: () => onTap(t),
-            ),
+            if (t != StoreType.franchise)
+              _Chip(
+                label: uiText(_typeKeys[t] ?? 'typeRestaurant', lang),
+                color: t.markerColor,
+                active: selected.contains(t),
+                onTap: () => onTap(t),
+              ),
         ],
       ),
+    );
+  }
+}
+
+/// 프랜차이즈 표시 토글. 유형 필터와 성격이 달라(더하기/빼기가 아니라 켜기/끄기)
+/// 칩 모양도 구분한다 — 켜지면 반경을 함께 보여 준다.
+class _FranchiseChip extends StatelessWidget {
+  const _FranchiseChip({
+    required this.active,
+    required this.lang,
+    required this.onTap,
+  });
+  final bool active;
+  final AppLang lang;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    const color = Color(0xFF6B7280);
+    final radius = uiText('franchiseNearby', lang)
+        .replaceFirst('{n}', franchiseRadiusM.round().toString());
+    return GestureDetector(
+        onTap: onTap,
+        child: Container(
+          height: 36,
+          padding: const EdgeInsets.symmetric(horizontal: 12),
+          alignment: Alignment.center,
+          // 지도 위에 얹히므로 반투명 — 아래 지형·상호가 비쳐 보이게 한다.
+          // 글자는 불투명하게 두어 가독성은 유지.
+          decoration: BoxDecoration(
+            color: active
+                ? color.withValues(alpha: 0.78)
+                : CubedColors.surface.withValues(alpha: 0.72),
+            borderRadius: BorderRadius.circular(18),
+            border: Border.all(
+              color: active
+                  ? color.withValues(alpha: 0.5)
+                  : CubedColors.line.withValues(alpha: 0.6),
+            ),
+            boxShadow: [
+              BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.08),
+                  blurRadius: 4,
+                  offset: const Offset(0, 1)),
+            ],
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(Icons.coffee_rounded,
+                  size: 15, color: active ? Colors.white : color),
+              const SizedBox(width: 5),
+              Text(
+                uiText('franchiseToggle', lang),
+                style: TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w700,
+                  color: active ? Colors.white : CubedColors.inkSoft,
+                ),
+              ),
+              if (active) ...[
+                const SizedBox(width: 5),
+                Text(radius,
+                    style: const TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w600,
+                        color: Colors.white70)),
+              ],
+            ],
+          ),
+        ),
     );
   }
 }

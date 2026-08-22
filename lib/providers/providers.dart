@@ -1,9 +1,12 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import '../core/i18n/app_lang.dart';
+import '../core/i18n/locale_controller.dart';
 import '../core/location_cache.dart';
 import '../core/sugar_profile.dart';
 import '../data/auth_repository.dart';
+import '../data/translation_repository.dart';
 import '../data/deal_repository.dart';
 import '../data/food_log_repository.dart';
 import '../data/franchise_repository.dart';
@@ -16,6 +19,7 @@ import '../data/models/my_review.dart';
 import '../data/models/product.dart';
 import '../data/models/product_price.dart';
 import '../data/models/store.dart';
+import '../data/models/store_menu.dart';
 import '../data/models/store_review.dart';
 import '../data/price_repository.dart';
 import '../data/product_repository.dart';
@@ -64,6 +68,28 @@ final franchiseRepositoryProvider = Provider<FranchiseRepository>(
   (ref) => FranchiseRepository(ref.watch(supabaseProvider)),
 );
 
+// ── 메뉴 정보 다국어 ────────────────────────────────────────────
+/// 표시 언어 (기기 언어 → 저장된 사용자 선택 순으로 결정)
+final menuLangProvider =
+    StateNotifierProvider<LocaleController, AppLang>((ref) => LocaleController());
+
+final translationRepositoryProvider = Provider<TranslationRepository>(
+  (ref) => TranslationRepository(ref.watch(supabaseProvider)),
+);
+
+/// 선택 언어의 번역 사전. 언어가 바뀌면 자동 재로드되고 화면이 갱신된다.
+final translationsProvider = FutureProvider<TranslationDict>((ref) async {
+  final lang = ref.watch(menuLangProvider);
+  return ref.watch(translationRepositoryProvider).load(lang);
+});
+
+/// 로딩 중에도 화면이 멈추지 않도록 사전이 없으면 원문(빈 사전)으로 폴백.
+final dictProvider = Provider<TranslationDict>((ref) {
+  final lang = ref.watch(menuLangProvider);
+  return ref.watch(translationsProvider).valueOrNull ??
+      TranslationDict(lang, const {});
+});
+
 /// 브랜드 특가(핫딜) 데이터 접근
 final dealRepositoryProvider = Provider<DealRepository>(
   (ref) => DealRepository(ref.watch(supabaseProvider)),
@@ -81,13 +107,25 @@ final dealsProvider = FutureProvider.autoDispose
 });
 
 /// 프랜차이즈 검색 결과 (검색어·브랜드·정렬 조합별). 같은 메뉴는 그룹으로 묶음.
+/// 표시 언어가 바뀌면 자동으로 다시 계산된다(외국어 검색어 대응).
 final franchiseSearchProvider = FutureProvider.autoDispose
     .family<List<FranchiseMenu>, FranchiseQuery>((ref, query) async {
-  return ref.watch(franchiseRepositoryProvider).search(
-        query: query.query,
-        brand: query.brand,
-        sort: query.sort,
-      );
+  final repo = ref.watch(franchiseRepositoryProvider);
+  final lang = ref.watch(menuLangProvider);
+
+  if (!lang.needsTranslation) {
+    return repo.search(
+      query: query.query,
+      brand: query.brand,
+      sort: query.sort,
+    );
+  }
+
+  // 외국어 표시 중에는 화면에 보이는 번역명으로 검색되어야 하므로
+  // 서버 검색어는 비우고 브랜드 범위만 받아 사전 기준으로 거른다.
+  final dict = await ref.watch(translationsProvider.future);
+  final all = await repo.search(brand: query.brand, sort: query.sort);
+  return FranchiseRepository.filterByText(all, query.query, dict);
 });
 
 /// 저당맵: 권한 허용 후 확보한 사용자 현재 위치(없으면 null).
@@ -98,6 +136,26 @@ final userLocationProvider = StateProvider<LatLng?>((ref) => null);
 final storeReviewsProvider =
     FutureProvider.family<List<StoreReview>, String>((ref, storeId) async {
   return ref.watch(storeRepositoryProvider).reviews(storeId);
+});
+
+/// 저당맵: 프랜차이즈 카페를 지도에 함께 표시할지. 기본은 꺼짐.
+/// 저당맵의 주인공은 저당 전문 매장이라, 프랜차이즈는 필요할 때만 켜서 본다.
+final showFranchiseProvider = StateProvider<bool>((ref) => false);
+
+/// 프랜차이즈 표시 반경(m). 지금은 고정, 추후 사용자 설정으로 뺀다.
+const franchiseRadiusM = 500.0;
+
+/// 이 브랜드에서 당류가 낮은 메뉴 5개 (프랜차이즈 매장 상세용).
+final brandLowSugarProvider =
+    FutureProvider.autoDispose.family<List<FranchiseDrink>, String>(
+        (ref, brand) {
+  return ref.watch(storeRepositoryProvider).lowSugarMenusFor(brand);
+});
+
+/// 매장 대표 메뉴 (저당 + 시그니처). 매장 상세 시트에서 사용.
+final storeMenusProvider =
+    FutureProvider.autoDispose.family<List<StoreMenu>, String>((ref, storeId) {
+  return ref.watch(storeRepositoryProvider).menus(storeId);
 });
 
 final authRepositoryProvider = Provider<AuthRepository>(

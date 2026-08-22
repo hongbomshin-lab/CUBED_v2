@@ -1,0 +1,42 @@
+kind,source,en,ja,zh,note
+store,디저트39 전주 객사점,DESSERT39 Jeonju Gaeksa,デザート39 チョンジュ・ケクサ店,DESSERT39 全州客舍店,브랜드 공식 표기 DESSERT39 + 지점명 로마자/한자
+store,디저트39 전주삼천점,DESSERT39 Jeonju Samcheon,デザート39 チョンジュ・サムチョン店,DESSERT39 全州三川店,
+store,디저트39 전주아중점,DESSERT39 Jeonju Ajung,デザート39 チョンジュ・アジュン店,DESSERT39 全州牙中店,
+store,디저트39 전북대점,DESSERT39 Jeonbuk National Univ.,デザート39 全北大店,DESSERT39 全北大店,전북대 = 전북대학교
+store,디저트39 전주만성점,DESSERT39 Jeonju Manseong,デザート39 チョンジュ・マンソン店,DESSERT39 全州萬成店,
+store,제로스토어 전북대점,ZEROSTORE Jeonbuk National Univ.,ゼロストア 全北大店,ZEROSTORE 全北大店,브랜드 공식 표기 ZEROSTORE (zerostore.kr)
+store,헬키푸키 전주혁신도시점,Helkipuki Jeonju Innovation City,ヘルキプキ 革新都市店,Helkipuki 全州革新都市店,공식 영문 표기 없음 → 음차
+store,리얼식단 전북도청점,Real Sicdan Jeonbuk Provincial Office,リアルシクタン 全北道庁店,Real Sicdan 全北道厅店,브랜드 표기 Real Sicdan (realsicdan.com)
+store,무가당,Mugadang,ムガダン,Mugadang,개인 카페 · 상호 자체가 '무가당'
+store,제로초이스 전주신시가지점,ZEROCHOICE Jeonju Sinsigaji,ゼロチョイス 新市街地店,ZEROCHOICE 全州新市街地店,브랜드 공식 표기 ZEROCHOICE (zerochoice.kr)
+store,영칼로리포케&샐러드 전주신시가지점,Zero Calorie Poke & Salad Jeonju Sinsigaji,ゼロカロリーポケ&サラダ 新市街地店,零卡路里波奇饭&沙拉 全州新市街地店,영(零)칼로리 = zero calorie
+store,슬로우캘리 전주효자점,SLOWCALI Jeonju Hyoja,スローカリ チョンジュ・ヒョジャ店,SLOWCALI 全州孝子店,브랜드 공식 표기 SLOWCALI (slowcali.co.kr)
+store,샐러디 전주송천점,SALADY Jeonju Songcheon,サラディ チョンジュ・ソンチョン店,SALADY 全州松川店,브랜드 공식 표기 SALADY (salady.com)
+store,샐러디 전주혁신도시점,SALADY Jeonju Innovation City,サラディ 革新都市店,SALADY 全州革新都市店,
+store_menu,콥 샐러디,Cobb Salady,コブサラディ,科布沙拉,
+store_menu,고추장머쉬룸 웜볼,Gochujang Mushroom Warm Bowl,コチュジャンマッシュルーム ウォームボウル,辣椒酱蘑菇暖碗,
+store_menu,우삼겹 웜볼,Beef Brisket Warm Bowl,牛バラ肉 ウォームボウル,牛五花暖碗,우삼겹 = 얇게 썬 소 차돌/삼겹
+store_menu,우삼겹메밀면 샐러디,Beef Brisket Buckwheat Noodle Salady,牛バラ肉そば サラディ,牛五花荞麦面沙拉,
+store_menu,시저치킨 샐러디,Caesar Chicken Salady,シーザーチキン サラディ,凯撒鸡肉沙拉,
+store_menu,애사비 에이드,Apple Cider Vinegar Ade,アップルサイダービネガーエード,苹果醋气泡饮,애사비 = 애플사이다비니거
+store_menu,연어 포케 (메밀면&샐러드),Salmon Poke (Buckwheat Noodles & Salad),サーモンポケ（そば&サラダ）,三文鱼波奇饭（荞麦面&沙拉）,
+store_menu,크런치 시저 샐러드,Crunch Caesar Salad,クランチシーザーサラダ,香脆凯撒沙拉,
+store_menu,문어 포케 (현미밥&샐러드),Octopus Poke (Brown Rice & Salad),タコポケ（玄米ご飯&サラダ）,章鱼波奇饭（糙米饭&沙拉）,
+store_menu,올인원 포케 (현미밥&샐러드),All-in-One Poke (Brown Rice & Salad),オールインワンポケ（玄米ご飯&サラダ）,全能波奇饭（糙米饭&沙拉）,
+store_menu,무설탕 수비드 안심 김치 덮밥,Sugar-Free Sous-Vide Tenderloin Kimchi Rice Bowl,無糖 スーヴィッド ヒレ肉キムチ丼,无糖低温慢煮里脊泡菜盖饭,수비드 = sous-vide
+store_menu,저당 갈비 포케,Low-Sugar Galbi Poke,低糖 カルビポケ,低糖排骨波奇饭,
+store_menu,저당 갈비 덮밥,Low-Sugar Galbi Rice Bowl,低糖 カルビ丼,低糖排骨盖饭,
+store_menu,부채살 포케,Flat Iron Steak Poke,ミスジポケ,板腱牛肉波奇饭,부채살 = 미스지(ミスジ) = flat iron
+store_menu,연어 포케,Salmon Poke,サーモンポケ,三文鱼波奇饭,
+store_menu,0칼로리 복숭아 아이스티,Zero-Calorie Peach Iced Tea,0キロカロリー ピーチアイスティー,0卡路里蜜桃冰茶,
+store_menu,착한 콜드브루,Value Cold Brew,お手頃コールドブリュー,超值冷萃咖啡,'착한' = 가격이 저렴하다는 관용 표현
+store_menu,아메리카노,Americano,アメリカーノ,美式咖啡,
+store_menu,착한 바닐라라떼,Value Vanilla Latte,お手頃バニララテ,超值香草拿铁,
+store_menu,자바칩 프라페,Java Chip Frappe,ジャバチップフラッペ,爪哇脆片冰乐,
+menu_note,전 샐러디 메뉴 중 당류 최저,Lowest sugar of all Salady menus,サラディ全メニュー中 糖類最少,全部沙拉菜单中含糖量最低,
+menu_note,전 메뉴 중 최저 칼로리,Lowest calories on the menu,全メニュー中 最少カロリー,全部菜单中热量最低,
+menu_note,당류·열량 0,Zero sugar and calories,糖類・カロリー 0,零糖零热量,
+menu_note,브랜드 대표 포케,The brand's signature poke,ブランド代表のポケ,品牌招牌波奇饭,
+menu_note,메뉴명에 '저당' 표기,Labeled "low sugar" by the brand,メニュー名に「低糖」表記,菜单名标注“低糖”,
+menu_note,공식 메뉴판 '제로·저칼로리' 분류,Listed under "Zero & Low Calorie" on the official menu,公式メニューの「ゼロ・低カロリー」分類,官方菜单“零卡·低卡”分类,
+menu_note,공식 메뉴판 '베스트 인기 메뉴',Listed as a "Best Seller" on the official menu,公式メニューの「人気ベストメニュー」,官方菜单“人气最佳菜单”,

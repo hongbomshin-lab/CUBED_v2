@@ -3,8 +3,11 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../core/i18n/app_lang.dart';
+import '../../core/i18n/ui_strings.dart';
 import '../../core/theme.dart';
 import '../../data/franchise_repository.dart';
+import '../../data/translation_repository.dart';
 import '../../data/models/franchise_drink.dart';
 import '../../providers/providers.dart';
 import 'franchise_detail_sheet.dart';
@@ -60,6 +63,8 @@ class _FranchiseBrowserState extends ConsumerState<FranchiseBrowser> {
     final async = ref.watch(franchiseSearchProvider(
       FranchiseQuery(query: _query, brand: _brand, sort: _sort),
     ));
+    final lang = ref.watch(menuLangProvider);
+    final dict = ref.watch(dictProvider);
 
     return Column(
       children: [
@@ -67,25 +72,32 @@ class _FranchiseBrowserState extends ConsumerState<FranchiseBrowser> {
           controller: _searchCtrl,
           onChanged: _onSearchChanged,
           onClear: _clearSearch,
+          hint: uiText('searchHint', lang),
         ),
-        _BrandFilterBar(selected: _brand, onTap: _selectBrand),
+        _BrandFilterBar(
+          selected: _brand,
+          onTap: _selectBrand,
+          dict: dict,
+          lang: lang,
+        ),
         _SortBar(
           sort: _sort,
           onChanged: (s) => setState(() => _sort = s),
           count: async.valueOrNull?.length,
+          lang: lang,
         ),
         Expanded(
           child: async.when(
             loading: () => const Center(child: CircularProgressIndicator()),
-            error: (_, __) => const Center(
-              child: Text('메뉴를 불러오지 못했어요',
-                  style: TextStyle(color: CubedColors.inkSoft)),
+            error: (_, __) => Center(
+              child: Text(uiText('loadFailed', lang),
+                  style: const TextStyle(color: CubedColors.inkSoft)),
             ),
             data: (drinks) {
               if (drinks.isEmpty) {
-                return const Center(
-                  child: Text('검색 결과가 없어요',
-                      style: TextStyle(color: CubedColors.inkSoft)),
+                return Center(
+                  child: Text(uiText('noResult', lang),
+                      style: const TextStyle(color: CubedColors.inkSoft)),
                 );
               }
               return ListView.separated(
@@ -94,6 +106,8 @@ class _FranchiseBrowserState extends ConsumerState<FranchiseBrowser> {
                 separatorBuilder: (_, __) => const SizedBox(height: 8),
                 itemBuilder: (_, i) => _MenuCard(
                   menu: drinks[i],
+                  dict: dict,
+                  lang: lang,
                   onTap: () => showFranchiseDetailSheet(context, drinks[i]),
                 ),
               );
@@ -111,10 +125,12 @@ class _SearchBar extends StatelessWidget {
     required this.controller,
     required this.onChanged,
     required this.onClear,
+    required this.hint,
   });
   final TextEditingController controller;
   final ValueChanged<String> onChanged;
   final VoidCallback onClear;
+  final String hint;
 
   @override
   Widget build(BuildContext context) {
@@ -137,11 +153,12 @@ class _SearchBar extends StatelessWidget {
               controller: controller,
               onChanged: onChanged,
               textInputAction: TextInputAction.search,
-              decoration: const InputDecoration(
+              decoration: InputDecoration(
                 isCollapsed: true,
                 border: InputBorder.none,
-                hintText: '메뉴 이름 검색 (예: 아메)',
-                hintStyle: TextStyle(color: CubedColors.inkSoft, fontSize: 14),
+                hintText: hint,
+                hintStyle: const TextStyle(
+                    color: CubedColors.inkSoft, fontSize: 14),
               ),
               style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
             ),
@@ -164,9 +181,16 @@ class _SearchBar extends StatelessWidget {
 
 /// 브랜드 필터 칩 (전체 + 6개 브랜드). 단일 선택.
 class _BrandFilterBar extends StatelessWidget {
-  const _BrandFilterBar({required this.selected, required this.onTap});
+  const _BrandFilterBar({
+    required this.selected,
+    required this.onTap,
+    required this.dict,
+    required this.lang,
+  });
   final String? selected;
   final void Function(String?) onTap;
+  final TranslationDict dict;
+  final AppLang lang;
 
   @override
   Widget build(BuildContext context) {
@@ -179,13 +203,13 @@ class _BrandFilterBar extends StatelessWidget {
         padding: const EdgeInsets.symmetric(horizontal: 12),
         children: [
           _Chip(
-            label: '전체',
+            label: uiText('all', lang),
             selected: selected == null,
             onTap: () => onTap(null),
           ),
           for (final b in FranchiseRepository.brands)
             _Chip(
-              label: b,
+              label: dict.brand(b),
               selected: selected == b,
               onTap: () => onTap(b),
             ),
@@ -240,10 +264,19 @@ class _SortBar extends StatelessWidget {
     required this.sort,
     required this.onChanged,
     required this.count,
+    required this.lang,
   });
   final FranchiseSort sort;
   final ValueChanged<FranchiseSort> onChanged;
   final int? count;
+  final AppLang lang;
+
+  /// 정렬 라벨의 UI 문구 키.
+  static const _sortKeys = {
+    FranchiseSort.sugarAsc: 'sortSugarAsc',
+    FranchiseSort.sugarDesc: 'sortSugarDesc',
+    FranchiseSort.calories: 'sortCalories',
+  };
 
   @override
   Widget build(BuildContext context) {
@@ -253,7 +286,7 @@ class _SortBar extends StatelessWidget {
       child: Row(
         children: [
           if (count != null)
-            Text('$count개',
+            Text('$count${uiText('countSuffix', lang)}',
                 style: const TextStyle(
                     fontSize: 12,
                     fontWeight: FontWeight.w700,
@@ -263,7 +296,7 @@ class _SortBar extends StatelessWidget {
             GestureDetector(
               onTap: () => onChanged(s),
               child: Text(
-                s.label,
+                uiText(_sortKeys[s]!, lang),
                 style: TextStyle(
                   fontSize: 12.5,
                   fontWeight: s == sort ? FontWeight.w800 : FontWeight.w600,
@@ -286,8 +319,15 @@ class _SortBar extends StatelessWidget {
 
 /// 목록 카드 — 메뉴명(강조) + 브랜드(+변형 힌트) + 당류(크게, 색상) + 칼로리(보조).
 class _MenuCard extends StatelessWidget {
-  const _MenuCard({required this.menu, required this.onTap});
+  const _MenuCard({
+    required this.menu,
+    required this.dict,
+    required this.lang,
+    required this.onTap,
+  });
   final FranchiseMenu menu;
+  final TranslationDict dict;
+  final AppLang lang;
   final VoidCallback onTap;
 
   @override
@@ -297,8 +337,10 @@ class _MenuCard extends StatelessWidget {
 
     // 변형 힌트: 온도(아이스/핫) + 사이즈 개수.
     final hints = <String>[
-      for (final t in menu.temperatures) t == 'ICE' ? '아이스' : '핫',
-      if (menu.sizes.length > 1) '사이즈 ${menu.sizes.length}',
+      for (final t in menu.temperatures)
+        uiText(t == 'ICE' ? 'iced' : 'hot', lang),
+      if (menu.sizes.length > 1)
+        uiText('sizeCount', lang).replaceFirst('{n}', '${menu.sizes.length}'),
     ];
 
     return Material(
@@ -316,7 +358,7 @@ class _MenuCard extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      menu.displayName,
+                      dict.menuName(menu.displayName, menu.translationKey),
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
                       style: const TextStyle(
@@ -324,7 +366,7 @@ class _MenuCard extends StatelessWidget {
                     ),
                     const SizedBox(height: 4),
                     Row(children: [
-                      Text(menu.brand,
+                      Text(dict.brand(menu.brand),
                           style: const TextStyle(
                               fontSize: 12,
                               fontWeight: FontWeight.w700,
@@ -340,7 +382,7 @@ class _MenuCard extends StatelessWidget {
                         ),
                       ] else if (rep.size != null) ...[
                         const SizedBox(width: 6),
-                        Text('· ${rep.size}',
+                        Text('· ${dict.size(rep.size)}',
                             style: const TextStyle(
                                 fontSize: 12, color: CubedColors.inkSoft)),
                       ],
@@ -357,7 +399,7 @@ class _MenuCard extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.baseline,
                     textBaseline: TextBaseline.alphabetic,
                     children: [
-                      Text('당 ',
+                      Text('${uiText('sugar', lang)} ',
                           style: TextStyle(
                               fontSize: 12,
                               fontWeight: FontWeight.w700,
@@ -380,7 +422,7 @@ class _MenuCard extends StatelessWidget {
                   const SizedBox(height: 3),
                   Text(
                     rep.calories == null
-                        ? '칼로리 -'
+                        ? '${uiText('calories', lang)} -'
                         : '${fmtNum(rep.calories)} kcal',
                     style: const TextStyle(
                         fontSize: 12, color: CubedColors.inkSoft),
