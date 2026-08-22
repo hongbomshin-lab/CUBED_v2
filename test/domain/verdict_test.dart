@@ -113,7 +113,7 @@ void main() {
   });
 
   test('generic + 함정 없음 → 폴백 불릿 없음 (배지 설명과 중복 방지)', () {
-    final p = product(sugar: 1, carb: 5, kcal: 20, serving: 100, category: '과자');
+    final p = product(sugar: 1, carb: 4, kcal: 20, serving: 100, category: '과자');
     final v = Verdict.of(interp(p, const []));
     expect(v.kind, VerdictKind.generic);
     expect(v.whyBullets, isEmpty);

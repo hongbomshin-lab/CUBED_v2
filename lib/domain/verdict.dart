@@ -66,10 +66,11 @@ class Verdict {
   /// [withFallback]이 false면 빈 결과에 등급 설명을 채우지 않는다(배지 문장과 중복 방지).
   static List<String> _bullets(Interpretation it,
       {bool includeInfo = true, bool withFallback = true}) {
+    // 순서: 🚩 함정 → 성분 warn 노트("어떤 대체당 때문인지") → ℹ️ 참고.
+    // 참고 라인이 성분 경고를 3개 제한 밖으로 밀어내지 않게 한다.
     final out = <String>[];
     final usedSlugs = <String>{};
-    for (final line in it.trapLines) {
-      if (!includeInfo && line.tier == TrapTier.info) continue;
+    for (final line in it.trapLines.where((l) => l.tier == TrapTier.trap)) {
       if (line.code == '당알코올 함정') {
         final slug = it.topSweetenerSlug;
         final note = slug == null ? null : it.slugNotes[slug];
@@ -87,6 +88,11 @@ class Verdict {
       ..sort((a, b) => b.value.priority.compareTo(a.value.priority));
     for (final e in warns) {
       out.add(e.value.message);
+    }
+    if (includeInfo) {
+      for (final line in it.trapLines.where((l) => l.tier == TrapTier.info)) {
+        out.add(line.text);
+      }
     }
     if (withFallback && out.isEmpty) out.add(gradeText[it.grade]!.desc);
     return out.take(3).toList();

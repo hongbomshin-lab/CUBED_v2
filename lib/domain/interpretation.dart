@@ -67,9 +67,11 @@ class Interpretation {
 
     final nc = rb.netCarb(p.carb, p.fiber, p.sugarAlcohol, p.rareSugarG);
     final p100 = rb.per100NetCarb(p.servingSize, p.carb, p.fiber, p.sugarAlcohol, p.rareSugarG);
+    final effNc = rb.effectiveNetCarb(nc, p.kcal);
     final grade = glycemicGrade(
       isLiquid: isLiq,
       servingSize: p.servingSize,
+      kcal: p.kcal,
       carb: p.carb,
       fiber: p.fiber,
       sugarAlcohol: p.sugarAlcohol,
@@ -89,13 +91,14 @@ class Interpretation {
       slugs: slugs,
     );
 
-    // 등급이 가장 높은(혈당 위험 큰) 감미료 표시명·slug — class='기타' 제외
+    // 등급이 가장 높은(혈당 위험 큰) 감미료 표시명·slug — 등급 계산과 같은 제외 기준
+    // (말토덱스트린은 포함해야 "왜 주의인지" 근거 문장이 등급과 일치한다)
     String? topName;
     String? topSlug;
     var worst = -1;
     for (final ps in p.sweeteners) {
       final sw = ref.sweeteners[ps.slug];
-      if (sw == null || sw.isEtc) continue;
+      if (sw == null || rb.isRulebookExcluded(ps.slug)) continue;
       final r = switch (sw.glycemicImpact) { Grade.caution => 2, Grade.mid => 1, Grade.low => 0 };
       if (r > worst) {
         worst = r;
@@ -110,6 +113,7 @@ class Interpretation {
       kcal: p.kcal,
       sugar: p.sugar,
       netCarb: nc,
+      effNetCarb: effNc,
       per100NetCarb: p100,
       grade: grade,
       traps: trapCodes,

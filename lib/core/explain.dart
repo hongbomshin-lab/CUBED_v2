@@ -10,6 +10,9 @@ class ExplainInput {
   final double kcal;
   final double sugar;
   final double netCarb;
+
+  /// 열량 정합 클램프 후 유효 순탄수(등급 계산에 실제 쓰인 값). null이면 netCarb와 동일.
+  final double? effNetCarb;
   final double per100NetCarb;
   final Grade grade;
   final List<String> traps;
@@ -21,6 +24,7 @@ class ExplainInput {
     required this.kcal,
     required this.sugar,
     required this.netCarb,
+    this.effNetCarb,
     required this.per100NetCarb,
     required this.grade,
     required this.traps,
@@ -75,14 +79,19 @@ List<TrapLine> trapLines(ExplainInput i) {
     out.add(TrapLine(TrapTier.info, 'ℹ️', '당류가 ${_n(i.sugar)}g으로 높은 편이에요.', '당류 함정'));
   }
   if (i.traps.contains('탄수 함정')) {
+    // 함정 판정에 실제 쓰인 유효 순탄수를 보여준다(클램프 미발동 시 라벨 순탄수와 동일)
     out.add(TrapLine(TrapTier.info, 'ℹ️',
-        '당은 낮지만 100${i.unit}당 순탄수 ${_n(i.per100NetCarb)}g — 탄수는 있어요.', '탄수 함정'));
+        '당은 낮지만 ${_unitWord(i)} 순탄수 ${_n(i.effNetCarb ?? i.netCarb)}g — 혈당을 올릴 수 있어요.', '탄수 함정'));
   }
   return out;
 }
 
-/// 등급 근거 한 줄
+/// 등급 근거 한 줄. 열량 클램프가 발동했으면(유효 순탄수 < 라벨 순탄수) 함께 설명.
 String reasonLine(ExplainInput i) {
   final sw = i.topSweetenerName != null ? '${i.topSweetenerName}(감미료)' : '감미료 없음';
-  return '근거: $sw + 100${i.unit}당 순탄수 ${_n(i.per100NetCarb)}g → 혈당 ${i.grade.ko}';
+  final eff = i.effNetCarb;
+  final ncText = (eff != null && eff < i.netCarb)
+      ? '순탄수 ${_n(i.netCarb)}g(열량 ${_n(i.kcal)}kcal 기준 유효 ${_n(eff)}g)'
+      : '순탄수 ${_n(i.netCarb)}g(100${i.unit}당 ${_n(i.per100NetCarb)}g)';
+  return '근거: $sw + $ncText → 혈당 ${i.grade.ko}';
 }

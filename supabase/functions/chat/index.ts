@@ -44,6 +44,7 @@ const RANK: Record<string, number> = { "낮음": 0, "중간": 1, "주의": 2 };
 
 const T_CARB_LIQ = [2.5, 5];
 const T_CARB_SOLID = [10, 20];
+const T_CARB_SERVING = [5, 15]; // 1회분 절대 순탄수(g) → +1/+2 단계 (밀도와 max 결합)
 const T_KCAL_LIQ = 4;
 const T_KCAL_SOLID = 40;
 const T_SUGAR_LIQ = 2.5;
@@ -57,8 +58,8 @@ const RISKY_SA = new Set([
   "sorbitol", "d-sorbitol-solution",
   "polyglycitol",
 ]);
-// 룰북 혈당등급 계산에서 제외할 class='기타' slug (이중계산 방지)
-const EXCLUDED_ETC = new Set(["maltodextrin", "gum-arabic", "monosodium-glutamate"]);
+// 룰북 혈당등급 계산에서 제외할 class='기타' slug — maltodextrin은 고GI라 반영(제외 금지)
+const EXCLUDED_ETC = new Set(["gum-arabic", "monosodium-glutamate"]);
 
 const r2 = (v: number) => Math.round(v * 100) / 100;
 const r1 = (v: number) => Math.round(v * 10) / 10;
@@ -71,23 +72,44 @@ function per100NetCarb(serving: number, carb: number, fiber: number, sa: number,
   const nc = netCarb(carb, fiber, sa, rare);
   return serving > 0 ? r1((nc * 100) / serving) : 0;
 }
-function carbSteps(isLiquid: boolean, p100: number): number {
+function carbSteps(isLiquid: boolean, p100: number, ncServing: number): number {
   const t = isLiquid ? T_CARB_LIQ : T_CARB_SOLID;
-  return p100 >= t[1] ? 2 : p100 >= t[0] ? 1 : 0;
+  const density = p100 >= t[1] ? 2 : p100 >= t[0] ? 1 : 0;
+  const serving = ncServing >= T_CARB_SERVING[1] ? 2 : ncServing >= T_CARB_SERVING[0] ? 1 : 0;
+  return Math.max(density, serving);
 }
 const rulebookSlugs = (slugs: string[]) => slugs.filter((s) => !EXCLUDED_ETC.has(s));
 
-function glycemicGrade(
-  isLiquid: boolean, serving: number, carb: number, fiber: number, sa: number, rare: number,
-  slugs: string[], giMap: Record<string, string>,
-): Grade {
-  const p100 = per100NetCarb(serving, carb, fiber, sa, rare);
-  let sw = 0;
+// 열량 정합 상한: 라벨 kcal로 가능한 최대 흡수 탄수는 kcal/4 g (kcal 미상(0)은 클램프 안 함)
+function effectiveNetCarb(nc: number, kcal: number): number {
+  return kcal > 0 && nc > kcal / 4 ? r1(kcal / 4) : nc;
+}
+
+// 감미료 단계(양 감응): 위험 당알코올은 0<SA<2g이면 미량 무시,
+// 말토덱스트린은 신뢰 가능한 유효 순탄수 < 2g이면 +1(중간)로 완화
+function sweetenerSteps(
+  slugs: string[], giMap: Record<string, string>, sa: number, effNc: number, ncReliable: boolean,
+): number {
+  let worst = 0;
   for (const s of rulebookSlugs(slugs)) {
-    const g = RANK[giMap[s] ?? "낮음"] ?? 0;
-    if (g > sw) sw = g;
+    let g = RANK[giMap[s] ?? "낮음"] ?? 0;
+    if (g === 0) continue;
+    if (RISKY_SA.has(s) && sa > 0 && sa < T_SA_MIN) g = 0;
+    if (s === "maltodextrin" && ncReliable && effNc < T_SA_MIN && g > 1) g = 1;
+    if (g > worst) worst = g;
   }
-  const total = sw + carbSteps(isLiquid, p100);
+  return worst;
+}
+
+function glycemicGrade(
+  isLiquid: boolean, serving: number, kcal: number, carb: number, fiber: number, sa: number,
+  rare: number, slugs: string[], giMap: Record<string, string>,
+): Grade {
+  const ncReliable = carb - fiber - sa - rare >= 0;
+  const nc = effectiveNetCarb(netCarb(carb, fiber, sa, rare), kcal);
+  const p100 = serving > 0 ? r1((nc * 100) / serving) : 0;
+  const sw = sweetenerSteps(slugs, giMap, sa, nc, ncReliable);
+  const total = sw + carbSteps(isLiquid, p100, nc);
   return INV[total > 2 ? 2 : total];
 }
 
@@ -95,7 +117,9 @@ function traps(
   isLiquid: boolean, serving: number, kcal: number, sugar: number, sa: number,
   carb: number, fiber: number, rare: number, slugs: string[],
 ): string[] {
-  const p100 = per100NetCarb(serving, carb, fiber, sa, rare);
+  // 함정도 등급과 같은 유효 순탄수(열량 정합 클램프) 기준
+  const nc = effectiveNetCarb(netCarb(carb, fiber, sa, rare), kcal);
+  const p100 = serving > 0 ? (nc * 100) / serving : 0;
   const per100kcal = serving > 0 ? (kcal * 100) / serving : 0;
   const per100sugar = serving > 0 ? (sugar * 100) / serving : 0;
   const zero = sugar <= 0.5;
@@ -104,7 +128,7 @@ function traps(
   if (zero && sa >= T_SA_MIN && slugs.some((x) => RISKY_SA.has(x))) out.push("당알코올 함정");
   if (zero && per100kcal >= (isLiquid ? T_KCAL_LIQ : T_KCAL_SOLID)) out.push("칼로리 함정");
   if (sugarHigh) out.push("당류 함정");
-  if (!zero && !sugarHigh && carbSteps(isLiquid, p100) > 0) out.push("탄수 함정");
+  if (!sugarHigh && carbSteps(isLiquid, p100, nc) > 0) out.push("탄수 함정");
   return out.length ? out : ["없음"];
 }
 
@@ -151,7 +175,7 @@ async function buildSummary(): Promise<unknown[]> {
       name: p.name,
       brand: p.brand ?? undefined,
       category: p.category ?? undefined,
-      grade: glycemicGrade(isLiq, serving, carb, fiber, sa, rare, slugs, giMap),
+      grade: glycemicGrade(isLiq, serving, kcal, carb, fiber, sa, rare, slugs, giMap),
       per100NetCarb: per100NetCarb(serving, carb, fiber, sa, rare),
       sugar,
       kcal,
