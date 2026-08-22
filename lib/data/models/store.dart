@@ -5,7 +5,10 @@ enum StoreType {
   cafe('cafe', '카페·베이커리', Color(0xFF2A7A4B), Icons.local_cafe_rounded),
   restaurant('restaurant', '음식점', Color(0xFFF57C00), Icons.restaurant_rounded),
   zeroStore('zero_store', '제로스토어', Color(0xFF1976D2), Icons.storefront_rounded),
-  delivery('delivery', '배달', Color(0xFF7B1FA2), Icons.delivery_dining_rounded);
+  delivery('delivery', '배달', Color(0xFF7B1FA2), Icons.delivery_dining_rounded),
+  // 프랜차이즈 카페 — 저당 전문 매장과 구분되도록 회색 계열.
+  // 저당맵의 주인공은 저당 전문 매장이고, 이건 '주변에 이런 것도 있다'는 보조 정보다.
+  franchise('franchise', '프랜차이즈', Color(0xFF6B7280), Icons.coffee_rounded);
 
   const StoreType(this.dbValue, this.label, this.markerColor, this.icon);
 
@@ -62,6 +65,10 @@ class Store {
   final int recommendCount;
   final List<StorePhoto> photos;
 
+  /// 프랜차이즈 브랜드명 (franchise_drinks.brand 와 같은 값).
+  /// 저당 전문 매장은 null — 이 값이 있으면 상세에서 저당 메뉴를 추천한다.
+  final String? brand;
+
   const Store({
     required this.id,
     required this.name,
@@ -77,6 +84,7 @@ class Store {
     required this.reviewCount,
     required this.recommendCount,
     this.photos = const [],
+    this.brand,
   });
 
   /// 대표 사진 (is_primary 우선, 없으면 첫 사진)
@@ -110,6 +118,7 @@ class Store {
       photos: rawPhotos
           .map((e) => StorePhoto.fromMap(e as Map<String, dynamic>))
           .toList(),
+      brand: m['brand'] as String?,
     );
   }
 }

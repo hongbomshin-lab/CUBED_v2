@@ -50,6 +50,9 @@ class _MapScreenState extends ConsumerState<MapScreen> {
   /// 마지막으로 그린 매장 — 언어가 바뀌면 재조회 없이 캡션만 다시 그린다.
   List<Store> _lastStores = const [];
 
+  /// 내 위치 반경 안의 프랜차이즈 카페 (토글이 켜져 있을 때만 채워진다).
+  List<Store> _franchise = const [];
+
   // 위치 확인 불가 시 기본 중심 (LocationService.fallback 과 동일)
   static const _fallbackCenter = NLatLng(37.58045239, 126.9971964);
 
@@ -147,12 +150,46 @@ class _MapScreenState extends ConsumerState<MapScreen> {
           );
       if (!mounted) return;
       _lastStores = stores;
+      await _refreshFranchise();
+      if (!mounted) return;
       await _renderMarkers(c, stores);
     } catch (e) {
       debugPrint('매장 조회 실패: $e');
     } finally {
       if (mounted) setState(() => _fetching = false);
     }
+  }
+
+  /// 프랜차이즈 카페를 내 위치 반경 안에서만 가져온다.
+  /// 토글이 꺼져 있으면 목록을 비워 마커도 사라지게 한다.
+  Future<void> _refreshFranchise() async {
+    if (!ref.read(showFranchiseProvider)) {
+      _franchise = const [];
+      return;
+    }
+    final me = ref.read(userLocationProvider);
+    if (me == null) {
+      _franchise = const [];
+      return;
+    }
+    try {
+      _franchise = await ref.read(storeRepositoryProvider).franchiseStoresNear(
+            center: me,
+            radiusM: franchiseRadiusM,
+          );
+    } catch (e) {
+      debugPrint('프랜차이즈 조회 실패: \$e');
+      _franchise = const [];
+    }
+  }
+
+  /// 토글 변경 → 재조회 후 마커만 다시 그린다(지도 이동 없음).
+  Future<void> _onToggleFranchise(bool on) async {
+    ref.read(showFranchiseProvider.notifier).state = on;
+    await _refreshFranchise();
+    final c = _controller;
+    if (!mounted || c == null) return;
+    await _renderMarkers(c, _lastStores);
   }
 
   /// store_type별 커스텀 마커 아이콘(위젯 렌더링) — 캐시 활용.
@@ -173,7 +210,8 @@ class _MapScreenState extends ConsumerState<MapScreen> {
     // 마커 캡션도 선택 언어로. 번역이 없으면 원문(한국어)이 그대로 나온다.
     final dict = ref.read(dictProvider);
     final markers = <NMarker>{};
-    for (final s in stores) {
+    // 프랜차이즈를 먼저 넣어 저당 전문 매장 마커가 위에 오도록 한다.
+    for (final s in [..._franchise, ...stores]) {
       final marker = NMarker(
         id: s.id,
         position: NLatLng(s.lat, s.lng),
@@ -298,7 +336,13 @@ class _MapScreenState extends ConsumerState<MapScreen> {
           onClear: _clearSearch,
           hint: uiText('storeSearchHint', lang),
         ),
-        _FilterBar(selected: _selected, onTap: _toggleFilter, lang: lang),
+        _FilterBar(
+          selected: _selected,
+          onTap: _toggleFilter,
+          lang: lang,
+          showFranchise: ref.watch(showFranchiseProvider),
+          onToggleFranchise: _onToggleFranchise,
+        ),
         Expanded(
           child: Stack(
             children: [
@@ -633,10 +677,14 @@ class _FilterBar extends StatelessWidget {
     required this.selected,
     required this.onTap,
     required this.lang,
+    required this.showFranchise,
+    required this.onToggleFranchise,
   });
   final Set<StoreType> selected;
   final void Function(StoreType? type) onTap;
   final AppLang lang;
+  final bool showFranchise;
+  final ValueChanged<bool> onToggleFranchise;
 
   /// StoreType → UI 문구 키. (enum 의 label 은 한국어 고정이라 여기서 갈아끼운다)
   static const _typeKeys = {
@@ -661,14 +709,80 @@ class _FilterBar extends StatelessWidget {
             active: selected.isEmpty,
             onTap: () => onTap(null),
           ),
+          // 프랜차이즈는 유형 필터가 아니라 별도 토글이라 여기서 제외한다.
           for (final t in StoreType.values)
-            _Chip(
-              label: uiText(_typeKeys[t]!, lang),
-              color: t.markerColor,
-              active: selected.contains(t),
-              onTap: () => onTap(t),
-            ),
+            if (t != StoreType.franchise)
+              _Chip(
+                label: uiText(_typeKeys[t]!, lang),
+                color: t.markerColor,
+                active: selected.contains(t),
+                onTap: () => onTap(t),
+              ),
+          _FranchiseChip(
+            active: showFranchise,
+            lang: lang,
+            onTap: () => onToggleFranchise(!showFranchise),
+          ),
         ],
+      ),
+    );
+  }
+}
+
+/// 프랜차이즈 표시 토글. 유형 필터와 성격이 달라(더하기/빼기가 아니라 켜기/끄기)
+/// 칩 모양도 구분한다 — 켜지면 반경을 함께 보여 준다.
+class _FranchiseChip extends StatelessWidget {
+  const _FranchiseChip({
+    required this.active,
+    required this.lang,
+    required this.onTap,
+  });
+  final bool active;
+  final AppLang lang;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    const color = Color(0xFF6B7280);
+    final radius = uiText('franchiseNearby', lang)
+        .replaceFirst('{n}', franchiseRadiusM.round().toString());
+    return Padding(
+      padding: const EdgeInsets.only(right: 8),
+      child: GestureDetector(
+        onTap: onTap,
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 12),
+          alignment: Alignment.center,
+          decoration: BoxDecoration(
+            color: active ? color : CubedColors.surface,
+            borderRadius: BorderRadius.circular(18),
+            border: Border.all(color: active ? color : CubedColors.line),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(Icons.coffee_rounded,
+                  size: 15, color: active ? Colors.white : color),
+              const SizedBox(width: 5),
+              Text(
+                uiText('franchiseToggle', lang),
+                style: TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w700,
+                  color: active ? Colors.white : CubedColors.inkSoft,
+                ),
+              ),
+              if (active) ...[
+                const SizedBox(width: 5),
+                Text(radius,
+                    style: const TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w600,
+                        color: Colors.white70)),
+              ],
+            ],
+          ),
+        ),
       ),
     );
   }

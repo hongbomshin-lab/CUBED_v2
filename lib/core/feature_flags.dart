@@ -11,4 +11,18 @@ class FeatureFlags {
   /// CaptureScreen.prefillBarcode)는 모두 그대로 유지되며, 이 플래그가
   /// `false`인 동안 홈 화면 진입점만 숨겨진다. 재도입 시 `true`로 변경.
   static const bool barcodeScan = false;
+
+  /// 데모용 위치 고정 (IR 시연).
+  ///
+  /// 저당맵의 프랜차이즈 표시는 '내 위치 반경 500m' 기준이라, 서울에서 실행하면
+  /// 전주 매장이 하나도 안 잡힌다. 이 플래그가 `true`인 동안 GPS 대신
+  /// [demoLat]/[demoLng] 를 사용자 위치로 쓴다.
+  ///
+  /// 시연이 끝나면 `false` 로만 바꾸면 실제 GPS 로 돌아간다.
+  static const bool useDemoLocation = true;
+
+  /// 전주 신시가지(홍산로 일대) — 저당 전문 매장과 프랜차이즈가 함께 몰려 있어
+  /// 시연에서 두 종류가 같이 보인다.
+  static const double demoLat = 35.8156;
+  static const double demoLng = 127.1064;
 }

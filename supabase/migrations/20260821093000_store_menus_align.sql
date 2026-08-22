@@ -14,5 +14,17 @@ ALTER TABLE public.store_menus
 CREATE UNIQUE INDEX IF NOT EXISTS store_menus_store_name_uidx
   ON public.store_menus (store_id, name);
 
+-- 읽기 정책. 테이블이 정책 없이 만들어졌으면 RLS 가 모든 행을 조용히 걸러내
+-- SQL Editor 에선 보이는데 앱(anon)에선 0건이 된다.
+ALTER TABLE public.store_menus ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "store_menus 공개 읽기" ON public.store_menus;
+CREATE POLICY "store_menus 공개 읽기"
+  ON public.store_menus FOR SELECT
+  USING (true);
+
+-- 쓰기는 service_role 만 (정책을 안 만들었으므로 anon/authenticated 는 INSERT 불가).
+GRANT SELECT ON public.store_menus TO anon, authenticated;
+
 COMMENT ON COLUMN public.store_menus.serving IS
   '영양성분의 기준량 (예: 160g, 1L). 공개된 값이 없으면 null.';

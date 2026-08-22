@@ -138,6 +138,20 @@ final storeReviewsProvider =
   return ref.watch(storeRepositoryProvider).reviews(storeId);
 });
 
+/// 저당맵: 프랜차이즈 카페를 지도에 함께 표시할지. 기본은 꺼짐.
+/// 저당맵의 주인공은 저당 전문 매장이라, 프랜차이즈는 필요할 때만 켜서 본다.
+final showFranchiseProvider = StateProvider<bool>((ref) => false);
+
+/// 프랜차이즈 표시 반경(m). 지금은 고정, 추후 사용자 설정으로 뺀다.
+const franchiseRadiusM = 500.0;
+
+/// 이 브랜드에서 당류가 낮은 메뉴 5개 (프랜차이즈 매장 상세용).
+final brandLowSugarProvider =
+    FutureProvider.autoDispose.family<List<FranchiseDrink>, String>(
+        (ref, brand) {
+  return ref.watch(storeRepositoryProvider).lowSugarMenusFor(brand);
+});
+
 /// 매장 대표 메뉴 (저당 + 시그니처). 매장 상세 시트에서 사용.
 final storeMenusProvider =
     FutureProvider.autoDispose.family<List<StoreMenu>, String>((ref, storeId) {

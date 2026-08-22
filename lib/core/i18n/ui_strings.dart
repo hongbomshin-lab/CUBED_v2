@@ -231,6 +231,30 @@ const Map<String, Map<AppLang, String>> _strings = {
     AppLang.ja: '店舗を提報',
     AppLang.zh: '提报门店',
   },
+  'franchiseToggle': {
+    AppLang.ko: '프랜차이즈',
+    AppLang.en: 'Chains',
+    AppLang.ja: 'チェーン店',
+    AppLang.zh: '连锁店',
+  },
+  'franchiseNearby': {
+    AppLang.ko: '내 주변 {n}m',
+    AppLang.en: 'within {n}m',
+    AppLang.ja: '半径{n}m',
+    AppLang.zh: '{n}m 以内',
+  },
+  'brandLowSugar': {
+    AppLang.ko: '이 브랜드 저당 메뉴',
+    AppLang.en: 'Low-sugar picks here',
+    AppLang.ja: 'このブランドの低糖メニュー',
+    AppLang.zh: '该品牌低糖菜单',
+  },
+  'seeAllMenus': {
+    AppLang.ko: '메뉴 전체 보기',
+    AppLang.en: 'See all menus',
+    AppLang.ja: 'メニューをすべて見る',
+    AppLang.zh: '查看全部菜单',
+  },
   // 모드 토글
   'modeMap': {
     AppLang.ko: '매장 지도',

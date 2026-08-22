@@ -3,6 +3,8 @@ import 'dart:convert';
 import 'package:geolocator/geolocator.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import 'feature_flags.dart';
+
 /// 단순 위경도 좌표.
 class LatLng {
   final double lat;
@@ -54,6 +56,11 @@ class LocationService {
   /// 권한 거부 / 위치서비스 꺼짐 / 실패 시 null (지도는 서울 기본값 유지).
   /// 성공 시 캐시에 저장.
   static Future<LatLng?> currentPosition() async {
+    // 데모 모드에서는 GPS 를 건너뛰고 고정 좌표를 쓴다 (IR 시연용).
+    // 서울에서 실행해도 전주 매장이 '내 주변'으로 잡히게 하기 위함.
+    if (FeatureFlags.useDemoLocation) {
+      return const LatLng(FeatureFlags.demoLat, FeatureFlags.demoLng);
+    }
     try {
       if (!await Geolocator.isLocationServiceEnabled()) return null;
 
@@ -82,6 +89,10 @@ class LocationService {
       l.lat >= 33 && l.lat <= 39 && l.lng >= 124 && l.lng <= 132;
 
   /// 두 좌표 간 거리(m). 사람이 읽기 좋은 문자열로 포맷.
+  /// 두 좌표 사이 거리(m). 반경 필터에 쓴다.
+  static double distanceMeters(LatLng from, LatLng to) =>
+      Geolocator.distanceBetween(from.lat, from.lng, to.lat, to.lng);
+
   static String formatDistance(LatLng from, LatLng to) {
     final meters =
         Geolocator.distanceBetween(from.lat, from.lng, to.lat, to.lng);

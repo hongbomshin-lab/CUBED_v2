@@ -342,6 +342,9 @@ class _StoreDetailSheetState extends ConsumerState<StoreDetailSheet>
 
                       // 대표 메뉴 — 탭에 묻히지 않도록 탭 위에 둔다.
                       _MenuSection(storeId: s.id),
+
+                      // 프랜차이즈 매장이면 그 브랜드의 저당 메뉴를 추천한다.
+                      if (s.brand != null) _BrandMenuSection(brand: s.brand!),
                     ],
                   ),
                 ),
@@ -512,6 +515,97 @@ class _MenuSection extends ConsumerWidget {
           for (final m in signature)
             _MenuTile(menu: m, dict: dict, lang: lang),
         ],
+        const SizedBox(height: 14),
+        const Divider(color: CubedColors.line),
+      ],
+    );
+  }
+}
+
+/// 프랜차이즈 매장용 — 그 브랜드에서 당류가 가장 낮은 메뉴 5개.
+/// 매장별 데이터가 아니라 브랜드 공통 영양정보(franchise_drinks)를 쓴다.
+class _BrandMenuSection extends ConsumerWidget {
+  const _BrandMenuSection({required this.brand});
+  final String brand;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final menus = ref.watch(brandLowSugarProvider(brand)).valueOrNull;
+    if (menus == null || menus.isEmpty) return const SizedBox.shrink();
+
+    final lang = ref.watch(menuLangProvider);
+    final dict = ref.watch(dictProvider);
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const SizedBox(height: 14),
+        Row(children: [
+          const Icon(Icons.eco_rounded, size: 16, color: CubedColors.brand),
+          const SizedBox(width: 6),
+          Text(uiText('brandLowSugar', lang),
+              style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w800)),
+        ]),
+        const SizedBox(height: 8),
+        for (final d in menus)
+          Padding(
+            padding: const EdgeInsets.symmetric(vertical: 6),
+            child: Row(
+              children: [
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        dict.menuName(d.nameClean, d.baseName),
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                            fontSize: 14, fontWeight: FontWeight.w700),
+                      ),
+                      if (d.size != null || d.calories != null) ...[
+                        const SizedBox(height: 2),
+                        Text(
+                          [
+                            if (d.size != null) dict.size(d.size),
+                            if (d.calories != null)
+                              '${d.calories!.round()} kcal',
+                          ].join(' · '),
+                          style: const TextStyle(
+                              fontSize: 12, color: CubedColors.inkSoft),
+                        ),
+                      ],
+                    ],
+                  ),
+                ),
+                const SizedBox(width: 10),
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.baseline,
+                  textBaseline: TextBaseline.alphabetic,
+                  children: [
+                    Text('${uiText('sugar', lang)} ',
+                        style: const TextStyle(
+                            fontSize: 11,
+                            fontWeight: FontWeight.w700,
+                            color: CubedColors.brand)),
+                    Text(
+                      _MenuTile._fmt(d.sugarG ?? 0),
+                      style: const TextStyle(
+                          fontSize: 17,
+                          fontWeight: FontWeight.w900,
+                          height: 1,
+                          color: CubedColors.brand),
+                    ),
+                    const Text('g',
+                        style: TextStyle(
+                            fontSize: 11,
+                            fontWeight: FontWeight.w700,
+                            color: CubedColors.brand)),
+                  ],
+                ),
+              ],
+            ),
+          ),
         const SizedBox(height: 14),
         const Divider(color: CubedColors.line),
       ],
