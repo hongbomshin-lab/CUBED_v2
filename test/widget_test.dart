@@ -17,7 +17,7 @@ void main() {
 
     test('알룰로스만 든 제로 음료 → 낮음', () {
       final g = glycemicGrade(
-        isLiquid: true, servingSize: 500, carb: 5, fiber: 0, sugarAlcohol: 0,
+        isLiquid: true, servingSize: 500, kcal: 0, carb: 5, fiber: 0, sugarAlcohol: 0,
         rareSugarG: 5, slugs: ['allulose'], giMap: gi,
       );
       expect(g, Grade.low);
@@ -25,7 +25,7 @@ void main() {
 
     test('말티톨 든 저당 과자 → 주의', () {
       final g = glycemicGrade(
-        isLiquid: false, servingSize: 30, carb: 20, fiber: 1, sugarAlcohol: 15,
+        isLiquid: false, servingSize: 30, kcal: 120, carb: 20, fiber: 1, sugarAlcohol: 15,
         rareSugarG: 0, slugs: ['maltitol'], giMap: gi,
       );
       expect(g, Grade.caution);
@@ -59,8 +59,11 @@ void main() {
   });
 
   group('rulebookSweeteners', () {
-    test("class='기타'(말토덱스트린)는 제외", () {
-      expect(rulebookSweeteners(['sucralose', 'maltodextrin']), ['sucralose']);
+    test("혈당영향 낮은 class='기타'(아라비아검·MSG)만 제외 — 말토덱스트린은 포함", () {
+      expect(
+        rulebookSweeteners(['sucralose', 'maltodextrin', 'gum-arabic', 'monosodium-glutamate']),
+        ['sucralose', 'maltodextrin'],
+      );
     });
   });
 }

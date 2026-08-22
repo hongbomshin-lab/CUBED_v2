@@ -22,9 +22,12 @@ class CaptureScreen extends ConsumerWidget {
     CaptureSlot slot,
     ImageSource source,
   ) async {
+    // maxHeight 필수: CLOVA 비전은 긴 변 2240px 초과 이미지를 40063으로 거부한다.
+    // maxWidth만 걸면 세로로 긴 사진(갤러리 스크린샷 등)의 높이가 한도를 넘는다.
     final file = await ImagePicker().pickImage(
       source: source,
       maxWidth: 1280,
+      maxHeight: 1280,
       imageQuality: 80,
     );
     if (file == null) return;
@@ -55,8 +58,8 @@ class CaptureScreen extends ConsumerWidget {
         );
         return;
       }
-    } catch (_) {
-      // 비치명 — 현행 3장 플로우로 계속
+    } catch (e) {
+      debugPrint('quickMatch 예외(비치명): $e'); // 현행 3장 플로우로 계속
     }
     if (context.mounted) ctrl.setQuickMatching(false);
   }
@@ -80,8 +83,7 @@ class CaptureScreen extends ConsumerWidget {
                 product: result.product,
                 submissionImagePath: result.imagePath,
                 priceCatalogKey: result.priceCatalogKey,
-                priceCatalogName: result.priceCatalogName,
-                sugarUnknown: result.sugarUnknown)),
+                priceCatalogName: result.priceCatalogName)),
       );
     } catch (e) {
       ctrl.setError('$e');

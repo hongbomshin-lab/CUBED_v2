@@ -49,7 +49,8 @@ ${choices}`;
         ],
       },
     ],
-    max_tokens: 500,
+    // 500이면 모델이 근거 서술을 먼저 쓸 때 JSON이 잘려 "JSON 객체를 찾지 못함"이 난다
+    max_tokens: 800,
     temperature: 0,
   };
 }
@@ -112,6 +113,31 @@ export async function recognizeWithClova(
   }
   const data = await response.json();
   const text = data?.choices?.[0]?.message?.content ?? "{}";
-  return validateRecognition(parseRecognitionText(text), candidates);
+  // 단계별 진단 로그: 어떤 단계에서 매칭이 틀어지는지 function_logs로 추적.
+  let output: RecognitionOutput;
+  try {
+    output = parseRecognitionText(text);
+  } catch (e) {
+    console.error(
+      `recognize: JSON 파싱 실패 (finish=${data?.choices?.[0]?.finish_reason}) raw=${
+        String(text).slice(0, 300)
+      }`,
+    );
+    throw e;
+  }
+  const validated = validateRecognition(output, candidates);
+  console.log(
+    `recognize: 후보 ${candidates.length}개 → id=${output.productId} conf=${output.confidence} ` +
+      `matched=${validated.matched} reason=${output.reason.slice(0, 80)}`,
+  );
+  if (output.productId && !validated.matched) {
+    const inSet = candidates.some((c) => c.product_id === output.productId);
+    console.error(
+      inSet
+        ? `recognize: 확신도 미달(${output.confidence} < 0.7)로 기각 — id=${output.productId}`
+        : `recognize: 모델이 후보에 없는 id 반환(오타 가능) — id=${output.productId}`,
+    );
+  }
+  return validated;
 }
 
