@@ -341,12 +341,14 @@ class _MapScreenState extends ConsumerState<MapScreen> {
           child: Stack(
             children: [
               NaverMap(
-                options: const NaverMapViewOptions(
-                  initialCameraPosition: NCameraPosition(
+                // 지도 라벨(도로·건물·상호)도 선택 언어로. NaverMapViewOptions 는
+                // == 비교로 변경을 감지하므로 locale 만 바꿔도 지도에 반영된다.
+                options: NaverMapViewOptions(
+                  initialCameraPosition: const NCameraPosition(
                     target: _fallbackCenter,
                     zoom: 11,
                   ),
-                  locale: Locale('ko'),
+                  locale: Locale(lang.code),
                   locationButtonEnable: true,
                 ),
                 onMapReady: (c) {
