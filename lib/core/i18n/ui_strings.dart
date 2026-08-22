@@ -213,6 +213,24 @@ const Map<String, Map<AppLang, String>> _strings = {
     AppLang.ja: '推定',
     AppLang.zh: '估算',
   },
+  'noReview': {
+    AppLang.ko: '리뷰 없음',
+    AppLang.en: 'No reviews',
+    AppLang.ja: 'レビューなし',
+    AppLang.zh: '暂无评价',
+  },
+  'reviewSummary': {
+    AppLang.ko: '추천 {rate}%  ·  리뷰 {n}개',
+    AppLang.en: '{rate}% recommend  ·  {n} reviews',
+    AppLang.ja: 'おすすめ {rate}%  ·  レビュー {n}件',
+    AppLang.zh: '{rate}% 推荐  ·  {n} 条评价',
+  },
+  'reportStore': {
+    AppLang.ko: '매장 제보',
+    AppLang.en: 'Add a store',
+    AppLang.ja: '店舗を提報',
+    AppLang.zh: '提报门店',
+  },
   // 모드 토글
   'modeMap': {
     AppLang.ko: '매장 지도',

@@ -206,6 +206,8 @@ class _StoreDetailSheetState extends ConsumerState<StoreDetailSheet>
         ? LocationService.formatDistance(userLoc, LatLng(s.lat, s.lng))
         : null;
 
+    final menuLang = ref.watch(menuLangProvider);
+
     // 리뷰 목록(실시간) — 작성/수정 후 카운트·목록 즉시 반영.
     final reviewsAsync = ref.watch(storeReviewsProvider(s.id));
     final liveReviews = reviewsAsync.valueOrNull;
@@ -257,9 +259,7 @@ class _StoreDetailSheetState extends ConsumerState<StoreDetailSheet>
                                     fontSize: 20, fontWeight: FontWeight.w800)),
                           ),
                           const SizedBox(width: 8),
-                          _TypeBadge(
-                              type: s.type,
-                              lang: ref.watch(menuLangProvider)),
+                          _TypeBadge(type: s.type, lang: menuLang),
                           const SizedBox(width: 4),
                           _FavoriteButton(
                             isFavorite: ref
@@ -280,8 +280,10 @@ class _StoreDetailSheetState extends ConsumerState<StoreDetailSheet>
                         const SizedBox(width: 4),
                         Text(
                           rate != null
-                              ? '추천 $rate%  ·  리뷰 $reviewCount개'
-                              : '리뷰 없음',
+                              ? uiText('reviewSummary', menuLang)
+                                  .replaceFirst('{rate}', '$rate')
+                                  .replaceFirst('{n}', '$reviewCount')
+                              : uiText('noReview', menuLang),
                           style: const TextStyle(
                               fontSize: 13, color: CubedColors.inkSoft),
                         ),
@@ -614,7 +616,7 @@ class _MenuTile extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.baseline,
               textBaseline: TextBaseline.alphabetic,
               children: [
-                Text('당 ',
+                Text('${uiText('sugar', lang)} ',
                     style: TextStyle(
                         fontSize: 11,
                         fontWeight: FontWeight.w700,

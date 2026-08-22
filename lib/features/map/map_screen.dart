@@ -47,6 +47,9 @@ class _MapScreenState extends ConsumerState<MapScreen> {
   // 화면 모드 (지도 / 메뉴 당류)
   _MapMode _mode = _MapMode.store;
 
+  /// 마지막으로 그린 매장 — 언어가 바뀌면 재조회 없이 캡션만 다시 그린다.
+  List<Store> _lastStores = const [];
+
   // 위치 확인 불가 시 기본 중심 (LocationService.fallback 과 동일)
   static const _fallbackCenter = NLatLng(37.58045239, 126.9971964);
 
@@ -143,6 +146,7 @@ class _MapScreenState extends ConsumerState<MapScreen> {
             types: _selected,
           );
       if (!mounted) return;
+      _lastStores = stores;
       await _renderMarkers(c, stores);
     } catch (e) {
       debugPrint('매장 조회 실패: $e');
@@ -228,6 +232,13 @@ class _MapScreenState extends ConsumerState<MapScreen> {
 
   @override
   Widget build(BuildContext context) {
+    // 표시 언어(또는 로딩이 끝난 번역 사전)가 바뀌면 마커 캡션을 다시 그린다.
+    // 마커는 카메라 이동·필터 변경 때만 그려지므로 이게 없으면 이름이 한국어로 남는다.
+    ref.listen(dictProvider, (_, __) {
+      final c = _controller;
+      if (c != null && _lastStores.isNotEmpty) _renderMarkers(c, _lastStores);
+    });
+
     return Scaffold(
       // 매장 제보 버튼은 지도 모드에서만.
       // 언어 버튼은 두 모드 모두에서 쓸 수 있어야 한다 — 선택한 언어가
@@ -245,8 +256,8 @@ class _MapScreenState extends ConsumerState<MapScreen> {
               foregroundColor: Colors.white,
               onPressed: _onReportStore,
               icon: const Icon(Icons.add_location_alt_rounded),
-              label: const Text('매장 제보',
-                  style: TextStyle(fontWeight: FontWeight.w800)),
+              label: Text(uiText('reportStore', ref.watch(menuLangProvider)),
+                  style: const TextStyle(fontWeight: FontWeight.w800)),
             ),
           ],
         ],
