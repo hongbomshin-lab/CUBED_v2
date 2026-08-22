@@ -83,8 +83,7 @@ class CaptureScreen extends ConsumerWidget {
                 product: result.product,
                 submissionImagePath: result.imagePath,
                 priceCatalogKey: result.priceCatalogKey,
-                priceCatalogName: result.priceCatalogName,
-                sugarUnknown: result.sugarUnknown)),
+                priceCatalogName: result.priceCatalogName)),
       );
     } catch (e) {
       ctrl.setError('$e');

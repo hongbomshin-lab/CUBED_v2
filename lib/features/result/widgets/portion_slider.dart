@@ -22,7 +22,7 @@ String portionSummary({required double factor, required double netCarb, required
 
 /// "이만큼 먹으면?" — 0.5~3회분 슬라이더로 순탄수·열량 총량을 즉시 재계산.
 /// 등급은 농도(100당) 기준이라 바뀌지 않는다 — 총량 정보만 제공.
-/// 배수는 portionFactorProvider(제품별) 공유 상태 — 개인 당류 판정 히어로가 실시간 연동된다.
+/// 배수는 portionFactorProvider(제품별) 공유 상태.
 class PortionSlider extends ConsumerWidget {
   const PortionSlider(
       {super.key,
