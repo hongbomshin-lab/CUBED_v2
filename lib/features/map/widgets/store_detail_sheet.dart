@@ -920,6 +920,7 @@ class _TypeBadge extends StatelessWidget {
     StoreType.restaurant: 'typeRestaurant',
     StoreType.zeroStore: 'typeZeroStore',
     StoreType.delivery: 'typeDelivery',
+    StoreType.franchise: 'franchiseToggle',
   };
   @override
   Widget build(BuildContext context) => Container(
@@ -928,7 +929,7 @@ class _TypeBadge extends StatelessWidget {
           color: type.markerColor.withValues(alpha: 0.12),
           borderRadius: BorderRadius.circular(20),
         ),
-        child: Text(uiText(_typeKeys[type]!, lang),
+        child: Text(uiText(_typeKeys[type] ?? 'typeRestaurant', lang),
             style: TextStyle(
                 color: type.markerColor,
                 fontSize: 12,

@@ -692,6 +692,7 @@ class _FilterBar extends StatelessWidget {
     StoreType.restaurant: 'typeRestaurant',
     StoreType.zeroStore: 'typeZeroStore',
     StoreType.delivery: 'typeDelivery',
+    StoreType.franchise: 'franchiseToggle',
   };
 
   @override
@@ -713,7 +714,7 @@ class _FilterBar extends StatelessWidget {
           for (final t in StoreType.values)
             if (t != StoreType.franchise)
               _Chip(
-                label: uiText(_typeKeys[t]!, lang),
+                label: uiText(_typeKeys[t] ?? 'typeRestaurant', lang),
                 color: t.markerColor,
                 active: selected.contains(t),
                 onTap: () => onTap(t),

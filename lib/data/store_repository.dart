@@ -20,6 +20,10 @@ class StoreRepository {
 
   /// 현재 지도 영역(bounding box) 안의 활성 매장을 조회.
   /// [types] 가 비어 있으면 전체, 아니면 해당 store_type 만 필터.
+  ///
+  /// 프랜차이즈는 항상 제외한다 — 같은 stores 테이블에 있지만 저당맵의
+  /// 주인공이 아니고, 표시 여부·반경을 franchiseStoresNear 로 따로 통제한다.
+  /// (이걸 빼면 '전체' 필터에 프랜차이즈 191곳이 딸려와 토글이 무의미해진다)
   Future<List<Store>> storesInBounds({
     required double south,
     required double north,
@@ -42,6 +46,8 @@ class StoreRepository {
         'store_type',
         types.map((t) => t.dbValue).toList(),
       );
+    } else {
+      query = query.neq('store_type', StoreType.franchise.dbValue);
     }
 
     final rows = await query.limit(limit);
