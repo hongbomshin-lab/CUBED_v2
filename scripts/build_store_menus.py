@@ -110,10 +110,13 @@ def main():
         f"-- 생성: build_store_menus.py · {len(values)}행",
         "-- 출처·신뢰도는 각 행의 source_url/confidence 참고. 당류 미공개는 null.",
         "",
-        "-- 테이블이 초안 스키마로 먼저 만들어진 환경을 위해 칼럼을 먼저 맞춘다.",
+        "-- 테이블이 초안 스키마로 먼저 만들어진 환경을 위해 스키마를 먼저 맞춘다.",
         "alter table public.store_menus add column if not exists serving text;",
         "alter table public.store_menus"
         " add column if not exists updated_at timestamptz default now();",
+        "-- ON CONFLICT 가 참조할 유니크 키. 제약 대신 인덱스로 만들면 idempotent 하다.",
+        "create unique index if not exists store_menus_store_name_uidx",
+        "  on public.store_menus (store_id, name);",
         "",
         "insert into public.store_menus",
         "  (store_id, name, kind, sugar_g, calories, price_won, serving, note,"
