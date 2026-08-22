@@ -336,13 +336,7 @@ class _MapScreenState extends ConsumerState<MapScreen> {
           onClear: _clearSearch,
           hint: uiText('storeSearchHint', lang),
         ),
-        _FilterBar(
-          selected: _selected,
-          onTap: _toggleFilter,
-          lang: lang,
-          showFranchise: ref.watch(showFranchiseProvider),
-          onToggleFranchise: _onToggleFranchise,
-        ),
+        _FilterBar(selected: _selected, onTap: _toggleFilter, lang: lang),
         Expanded(
           child: Stack(
             children: [
@@ -368,6 +362,17 @@ class _MapScreenState extends ConsumerState<MapScreen> {
                   right: 12,
                   child: _FetchingChip(),
                 ),
+              // 프랜차이즈 토글 — 칩 줄 끝에 두면 스와이프해야 보여서 지도 위로 뺐다.
+              Positioned(
+                top: _fetching ? 56 : 12,
+                right: 12,
+                child: _FranchiseChip(
+                  active: ref.watch(showFranchiseProvider),
+                  lang: ref.watch(menuLangProvider),
+                  onTap: () =>
+                      _onToggleFranchise(!ref.read(showFranchiseProvider)),
+                ),
+              ),
               // 검색 결과 오버레이
               if (_searchOpen)
                 Positioned(
@@ -677,14 +682,10 @@ class _FilterBar extends StatelessWidget {
     required this.selected,
     required this.onTap,
     required this.lang,
-    required this.showFranchise,
-    required this.onToggleFranchise,
   });
   final Set<StoreType> selected;
   final void Function(StoreType? type) onTap;
   final AppLang lang;
-  final bool showFranchise;
-  final ValueChanged<bool> onToggleFranchise;
 
   /// StoreType → UI 문구 키. (enum 의 label 은 한국어 고정이라 여기서 갈아끼운다)
   static const _typeKeys = {
@@ -719,11 +720,6 @@ class _FilterBar extends StatelessWidget {
                 active: selected.contains(t),
                 onTap: () => onTap(t),
               ),
-          _FranchiseChip(
-            active: showFranchise,
-            lang: lang,
-            onTap: () => onToggleFranchise(!showFranchise),
-          ),
         ],
       ),
     );
@@ -747,17 +743,22 @@ class _FranchiseChip extends StatelessWidget {
     const color = Color(0xFF6B7280);
     final radius = uiText('franchiseNearby', lang)
         .replaceFirst('{n}', franchiseRadiusM.round().toString());
-    return Padding(
-      padding: const EdgeInsets.only(right: 8),
-      child: GestureDetector(
+    return GestureDetector(
         onTap: onTap,
         child: Container(
+          height: 36,
           padding: const EdgeInsets.symmetric(horizontal: 12),
           alignment: Alignment.center,
           decoration: BoxDecoration(
             color: active ? color : CubedColors.surface,
             borderRadius: BorderRadius.circular(18),
             border: Border.all(color: active ? color : CubedColors.line),
+            boxShadow: [
+              BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.15),
+                  blurRadius: 6,
+                  offset: const Offset(0, 2)),
+            ],
           ),
           child: Row(
             mainAxisSize: MainAxisSize.min,
@@ -784,7 +785,6 @@ class _FranchiseChip extends StatelessWidget {
             ],
           ),
         ),
-      ),
     );
   }
 }
