@@ -4,7 +4,7 @@ import '../../data/models/brand_deal.dart';
 enum PointReason {
   lowSugarLog('저당 제품 기록'),
   midSugarLog('제품 기록'),
-  streakBonus('연속 기록 보너스'),
+  mission('미션 달성'),
   redeem('상품 구매에 사용');
 
   const PointReason(this.label);

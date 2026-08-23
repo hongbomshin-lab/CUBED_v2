@@ -26,7 +26,7 @@ class PointsController extends StateNotifier<List<PointEntry>> {
       e(0, 30, PointReason.lowSugarLog, '라라스윗 초코 아이스크림'),
       e(1, 30, PointReason.lowSugarLog, '널담 고단백 통밀스콘'),
       e(1, 10, PointReason.midSugarLog, '제로콜라'),
-      e(2, 50, PointReason.streakBonus, '3일 연속 기록'),
+      e(2, 30, PointReason.mission, '3일 연속 출석'),
       e(3, 30, PointReason.lowSugarLog, '마이노멀 저당 케찹'),
       e(4, 30, PointReason.lowSugarLog, '널담 저당 쫀득빵'),
       e(6, 10, PointReason.midSugarLog, '아메리카노'),
@@ -54,6 +54,12 @@ class PointsController extends StateNotifier<List<PointEntry>> {
       subject: productName,
     );
     return amount;
+  }
+
+  /// 미션 달성 적립. 금액은 미션 정의가 정한다(앱이 계산하지 않는다).
+  void earnMission({required int amount, required String missionTitle}) {
+    if (amount <= 0) return;
+    _add(delta: amount, reason: PointReason.mission, subject: missionTitle);
   }
 
   /// 상품 구매에 포인트 사용. 잔액을 넘으면 아무것도 하지 않는다.

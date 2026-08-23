@@ -1,0 +1,5 @@
+code,title,description,icon,trigger,condition,period,target,reward,sort,active
+daily_checkin,매일 출석체크,하루 한 번 앱에 들르면 적립,event_available,checkin,,daily,1,10,10,true
+streak_3,3일 연속 출석,사흘만 이어가도 보너스,local_fire_department,checkin,,streak,3,30,20,true
+streak_7,7일 연속 출석,일주일을 채우면 크게 적립,local_fire_department,checkin,,streak,7,100,21,true
+streak_30,30일 연속 출석,한 달을 채운 사람에게,workspace_premium,checkin,,streak,30,500,22,true

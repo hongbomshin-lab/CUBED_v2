@@ -8,6 +8,7 @@ import '../../providers/providers.dart';
 import 'point_card.dart' show won;
 import 'point_models.dart';
 import 'points_controller.dart';
+import '../missions/missions_screen.dart';
 import 'redeem_sheet.dart';
 
 /// 포인트 상점 — 핫딜 탭의 '포인트 상점' 모드 본문.
@@ -75,28 +76,53 @@ class _BalanceBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      margin: const EdgeInsets.fromLTRB(14, 4, 14, 8),
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-      decoration: BoxDecoration(
+    // 잔액이 부족할 때 '어디서 더 모으지'로 바로 이어지도록 미션으로 보낸다.
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(14, 4, 14, 8),
+      child: Material(
         color: CubedColors.ink,
         borderRadius: BorderRadius.circular(14),
+        child: InkWell(
+          borderRadius: BorderRadius.circular(14),
+          onTap: () => Navigator.of(context).push(
+            MaterialPageRoute(builder: (_) => const MissionsScreen()),
+          ),
+          child: Padding(
+            padding:
+                const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            child: Row(children: [
+              const Icon(Icons.savings_rounded,
+                  size: 16, color: CubedColors.lime),
+              const SizedBox(width: 8),
+              Text('사용 가능',
+                  style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w700,
+                      color: Colors.white.withValues(alpha: 0.7))),
+              const Spacer(),
+              Text('${won(balance)}P',
+                  style: const TextStyle(
+                      fontSize: 17,
+                      fontWeight: FontWeight.w900,
+                      color: Colors.white)),
+              const SizedBox(width: 8),
+              Container(
+                padding: const EdgeInsets.symmetric(
+                    horizontal: 9, vertical: 4),
+                decoration: BoxDecoration(
+                  color: CubedColors.lime,
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: const Text('모으기',
+                    style: TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w800,
+                        color: CubedColors.ink)),
+              ),
+            ]),
+          ),
+        ),
       ),
-      child: Row(children: [
-        const Icon(Icons.savings_rounded, size: 16, color: CubedColors.lime),
-        const SizedBox(width: 8),
-        Text('사용 가능',
-            style: TextStyle(
-                fontSize: 12,
-                fontWeight: FontWeight.w700,
-                color: Colors.white.withValues(alpha: 0.7))),
-        const Spacer(),
-        Text('${won(balance)}P',
-            style: const TextStyle(
-                fontSize: 17,
-                fontWeight: FontWeight.w900,
-                color: Colors.white)),
-      ]),
     );
   }
 }

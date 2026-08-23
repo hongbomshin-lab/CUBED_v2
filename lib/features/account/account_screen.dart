@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/theme.dart';
+import '../missions/missions_screen.dart';
 import '../points/point_card.dart';
 import '../../providers/providers.dart';
 import '../auth/login_screen.dart';
@@ -150,6 +151,16 @@ class _LoggedIn extends ConsumerWidget {
 
         // 포인트 — 마이페이지에서 가장 먼저 보이게 한다.
         const PointCard(),
+
+        // 포인트를 본 다음 '어떻게 더 모으지'로 이어지도록 바로 아래에 둔다.
+        _MenuTile(
+          icon: Icons.flag_rounded,
+          label: '미션 · 출석체크',
+          onTap: () => Navigator.of(context).push(
+            MaterialPageRoute(builder: (_) => const MissionsScreen()),
+          ),
+        ),
+        const SizedBox(height: 12),
 
         // 메뉴
         _MenuTile(
