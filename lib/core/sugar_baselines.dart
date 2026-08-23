@@ -34,7 +34,7 @@ const List<SugarBaseline> kSugarBaselines = [
   SugarBaseline(category: '건강/기능성음료', baselineG: 10, basis: '일반 기능성음료 100ml 병'),
   SugarBaseline(
       category: '차/티음료',
-      keywords: ['아이스티', '에이드', '티즐', '콤부차', '블렌딩', '밀크티'],
+      keywords: ['아이스티', '에이드', '블렌딩', '밀크티'],
       baselineG: 25,
       basis: '일반 아이스티 500ml'),
   SugarBaseline(
@@ -42,7 +42,13 @@ const List<SugarBaseline> kSugarBaselines = [
       keywords: ['식혜', '수정과'],
       baselineG: 20,
       basis: '일반 식혜 238ml 캔'),
-  SugarBaseline(category: '차/티음료', baselineG: 5, basis: '일반 차음료'),
+  SugarBaseline(
+      category: '차/티음료',
+      keywords: ['유자차', '꿀'],
+      baselineG: 20,
+      basis: '일반 유자차 음료'),
+  // RTD 차는 이봉분포: 대부분 0~1g(대체당), 유자·꿀차만 20g+ → 기본값은 하한 완충
+  SugarBaseline(category: '차/티음료', baselineG: 3, basis: '일반 차음료'),
   SugarBaseline(
       category: '커피',
       keywords: ['아메리카노'],
@@ -56,7 +62,7 @@ const List<SugarBaseline> kSugarBaselines = [
       keywords: ['우유', '쉐이크', '셰이크', '밀크'],
       baselineG: 26,
       basis: '일반 가공유 240ml'),
-  SugarBaseline(category: '우유/요거트음료', baselineG: 10, basis: '일반 요거트드링크 1병'),
+  SugarBaseline(category: '우유/요거트음료', baselineG: 12, basis: '일반 요거트드링크 1병'),
   SugarBaseline(category: '두유/식물성음료', baselineG: 8, basis: '일반 두유 190ml'),
   SugarBaseline(category: '단백질음료', baselineG: 5, basis: '일반 단백질음료 1병'),
   // 아이스크림 — 형태별로 일반 제품 당류가 다름
@@ -70,7 +76,7 @@ const List<SugarBaseline> kSugarBaselines = [
   SugarBaseline(
       category: '아이스크림/빙과',
       keywords: ['모나카', '샌드'],
-      baselineG: 22,
+      baselineG: 24,
       basis: '일반 모나카 1개'),
   SugarBaseline(
       category: '아이스크림/빙과',
@@ -99,17 +105,21 @@ const List<SugarBaseline> kSugarBaselines = [
       baselineG: 15,
       basis: '일반 그래놀라 50g'),
   SugarBaseline(
-      category: '과자/스낵', keywords: ['팝콘'], baselineG: 7, basis: '일반 팝콘 1봉'),
+      category: '과자/스낵',
+      keywords: ['팝콘'],
+      baselineG: 23,
+      basis: '일반 카라멜팝콘 1봉(75g)'),
   SugarBaseline(
       category: '과자/스낵', keywords: ['웨하스'], baselineG: 6, basis: '일반 웨하스 1회'),
-  SugarBaseline(category: '과자/스낵', baselineG: 18, basis: '일반 쿠키 1봉'),
+  SugarBaseline(
+      category: '과자/스낵', baselineG: 7, basis: '일반 쿠키 1회(2~3개)'),
   SugarBaseline(
       category: '빵/디저트',
       keywords: ['단팥', '호빵'],
       baselineG: 18,
       basis: '일반 단팥빵 1개'),
   SugarBaseline(
-      category: '빵/디저트', keywords: ['도넛'], baselineG: 12, basis: '일반 도넛 1개'),
+      category: '빵/디저트', keywords: ['도넛'], baselineG: 9, basis: '일반 도넛 1개'),
   SugarBaseline(
       category: '빵/디저트',
       keywords: ['티라미수', '케이크'],
@@ -127,12 +137,18 @@ const List<SugarBaseline> kSugarBaselines = [
       category: '간편식/식사', keywords: ['떡볶이'], baselineG: 16, basis: '일반 떡볶이 1인분'),
   SugarBaseline(
       category: '간편식/식사',
-      keywords: ['비빔밥', '덮밥'],
-      baselineG: 10,
+      keywords: ['비빔밥'],
+      baselineG: 6,
       basis: '일반 비빔밥 1인분'),
   SugarBaseline(
+      category: '간편식/식사',
+      keywords: ['덮밥', '도시락'],
+      baselineG: 12,
+      basis: '일반 고기양념 도시락 1인분'),
+  SugarBaseline(
       category: '간편식/식사', keywords: ['샌드'], baselineG: 7, basis: '일반 샌드위치 1개'),
-  SugarBaseline(category: '간편식/식사', baselineG: 5, basis: '일반 간편식 1팩'),
+  SugarBaseline(
+      category: '간편식/식사', baselineG: 8, basis: '일반 샐러드 1팩(드레싱 포함)'),
   SugarBaseline(category: '단백질/에너지바', baselineG: 15, basis: '일반 에너지바 1개'),
   SugarBaseline(
       category: '소스/장류', keywords: ['초고추장'], baselineG: 8, basis: '일반 초고추장 20g'),

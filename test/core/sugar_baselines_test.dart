@@ -24,6 +24,19 @@ void main() {
       expect(sugarBaselineFor(category: '차/티음료', name: '팔도 비락 식혜 제로')
               ?.baselineG,
           20);
+      expect(sugarBaselineFor(category: '차/티음료', name: '동원 양반 유자차')
+              ?.baselineG,
+          20); // 고당 예외군
+      expect(sugarBaselineFor(category: '차/티음료', name: '양반 가마솥 누룽지')
+              ?.baselineG,
+          3); // 무가당·대체당 기본값
+      expect(sugarBaselineFor(category: '간편식/식사', name: '봄동저당비빔밥')?.baselineG,
+          6);
+      expect(sugarBaselineFor(category: '간편식/식사', name: '저당 규동 덮밥')?.baselineG,
+          12);
+      expect(sugarBaselineFor(category: '과자/스낵', name: '라라스윗 저당 카라멜팝콘')
+              ?.baselineG,
+          23);
     });
 
     test('셰이크/쉐이크 표기 변형 모두 매칭', () {
