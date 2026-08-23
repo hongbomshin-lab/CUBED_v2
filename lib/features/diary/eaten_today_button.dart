@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart' show PostgrestException;
 
 import '../../core/rulebook.dart';
+import '../../core/sugar_baselines.dart';
 import '../../core/theme.dart';
 import '../../data/models/product.dart';
 import '../../providers/providers.dart';
@@ -31,6 +32,11 @@ class EatenTodayButton extends ConsumerWidget {
     final today = ref.watch(todayLogProvider(key));
     final logged = today.valueOrNull != null;
     final busy = today.isLoading;
+    final points = sugarPointsFor(
+      category: product.category,
+      name: product.name,
+      sugar: product.sugar,
+    );
 
     Future<void> onTap() async {
       if (user == null) {
@@ -50,11 +56,17 @@ class EatenTodayButton extends ConsumerWidget {
               category: product.category,
               grade: grade.name,
               imagePath: submissionImagePath,
+              points: points,
             );
         if (context.mounted) {
+          final msg = !added
+              ? '기록을 취소했어요'
+              : points > 0
+                  ? '기록 완료! 설탕 ${points}g을 아꼈어요 (+${points}P)'
+                  : '오늘 먹은 기록에 추가했어요';
           ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-            content: Text(added ? '오늘 먹은 기록에 추가했어요' : '기록을 취소했어요'),
-            duration: const Duration(seconds: 1),
+            content: Text(msg),
+            duration: const Duration(milliseconds: 1400),
           ));
         }
       } on PostgrestException catch (e) {
@@ -71,14 +83,36 @@ class EatenTodayButton extends ConsumerWidget {
       } finally {
         container.invalidate(todayLogProvider(key));
         container.invalidate(monthLogsProvider); // 달력 전체 갱신
+        container.invalidate(myPointsProvider); // 마이페이지 포인트 갱신
       }
     }
 
     final label = logged ? '오늘 먹었어요 ✓' : '오늘 이거 먹었어요';
     final icon = logged ? Icons.check_circle_rounded : Icons.restaurant_rounded;
     final iconWidget = Icon(icon, size: 20);
-    final labelWidget = Text(label,
-        style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 15));
+    final labelWidget = Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Text(label,
+            style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 15)),
+        // 적립 예고 배지 — 기록하면 얼마나 아끼는지 먼저 보여준다
+        if (points > 0 && !logged) ...[
+          const SizedBox(width: 8),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+            decoration: BoxDecoration(
+              color: CubedColors.brand.withValues(alpha: 0.12),
+              borderRadius: BorderRadius.circular(999),
+            ),
+            child: Text('+${points}P',
+                style: const TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w800,
+                    color: CubedColors.brandDeep)),
+          ),
+        ],
+      ],
+    );
 
     return SizedBox(
       width: double.infinity,

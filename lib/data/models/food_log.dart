@@ -9,6 +9,7 @@ class FoodLog {
   final String? category;
   final String? grade; // 'low' | 'mid' | 'caution' 스냅샷
   final String? imagePath; // submission-images 폴더 uuid
+  final int points; // 아낀 설탕 g (기록 시점 계산 스냅샷)
 
   const FoodLog({
     required this.id,
@@ -19,6 +20,7 @@ class FoodLog {
     this.category,
     this.grade,
     this.imagePath,
+    this.points = 0,
   });
 
   /// 로컬 날짜 → 'yyyy-MM-dd' (eaten_on 컬럼 키)
@@ -44,6 +46,7 @@ class FoodLog {
         category: m['category'] as String?,
         grade: m['grade'] as String?,
         imagePath: m['image_path'] as String?,
+        points: (m['points'] as num?)?.toInt() ?? 0,
       );
 
   /// insert용 맵 (id·created_at은 DB 기본값 사용)
@@ -56,6 +59,7 @@ class FoodLog {
     String? category,
     String? grade,
     String? imagePath,
+    int points = 0,
   }) =>
       {
         'user_id': userId,
@@ -66,5 +70,6 @@ class FoodLog {
         'category': category,
         'grade': grade,
         'image_path': imagePath,
+        'points': points,
       };
 }

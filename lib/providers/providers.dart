@@ -268,6 +268,12 @@ final monthLogsProvider =
       .logsForMonth(DateTime(key.year, key.month, 1));
 });
 
+/// 누적 포인트 (아낀 설탕 g 합계) — 마이페이지 표시
+final myPointsProvider = FutureProvider<int>((ref) async {
+  ref.watch(authStateProvider); // 로그인/로그아웃 시 갱신
+  return ref.watch(foodLogRepositoryProvider).totalPoints();
+});
+
 /// 오늘 이 제품을 기록했는지 (결과 화면 토글 버튼 상태)
 final todayLogProvider =
     FutureProvider.family<FoodLog?, ({String? productId, String name})>(

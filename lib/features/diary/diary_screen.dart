@@ -55,6 +55,7 @@ class _DiaryScreenState extends ConsumerState<DiaryScreen> {
     // 기록이 속한 달을 무효화 — await 중 달력을 넘겼어도 정확한 달을 갱신
     container.invalidate(monthLogsProvider(
         (year: log.eatenOn.year, month: log.eatenOn.month)));
+    container.invalidate(myPointsProvider); // 삭제된 기록의 포인트 반영
   }
 
   @override
@@ -177,7 +178,23 @@ class _LogTile extends StatelessWidget {
           log.brand ?? (log.productId == null ? '사진으로 분석한 제품' : ''),
           style: const TextStyle(color: CubedColors.inkSoft, fontSize: 12),
         ),
-        trailing: _GradeBadge(grade: log.grade),
+        trailing: Column(
+          mainAxisSize: MainAxisSize.min,
+          mainAxisAlignment: MainAxisAlignment.center,
+          crossAxisAlignment: CrossAxisAlignment.end,
+          children: [
+            _GradeBadge(grade: log.grade),
+            if (log.points > 0)
+              Padding(
+                padding: const EdgeInsets.only(top: 4),
+                child: Text('+${log.points}P',
+                    style: const TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w800,
+                        color: CubedColors.brandDeep)),
+              ),
+          ],
+        ),
       ),
     );
   }
