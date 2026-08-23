@@ -253,40 +253,7 @@ class _PointsCard extends ConsumerWidget {
             ),
           ),
           const SizedBox(width: 12),
-          const _SugarCubeStack(),
-        ],
-      ),
-    );
-  }
-}
-
-/// 각설탕 스택 장식 — CUBED 아이덴티티의 미니 큐브 3개.
-class _SugarCubeStack extends StatelessWidget {
-  const _SugarCubeStack();
-
-  Widget _cube(double size, double alpha, double angle) => Transform.rotate(
-        angle: angle,
-        child: Container(
-          width: size,
-          height: size,
-          decoration: BoxDecoration(
-            color: CubedColors.lime.withValues(alpha: alpha),
-            borderRadius: BorderRadius.circular(size * 0.28),
-          ),
-        ),
-      );
-
-  @override
-  Widget build(BuildContext context) {
-    return SizedBox(
-      width: 64,
-      height: 64,
-      child: Stack(
-        alignment: Alignment.center,
-        children: [
-          Positioned(right: 0, top: 2, child: _cube(26, 0.25, 0.35)),
-          Positioned(left: 2, bottom: 0, child: _cube(20, 0.45, -0.25)),
-          _cube(34, 1, 0.12),
+          const SugarCubeStack(),
         ],
       ),
     );

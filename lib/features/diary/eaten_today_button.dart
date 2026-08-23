@@ -32,6 +32,8 @@ class EatenTodayButton extends ConsumerWidget {
     final today = ref.watch(todayLogProvider(key));
     final logged = today.valueOrNull != null;
     final busy = today.isLoading;
+    final rule =
+        sugarBaselineFor(category: product.category, name: product.name);
     final points = sugarPointsFor(
       category: product.category,
       name: product.name,
@@ -59,15 +61,14 @@ class EatenTodayButton extends ConsumerWidget {
               points: points,
             );
         if (context.mounted) {
-          final msg = !added
-              ? '기록을 취소했어요'
-              : points > 0
-                  ? '기록 완료! 설탕 ${points}g을 아꼈어요 (+${points}P)'
-                  : '오늘 먹은 기록에 추가했어요';
-          ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-            content: Text(msg),
-            duration: const Duration(milliseconds: 1400),
-          ));
+          if (added && points > 0) {
+            await _showEarnedDialog(context, points, rule?.basis);
+          } else {
+            ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+              content: Text(added ? '오늘 먹은 기록에 추가했어요' : '기록을 취소했어요'),
+              duration: const Duration(seconds: 1),
+            ));
+          }
         }
       } on PostgrestException catch (e) {
         // 동시 중복(unique 충돌)은 이미 기록된 것으로 간주 (스펙 §9)
@@ -90,31 +91,10 @@ class EatenTodayButton extends ConsumerWidget {
     final label = logged ? '오늘 먹었어요 ✓' : '오늘 이거 먹었어요';
     final icon = logged ? Icons.check_circle_rounded : Icons.restaurant_rounded;
     final iconWidget = Icon(icon, size: 20);
-    final labelWidget = Row(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Text(label,
-            style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 15)),
-        // 적립 예고 배지 — 기록하면 얼마나 아끼는지 먼저 보여준다
-        if (points > 0 && !logged) ...[
-          const SizedBox(width: 8),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-            decoration: BoxDecoration(
-              color: CubedColors.brand.withValues(alpha: 0.12),
-              borderRadius: BorderRadius.circular(999),
-            ),
-            child: Text('+${points}P',
-                style: const TextStyle(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w800,
-                    color: CubedColors.brandDeep)),
-          ),
-        ],
-      ],
-    );
+    final labelWidget = Text(label,
+        style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 15));
 
-    return SizedBox(
+    final button = SizedBox(
       width: double.infinity,
       child: logged
           ? FilledButton.icon(
@@ -136,6 +116,89 @@ class EatenTodayButton extends ConsumerWidget {
               icon: iconWidget,
               label: labelWidget,
             ),
+    );
+
+    if (points <= 0) return button;
+    // 왜 기록하는지 먼저 보이게 — 일반 제품 대비 아끼는 당류를 문장으로
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Icon(Icons.eco_rounded,
+                size: 15, color: CubedColors.brandDeep),
+            const SizedBox(width: 5),
+            Flexible(
+              child: Text(
+                logged
+                    ? '설탕 ${points}g을 아꼈어요'
+                    : '${rule?.basis ?? '일반 제품'}보다 당류 ${points}g 덜 먹어요',
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w700,
+                    color: CubedColors.brandDeep),
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 8),
+        button,
+      ],
+    );
+  }
+
+  /// 적립 팝업 — 아낀 당류만큼 포인트 적립을 알린다.
+  Future<void> _showEarnedDialog(
+      BuildContext context, int points, String? basis) {
+    return showDialog<void>(
+      context: context,
+      builder: (context) => Dialog(
+        backgroundColor: CubedColors.inkCard,
+        shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(CubedFx.radiusHero)),
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(24, 28, 24, 20),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const SugarCubeStack(size: 56),
+              const SizedBox(height: 16),
+              Text('+${points}P',
+                  style: const TextStyle(
+                      fontSize: 34,
+                      fontWeight: FontWeight.w800,
+                      letterSpacing: -1,
+                      color: CubedColors.lime)),
+              const SizedBox(height: 8),
+              const Text('아낀 당류만큼 포인트를 적립했어요',
+                  style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w800,
+                      color: Colors.white)),
+              const SizedBox(height: 6),
+              Text('${basis ?? '일반 제품'}보다 설탕 ${points}g을 덜 먹었어요',
+                  textAlign: TextAlign.center,
+                  style:
+                      const TextStyle(fontSize: 13, color: Colors.white70)),
+              const SizedBox(height: 20),
+              SizedBox(
+                width: double.infinity,
+                child: FilledButton(
+                  style: FilledButton.styleFrom(
+                    backgroundColor: CubedColors.lime,
+                    foregroundColor: CubedColors.ink,
+                  ),
+                  onPressed: () => Navigator.of(context).pop(),
+                  child: const Text('좋아요',
+                      style: TextStyle(fontWeight: FontWeight.w800)),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 }

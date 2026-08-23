@@ -48,6 +48,44 @@ class CubedFx {
   ];
 }
 
+/// 각설탕 스택 장식 — CUBED 아이덴티티의 미니 큐브 3개.
+/// 다크(inkCard) 표면 위 사용 전제 (라임은 잉크 위 전용).
+class SugarCubeStack extends StatelessWidget {
+  const SugarCubeStack({super.key, this.size = 64});
+  final double size;
+
+  Widget _cube(double s, double alpha, double angle) => Transform.rotate(
+        angle: angle,
+        child: Container(
+          width: s,
+          height: s,
+          decoration: BoxDecoration(
+            color: CubedColors.lime.withValues(alpha: alpha),
+            borderRadius: BorderRadius.circular(s * 0.28),
+          ),
+        ),
+      );
+
+  @override
+  Widget build(BuildContext context) {
+    final u = size / 64; // 64px 기준 비율
+    return SizedBox(
+      width: size,
+      height: size,
+      child: Stack(
+        alignment: Alignment.center,
+        children: [
+          Positioned(
+              right: 0, top: 2 * u, child: _cube(26 * u, 0.25, 0.35)),
+          Positioned(
+              left: 2 * u, bottom: 0, child: _cube(20 * u, 0.45, -0.25)),
+          _cube(34 * u, 1, 0.12),
+        ],
+      ),
+    );
+  }
+}
+
 ThemeData buildCubedTheme() {
   const scheme = ColorScheme.light(
     primary: CubedColors.brand,

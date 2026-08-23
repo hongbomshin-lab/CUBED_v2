@@ -24,7 +24,7 @@ class _CaptureScreenState extends ConsumerState<CaptureScreen> {
   @override
   void initState() {
     super.initState();
-    // 진입 즉시 카메라부터 — 취소하면 슬롯 카드 화면이 남는다.
+    // 진입 즉시 카메라부터 — 1단계에서는 슬롯 화면을 보여주지 않는다.
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final state = ref.read(captureControllerProvider);
       if (state.images.isEmpty && !state.quickChecked) {
@@ -47,7 +47,18 @@ class _CaptureScreenState extends ConsumerState<CaptureScreen> {
       maxHeight: 1280,
       imageQuality: 80,
     );
-    if (file == null) return;
+    if (file == null) {
+      // 1단계(전면샷 전) 카메라 취소 = 촬영 자체를 그만둔 것 → 화면 닫기
+      final st = ref.read(captureControllerProvider);
+      if (slot == CaptureSlot.full &&
+          !st.quickChecked &&
+          st.images.isEmpty &&
+          context.mounted &&
+          Navigator.of(context).canPop()) {
+        Navigator.of(context).pop();
+      }
+      return;
+    }
     final bytes = await file.readAsBytes();
     ref.read(captureControllerProvider.notifier).setImage(slot, bytes);
     // 전면샷 단계면 등록 제품 빠른 매칭부터 — 매칭되면 나머지 2장 생략
@@ -113,9 +124,29 @@ class _CaptureScreenState extends ConsumerState<CaptureScreen> {
   @override
   Widget build(BuildContext context) {
     final state = ref.watch(captureControllerProvider);
-    // 1단계: 전면 1장 → 빠른 매칭. 2단계(quickChecked): 미등록 확정 → 3장 플로우.
-    final slots =
-        state.quickChecked ? CaptureSlot.values : const [CaptureSlot.full];
+    // 1단계(카메라·빠른 매칭): 슬롯 화면 없이 진행 상태만.
+    // 2단계(quickChecked): 미등록 확정 → 3장 플로우.
+    if (!state.quickChecked && !state.submitting) {
+      return Scaffold(
+        appBar: AppBar(title: const Text('사진으로 분석')),
+        body: Center(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const CircularProgressIndicator(color: CubedColors.brand),
+              const SizedBox(height: 16),
+              Text(
+                  state.quickMatching
+                      ? '등록된 제품인지 확인 중…\n맞으면 바로 결과로 이동해요'
+                      : '카메라를 여는 중…',
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(
+                      color: CubedColors.inkSoft, height: 1.5)),
+            ],
+          ),
+        ),
+      );
+    }
     return Scaffold(
       appBar: AppBar(title: const Text('사진으로 분석')),
       body: state.submitting
@@ -133,43 +164,14 @@ class _CaptureScreenState extends ConsumerState<CaptureScreen> {
           : ListView(
               padding: const EdgeInsets.all(20),
               children: [
-                Text(
-                    state.quickChecked
-                        ? '등록되지 않은 제품이에요'
-                        : '제품 앞면부터 찍어주세요',
-                    style: const TextStyle(
-                        fontSize: 18, fontWeight: FontWeight.w800)),
+                const Text('등록되지 않은 제품이에요',
+                    style:
+                        TextStyle(fontSize: 18, fontWeight: FontWeight.w800)),
                 const SizedBox(height: 4),
-                Text(
-                    state.quickChecked
-                        ? '원재료명·영양성분표까지 3장이 모이면 AI가 분석해요.'
-                        : '등록된 제품이면 한 장으로 바로 결과가 나와요.',
-                    style: const TextStyle(
-                        color: CubedColors.inkSoft, height: 1.5)),
-                if (state.quickMatching) ...[
-                  const SizedBox(height: 12),
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 14, vertical: 11),
-                    decoration: BoxDecoration(
-                      color: CubedColors.brand.withValues(alpha: 0.08),
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: const Row(children: [
-                      SizedBox(
-                          width: 14,
-                          height: 14,
-                          child: CircularProgressIndicator(
-                              strokeWidth: 2, color: CubedColors.brand)),
-                      SizedBox(width: 10),
-                      Text('등록된 제품인지 확인 중… 맞으면 바로 결과로 이동해요',
-                          style: TextStyle(
-                              color: CubedColors.brandDeep, fontSize: 13)),
-                    ]),
-                  ),
-                ],
+                const Text('원재료명·영양성분표까지 3장이 모이면 AI가 분석해요.',
+                    style: TextStyle(color: CubedColors.inkSoft, height: 1.5)),
                 const SizedBox(height: 16),
-                for (final slot in slots)
+                for (final slot in CaptureSlot.values)
                   _SlotCard(
                     slot: slot,
                     index: slot.index + 1,
