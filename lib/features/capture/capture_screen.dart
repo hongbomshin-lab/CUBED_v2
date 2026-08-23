@@ -11,10 +11,27 @@ import '../ocr/ocr_service.dart';
 import '../result/result_screen.dart';
 import 'capture_controller.dart';
 
-/// 미등록 제품 제보: 전체샷·원재료·영양성분 3장 가이드 촬영 → 분석.
-class CaptureScreen extends ConsumerWidget {
+/// 사진 분석: 진입 즉시 전면 1장 촬영 → 빠른 매칭, 미등록 확정 시에만 3장 플로우.
+class CaptureScreen extends ConsumerStatefulWidget {
   const CaptureScreen({super.key, this.prefillBarcode});
   final String? prefillBarcode;
+
+  @override
+  ConsumerState<CaptureScreen> createState() => _CaptureScreenState();
+}
+
+class _CaptureScreenState extends ConsumerState<CaptureScreen> {
+  @override
+  void initState() {
+    super.initState();
+    // 진입 즉시 카메라부터 — 취소하면 슬롯 카드 화면이 남는다.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final state = ref.read(captureControllerProvider);
+      if (state.images.isEmpty && !state.quickChecked) {
+        _pick(context, ref, CaptureSlot.full, ImageSource.camera);
+      }
+    });
+  }
 
   Future<void> _pick(
     BuildContext context,
@@ -77,7 +94,7 @@ class CaptureScreen extends ConsumerWidget {
         fullB64: base64Encode(imgs[CaptureSlot.full]!),
         ingredientsB64: base64Encode(imgs[CaptureSlot.ingredients]!),
         nutritionB64: base64Encode(imgs[CaptureSlot.nutrition]!),
-        barcode: prefillBarcode,
+        barcode: widget.prefillBarcode,
       );
       if (!context.mounted) return;
       Navigator.of(context).pushReplacement(
@@ -94,7 +111,7 @@ class CaptureScreen extends ConsumerWidget {
   }
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  Widget build(BuildContext context) {
     final state = ref.watch(captureControllerProvider);
     // 1단계: 전면 1장 → 빠른 매칭. 2단계(quickChecked): 미등록 확정 → 3장 플로우.
     final slots =

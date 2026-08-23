@@ -71,13 +71,13 @@ class HomeScreen extends ConsumerWidget {
               const SizedBox(height: 12),
             ],
 
-            // 메인 CTA — 사진 3장 분석
+            // 메인 CTA — 사진 촬영 → 분석 (등록 제품은 1장, 미등록만 3장)
             Reveal(
               delayMs: 90,
               child: _HeroCard(
-                chipLabel: 'AI 3장 분석',
+                chipLabel: 'AI 사진 분석',
                 title: '사진 찍고 3초',
-                subtitle: '제품·원재료·영양정보 3장이면 분석 끝',
+                subtitle: '앞면 한 장이면 끝 — 미등록 제품만 3장 촬영',
                 onTap: () => Navigator.of(context).push(
                   MaterialPageRoute(builder: (_) => const CaptureScreen()),
                 ),
