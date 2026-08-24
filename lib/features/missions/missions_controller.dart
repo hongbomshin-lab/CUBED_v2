@@ -38,7 +38,7 @@ class MissionState {
       streak.lastDate == PeriodKey.day(DateTime.now());
 
   MissionProgress progressOf(Mission m) =>
-      progress[m.code] ?? MissionProgress(periodKey: '');
+      progress[m.code] ?? const MissionProgress(periodKey: '');
 }
 
 /// 미션 엔진.
