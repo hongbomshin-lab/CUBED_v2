@@ -7,6 +7,8 @@ metadata:
   originSessionId: 7e47b867-e901-4dee-810a-18a02b33b944
 ---
 
+> ⚠️ **아카이브 문서** — 2026-06 Next.js→Flutter 포팅 당시의 as-is 분석입니다. 현재 스키마·구조와 다릅니다. 현재 스펙은 [`docs/product-spec.md`](docs/product-spec.md)를 보세요.
+
 기존 Next.js 저당맵 웹앱([/Users/sangin514/my-nutrition-map](/Users/sangin514/my-nutrition-map))을 Flutter로 포팅 중. 로그인/인증·커뮤니티는 포팅 범위 제외. DB 수정은 별도(새 세션에서 새 스키마 받기로 함) — 아래는 **현재(as-is) 분석**.
 
 **Why:** Flutter 구현 세션의 사전 컨텍스트로 사용. 실제 운영 DB 스키마를 사용자에게 직접 받아 역추적 추정을 교체함.
