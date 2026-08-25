@@ -288,7 +288,15 @@ class AttendanceCard extends ConsumerWidget {
       );
       return;
     }
-    final earned = await ref.read(missionsProvider.notifier).checkIn();
+    int earned;
+    try {
+      earned = await ref.read(missionsProvider.notifier).checkIn();
+    } catch (e) {
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text('출석 처리 실패: $e')));
+      return;
+    }
     if (!context.mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(SnackBar(
       content: Text(earned > 0 ? '출석 완료 · +${won(earned)}P' : '오늘은 이미 출석했어요'),

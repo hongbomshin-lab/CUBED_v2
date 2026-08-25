@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart' show debugPrint;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../providers/providers.dart';
@@ -120,7 +121,10 @@ class MissionsController extends StateNotifier<MissionState> {
           .fire(trigger.code, data: data, refId: refId);
       earned = awards.fold(0, (sum, a) => sum + a.reward);
     } catch (e) {
-      return 0;
+      // 조용히 삼키면 서버 오류를 못 본다 — 실제로 fire_event 가 42702 로
+      // 항상 실패하는데도 '이미 출석했어요'로만 보였다.
+      debugPrint('fire_event 실패: $e');
+      rethrow;
     }
     // 서버가 진행·적립을 마쳤으니 화면과 잔액을 다시 읽는다.
     await refresh();

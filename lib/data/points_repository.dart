@@ -53,9 +53,11 @@ class PointsRepository {
     });
     return ((rows as List?) ?? const [])
         .map((r) => MissionAward(
-              code: r['mission_code'] as String,
-              title: r['title'] as String,
-              reward: (r['reward'] as num).toInt(),
+              // 반환 컬럼은 out_ 접두어를 쓴다 — 함수 안에서 테이블 컬럼명과
+              // 겹치면 PL/pgSQL 이 42702(ambiguous)로 실패하기 때문이다.
+              code: r['out_mission_code'] as String,
+              title: r['out_title'] as String,
+              reward: (r['out_reward'] as num).toInt(),
             ))
         .toList();
   }
