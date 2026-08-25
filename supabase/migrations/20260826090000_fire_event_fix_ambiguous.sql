@@ -8,7 +8,11 @@
 -- 조치: 출력 컬럼을 out_ 접두어로 바꿔 이름 충돌을 없앤다.
 --       테이블 참조에도 별칭을 붙여 의도를 분명히 한다.
 
-CREATE OR REPLACE FUNCTION public.fire_event(
+-- 반환 타입(OUT 파라미터 구성)이 바뀌므로 CREATE OR REPLACE 로는 안 된다.
+--   42P13: cannot change return type of existing function
+DROP FUNCTION IF EXISTS public.fire_event(text, jsonb, text);
+
+CREATE FUNCTION public.fire_event(
   p_trigger text,
   p_data jsonb DEFAULT '{}'::jsonb,
   p_ref_id text DEFAULT NULL
