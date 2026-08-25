@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/theme.dart';
 import 'point_card.dart' show won;
 import 'point_models.dart';
+import '../../providers/providers.dart';
 import 'points_controller.dart';
 
 /// 포인트 적립·사용 내역 — 원장을 그대로 보여준다.
@@ -13,8 +14,9 @@ class PointsHistoryScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final entries = ref.watch(pointLedgerProvider);
+    final entries = ref.watch(serverLedgerProvider).valueOrNull ?? const [];
     final balance = ref.watch(pointBalanceProvider);
+    final loggedIn = ref.watch(currentUserProvider) != null;
 
     return Scaffold(
       backgroundColor: CubedColors.bg,
@@ -55,9 +57,10 @@ class PointsHistoryScreen extends ConsumerWidget {
           ),
           Expanded(
             child: entries.isEmpty
-                ? const Center(
-                    child: Text('아직 내역이 없어요',
-                        style: TextStyle(color: CubedColors.inkSoft)),
+                ? Center(
+                    child: Text(
+                        loggedIn ? '아직 내역이 없어요' : '로그인하면 포인트가 쌓여요',
+                        style: const TextStyle(color: CubedColors.inkSoft)),
                   )
                 : ListView.separated(
                     itemCount: entries.length,

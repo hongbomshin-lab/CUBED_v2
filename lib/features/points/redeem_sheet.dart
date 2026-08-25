@@ -5,6 +5,7 @@ import 'package:url_launcher/url_launcher.dart';
 
 import '../../core/theme.dart';
 import 'point_card.dart' show won;
+import '../../providers/providers.dart';
 import 'point_models.dart';
 import 'points_controller.dart';
 
@@ -266,17 +267,30 @@ class _RedeemSheetState extends ConsumerState<_RedeemSheet> {
     );
     if (method == null || !mounted) return;
 
+    // 차감은 서버에서 한다 — 잔액 검사도 서버가 하고, 앱 계산을 믿지 않는다.
+    var spent = 0;
     if (use > 0) {
-      ref
-          .read(pointLedgerProvider.notifier)
-          .spend(amount: use, productName: item.name);
+      try {
+        spent = await ref.read(pointsRepositoryProvider).spend(
+              amount: use,
+              subject: item.name,
+              refId: item.deal.id,
+            );
+        ref.invalidate(serverBalanceProvider);
+        ref.invalidate(serverLedgerProvider);
+      } catch (e) {
+        if (!mounted) return;
+        ScaffoldMessenger.of(context)
+            .showSnackBar(SnackBar(content: Text('포인트 사용 실패: $e')));
+        return;
+      }
     }
     if (!mounted) return;
     Navigator.of(context).pop();
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text(use > 0
-            ? '$method 결제 준비 완료 · 포인트 ${won(use)}P 사용'
+        content: Text(spent > 0
+            ? '$method 결제 준비 완료 · 포인트 ${won(spent)}P 사용'
             : '$method 결제 준비 완료'),
       ),
     );

@@ -89,21 +89,11 @@ final pointLedgerProvider =
 
 /// 현재 잔액 — 화면 어디서나 이 값 하나만 쓴다.
 ///
-/// 두 갈래를 합친다:
-///   · DB(product_logs.points) — 지금까지 아낀 설탕. 계정에 남는 진짜 기록.
-///   · 원장(메모리) — 이번 세션의 미션 보상·사용 내역.
-/// 이번 세션에 기록한 건 양쪽에 잡히므로, 원장의 '아낀 설탕' 항목은 빼서 중복을 막는다.
-/// (원장이 서버로 옮겨지면 이 합산은 사라지고 원장 하나만 남는다)
+/// 서버 원장(point_ledger)의 합이다. 로그인하지 않았으면 0 —
+/// 포인트는 계정에 귀속되므로 로그아웃 상태에서 잔액이 보이면 안 된다.
+/// 로딩 중에는 마지막으로 알던 값 대신 0 을 쓴다(없는 돈을 보여주지 않는다).
 final pointBalanceProvider = Provider<int>((ref) {
-  final entries = ref.watch(pointLedgerProvider);
-  final ledgerExceptSugar = entries
-      .where((e) => e.reason != PointReason.sugarSaved)
-      .fold(0, (sum, e) => sum + e.delta);
-  final seeded = entries
-      .where((e) => e.reason == PointReason.sugarSaved && e.id.startsWith('seed'))
-      .fold(0, (sum, e) => sum + e.delta);
-  final fromDb = ref.watch(myPointsProvider).valueOrNull ?? 0;
-  return fromDb + seeded + ledgerExceptSugar;
+  return ref.watch(serverBalanceProvider).valueOrNull ?? 0;
 });
 
 /// 최근 7일 적립분 (마이페이지 카드용).

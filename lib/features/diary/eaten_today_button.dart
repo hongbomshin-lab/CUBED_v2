@@ -8,9 +8,7 @@ import '../../core/theme.dart';
 import '../../data/models/product.dart';
 import '../../providers/providers.dart';
 import '../auth/login_screen.dart';
-import '../missions/mission_models.dart';
-import '../missions/missions_controller.dart';
-import '../points/points_controller.dart';
+
 
 /// '오늘 이거 먹었어요' 토글 — DB 제품/촬영 제품 공용. 카카오 로그인 필요.
 class EatenTodayButton extends ConsumerWidget {
@@ -54,7 +52,7 @@ class EatenTodayButton extends ConsumerWidget {
       // 위젯이 await 중 dispose돼도 무효화가 동작하도록 컨테이너를 미리 캡처
       final container = ProviderScope.containerOf(context, listen: false);
       try {
-        final added = await ref.read(foodLogRepositoryProvider).toggleToday(
+        final logId = await ref.read(foodLogRepositoryProvider).toggleToday(
               productId: _productId,
               name: product.name,
               brand: product.brand,
@@ -63,28 +61,30 @@ class EatenTodayButton extends ConsumerWidget {
               imagePath: submissionImagePath,
               points: points,
             );
-        // 적립액은 sugarPointsFor 한 곳에서만 나온다(아낀 설탕 1g = 1P).
-        // DB(product_logs.points)가 원본이고, 원장에는 화면 표시용으로 같은 값을 남긴다.
-        // 취소는 회수하지 않는다 — 토글마다 ±가 반복되면 원장이 지저분해진다.
+        final added = logId != null;
+        // 적립은 서버가 한다 — 앱은 '이 기록으로 적립해 달라'만 요청하고
+        // 금액은 넘기지 않는다. 서버가 products.sugar 로 직접 계산한다.
+        // 취소는 회수하지 않는다(토글마다 ±가 반복되면 원장이 지저분해진다).
+        var awarded = 0;
         if (added) {
-          if (points > 0) {
-            container.read(pointLedgerProvider.notifier).earnSugarSaved(
-                  amount: points,
-                  productName: product.name,
-                );
-          }
-          // 먹은 기록 미션(예: 주 5회 기록)도 같은 순간에 진행된다.
-          container.read(missionsProvider.notifier).fire(
-            MissionTrigger.productLog,
-            {
+          final repo = container.read(pointsRepositoryProvider);
+          try {
+            awarded = await repo.earnForLog(logId);
+            // 먹은 기록 미션(주 5회 기록 등)도 같은 순간에 진행된다.
+            await repo.fire('product_log', data: {
               'grade': grade.name,
               if (product.brand != null) 'brand': product.brand!,
-            },
-          );
+            }, refId: logId);
+          } catch (e) {
+            debugPrint('적립 실패: $e');   // 기록 자체는 성공했으므로 막지 않는다
+          }
+          container.invalidate(serverBalanceProvider);
+          container.invalidate(serverLedgerProvider);
+          container.invalidate(dailyRoomProvider);
         }
         if (context.mounted) {
-          if (added && points > 0) {
-            await _showEarnedDialog(context, points, rule?.basis);
+          if (added && awarded > 0) {
+            await _showEarnedDialog(context, awarded, rule?.basis);
           } else {
             ScaffoldMessenger.of(context).showSnackBar(SnackBar(
               content: Text(added ? '오늘 먹은 기록에 추가했어요' : '기록을 취소했어요'),
