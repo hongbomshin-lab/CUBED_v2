@@ -192,10 +192,10 @@ class HomeScreen extends ConsumerWidget {
   }
 }
 
-/// 개인정보처리방침 공개 URL (docs/privacy-policy.md → GitHub Pages 호스팅).
+/// 개인정보처리방침 공개 URL (Notion 공개 페이지 호스팅).
 /// 스토어 등록 시 Play Console·App Store Connect에도 동일 URL을 입력한다.
 const kPrivacyPolicyUrl =
-    'https://hongbomshin-lab.github.io/CUBED_v2/privacy-policy';
+    'https://atlantic-whale-582.notion.site/ZERO-DOT-3ba28df6a5b981808860f00eb355ab05';
 
 /// "ZERO DOT" 워드마크 — 브랜드 도트(●)가 시그니처.
 class _Wordmark extends StatelessWidget {

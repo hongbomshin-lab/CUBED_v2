@@ -29,9 +29,11 @@ supabase functions deploy delete-account
 - **Supabase**: Redirect URL(`cubed://login-callback`)은 패키지와 무관하므로 그대로 OK
 
 ### A-4. 개인정보처리방침 호스팅
-- GitHub 저장소(CUBED_v2) → Settings → Pages → Source: `main` 브랜치 `/docs` 폴더 선택
-- 게시 URL 확인: `https://hongbomshin-lab.github.io/CUBED_v2/privacy-policy`
-- URL이 다르면 `lib/features/home/home_screen.dart`의 `kPrivacyPolicyUrl` 수정 요청
+- Notion 공개 페이지로 호스팅 (게시 완료)
+- 게시 URL: `https://atlantic-whale-582.notion.site/ZERO-DOT-3ba28df6a5b981808860f00eb355ab05`
+- 앱 내 링크(`lib/features/home/home_screen.dart`의 `kPrivacyPolicyUrl`)와 동일 URL 사용
+- Play Console·App Store Connect의 개인정보처리방침 URL 항목에도 위 URL 입력
+- 주의: Notion 페이지의 "웹에 게시(Publish to web)" 상태를 해제하면 스토어 심사에서 반려되므로 게시 상태 유지
 
 ### A-5. 앱 아이콘 제작
 - 1024×1024 PNG 1장 준비 (ZERO DOT 브랜드 아이콘)
