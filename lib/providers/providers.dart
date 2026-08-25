@@ -4,7 +4,6 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../core/i18n/app_lang.dart';
 import '../core/i18n/locale_controller.dart';
 import '../core/location_cache.dart';
-import '../core/sugar_profile.dart';
 import '../data/auth_repository.dart';
 import '../data/translation_repository.dart';
 import '../data/deal_repository.dart';
@@ -250,31 +249,7 @@ final searchProvider =
   return ref.watch(repositoryProvider).searchByName(q.trim());
 });
 
-/// 당류 개인화 프로필 (SharedPreferences, 서버 미동기화). null = 미설정.
-class SugarProfileController extends StateNotifier<SugarProfile?> {
-  SugarProfileController() : super(null) {
-    _load();
-  }
-  Future<void> _load() async {
-    try {
-      state = await SugarProfile.load();
-    } catch (_) {
-      // 프리퍼런스 불가 환경(위젯 테스트 등) — 미설정 유지
-    }
-  }
-
-  Future<void> save(SugarProfile p) async {
-    state = p;
-    await SugarProfile.save(p);
-  }
-}
-
-final sugarProfileProvider =
-    StateNotifierProvider<SugarProfileController, SugarProfile?>(
-  (ref) => SugarProfileController(),
-);
-
-/// 결과 화면 양 배수(제품별) — 양 슬라이더 ↔ 개인 당류 판정 히어로 실시간 연동용.
+/// 결과 화면 양 배수(제품별) — 양 슬라이더 공유 상태.
 final portionFactorProvider =
     StateProvider.autoDispose.family<double, String>((ref, productId) => 1.0);
 
@@ -291,6 +266,12 @@ final monthLogsProvider =
   return ref
       .watch(foodLogRepositoryProvider)
       .logsForMonth(DateTime(key.year, key.month, 1));
+});
+
+/// 누적 포인트 (아낀 설탕 g 합계) — 마이페이지 표시
+final myPointsProvider = FutureProvider<int>((ref) async {
+  ref.watch(authStateProvider); // 로그인/로그아웃 시 갱신
+  return ref.watch(foodLogRepositoryProvider).totalPoints();
 });
 
 /// 오늘 이 제품을 기록했는지 (결과 화면 토글 버튼 상태)

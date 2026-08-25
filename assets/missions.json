@@ -50,5 +50,33 @@
     "reward": 500,
     "sort": 22,
     "active": true
+  },
+  {
+    "code": "low_sugar_daily",
+    "title": "저당 제품 인증",
+    "description": "오늘 먹은 저당 제품을 기록하세요",
+    "icon": "restaurant",
+    "trigger": "product_log",
+    "condition": {
+      "grade": "low"
+    },
+    "period": "daily",
+    "target": 1,
+    "reward": 20,
+    "sort": 30,
+    "active": true
+  },
+  {
+    "code": "weekly_5_logs",
+    "title": "이번 주 5번 기록",
+    "description": "꾸준히 기록하면 보너스",
+    "icon": "edit_calendar",
+    "trigger": "product_log",
+    "condition": {},
+    "period": "weekly",
+    "target": 5,
+    "reward": 50,
+    "sort": 40,
+    "active": true
   }
 ]

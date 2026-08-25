@@ -47,6 +47,16 @@ class FoodLogRepository {
     return null;
   }
 
+  /// 누적 포인트 (아낀 설탕 g 합계). 비로그인 0.
+  Future<int> totalPoints() async {
+    final uid = _uid;
+    if (uid == null) return 0;
+    // ponytail: 전 행 fetch 후 클라 합산 — 행이 수만 건 규모가 되면 RPC 집계로 교체
+    final rows =
+        await _db.from('product_logs').select('points').eq('user_id', uid);
+    return rows.fold<int>(0, (sum, r) => sum + ((r['points'] as num?) ?? 0).toInt());
+  }
+
   /// '오늘 이거 먹었어요' 토글 → 기록됐으면 true, 해제됐으면 false
   Future<bool> toggleToday({
     String? productId,
@@ -55,6 +65,7 @@ class FoodLogRepository {
     String? category,
     String? grade,
     String? imagePath,
+    int points = 0,
   }) async {
     final uid = _uid;
     if (uid == null) throw Exception('로그인이 필요해요');
@@ -72,6 +83,7 @@ class FoodLogRepository {
           category: category,
           grade: grade,
           imagePath: imagePath,
+          points: points,
         ));
     return true;
   }

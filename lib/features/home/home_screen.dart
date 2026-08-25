@@ -71,13 +71,13 @@ class HomeScreen extends ConsumerWidget {
               const SizedBox(height: 12),
             ],
 
-            // 메인 CTA — 사진 3장 분석
+            // 메인 CTA — 사진 촬영 → 분석 (등록 제품은 1장, 미등록만 3장)
             Reveal(
               delayMs: 90,
               child: _HeroCard(
-                chipLabel: 'AI 3장 분석',
+                chipLabel: 'AI 사진 분석',
                 title: '사진 찍고 3초',
-                subtitle: '제품·원재료·영양정보 3장이면 분석 끝',
+                subtitle: '앞면 한 장이면 끝 — 미등록 제품만 3장 촬영',
                 onTap: () => Navigator.of(context).push(
                   MaterialPageRoute(builder: (_) => const CaptureScreen()),
                 ),
@@ -192,10 +192,10 @@ class HomeScreen extends ConsumerWidget {
   }
 }
 
-/// 개인정보처리방침 공개 URL (docs/privacy-policy.md → GitHub Pages 호스팅).
+/// 개인정보처리방침 공개 URL (Notion 공개 페이지 호스팅).
 /// 스토어 등록 시 Play Console·App Store Connect에도 동일 URL을 입력한다.
 const kPrivacyPolicyUrl =
-    'https://hongbomshin-lab.github.io/CUBED_v2/privacy-policy';
+    'https://atlantic-whale-582.notion.site/ZERO-DOT-3ba28df6a5b981808860f00eb355ab05';
 
 /// "ZERO DOT" 워드마크 — 브랜드 도트(●)가 시그니처.
 class _Wordmark extends StatelessWidget {

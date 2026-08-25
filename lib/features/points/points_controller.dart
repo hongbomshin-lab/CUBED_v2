@@ -1,5 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../providers/providers.dart';
 import 'point_models.dart';
 
 /// 포인트 잔액 + 원장.
@@ -23,13 +24,13 @@ class PointsController extends StateNotifier<List<PointEntry>> {
           subject: subject,
         );
     return [
-      e(0, 30, PointReason.lowSugarLog, '라라스윗 초코 아이스크림'),
-      e(1, 30, PointReason.lowSugarLog, '널담 고단백 통밀스콘'),
-      e(1, 10, PointReason.midSugarLog, '제로콜라'),
+      e(0, 14, PointReason.sugarSaved, '라라스윗 초코 아이스크림'),
+      e(1, 9, PointReason.sugarSaved, '널담 고단백 통밀스콘'),
+      e(1, 27, PointReason.sugarSaved, '제로콜라'),
       e(2, 30, PointReason.mission, '3일 연속 출석'),
-      e(3, 30, PointReason.lowSugarLog, '마이노멀 저당 케찹'),
-      e(4, 30, PointReason.lowSugarLog, '널담 저당 쫀득빵'),
-      e(6, 10, PointReason.midSugarLog, '아메리카노'),
+      e(3, 4, PointReason.sugarSaved, '마이노멀 저당 케찹'),
+      e(4, 11, PointReason.sugarSaved, '널담 저당 쫀득빵'),
+      e(6, 8, PointReason.sugarSaved, '아메리카노'),
     ];
   }
 
@@ -43,17 +44,11 @@ class PointsController extends StateNotifier<List<PointEntry>> {
         .fold(0, (sum, e) => sum + e.delta);
   }
 
-  /// 먹은 기록 적립. 등급에 따라 금액이 정해진다.
-  /// 적립이 0이면(주의 등급) 원장에 남기지 않는다.
-  int earnForLog({required String? grade, required String productName}) {
-    final amount = PointPolicy.earnFor(grade);
-    if (amount <= 0) return 0;
-    _add(
-      delta: amount,
-      reason: grade == 'low' ? PointReason.lowSugarLog : PointReason.midSugarLog,
-      subject: productName,
-    );
-    return amount;
+  /// 아낀 설탕만큼 적립. 금액은 호출자가 sugarPointsFor 로 구해 넘긴다
+  /// — 적립 기준을 두 곳에 두지 않기 위해 이 클래스는 계산하지 않는다.
+  void earnSugarSaved({required int amount, required String productName}) {
+    if (amount <= 0) return;
+    _add(delta: amount, reason: PointReason.sugarSaved, subject: productName);
   }
 
   /// 미션 달성 적립. 금액은 미션 정의가 정한다(앱이 계산하지 않는다).
@@ -92,10 +87,23 @@ final pointLedgerProvider =
     StateNotifierProvider<PointsController, List<PointEntry>>(
         (ref) => PointsController());
 
-/// 현재 잔액. 원장의 합이라 따로 저장하지 않는다.
+/// 현재 잔액 — 화면 어디서나 이 값 하나만 쓴다.
+///
+/// 두 갈래를 합친다:
+///   · DB(product_logs.points) — 지금까지 아낀 설탕. 계정에 남는 진짜 기록.
+///   · 원장(메모리) — 이번 세션의 미션 보상·사용 내역.
+/// 이번 세션에 기록한 건 양쪽에 잡히므로, 원장의 '아낀 설탕' 항목은 빼서 중복을 막는다.
+/// (원장이 서버로 옮겨지면 이 합산은 사라지고 원장 하나만 남는다)
 final pointBalanceProvider = Provider<int>((ref) {
   final entries = ref.watch(pointLedgerProvider);
-  return entries.fold(0, (sum, e) => sum + e.delta);
+  final ledgerExceptSugar = entries
+      .where((e) => e.reason != PointReason.sugarSaved)
+      .fold(0, (sum, e) => sum + e.delta);
+  final seeded = entries
+      .where((e) => e.reason == PointReason.sugarSaved && e.id.startsWith('seed'))
+      .fold(0, (sum, e) => sum + e.delta);
+  final fromDb = ref.watch(myPointsProvider).valueOrNull ?? 0;
+  return fromDb + seeded + ledgerExceptSugar;
 });
 
 /// 최근 7일 적립분 (마이페이지 카드용).

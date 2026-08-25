@@ -44,7 +44,13 @@ Deno.serve(async (req: Request) => {
       if (!images?.full) return json({ error: "images.full 필요" }, 400);
       const db = createClient(SUPABASE_URL, SERVICE_ROLE);
       try {
+        console.log(`quick: 이미지 base64 ${images.full.length}B 수신`);
         const match = await matchRegisteredIdentity(db, images.full);
+        console.log(
+          `quick: matched_product=${match.matchedProduct ? "있음" : "없음"} price_match=${
+            match.priceMatch ? "있음" : "없음"
+          }`,
+        );
         return json({
           matched_product: match.matchedProduct,
           price_match: match.priceMatch,

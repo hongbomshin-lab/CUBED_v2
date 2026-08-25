@@ -3,3 +3,5 @@ daily_checkin,매일 출석체크,하루 한 번 앱에 들르면 적립,event_a
 streak_3,3일 연속 출석,사흘만 이어가도 보너스,local_fire_department,checkin,,streak,3,30,20,true
 streak_7,7일 연속 출석,일주일을 채우면 크게 적립,local_fire_department,checkin,,streak,7,100,21,true
 streak_30,30일 연속 출석,한 달을 채운 사람에게,workspace_premium,checkin,,streak,30,500,22,true
+low_sugar_daily,저당 제품 인증,오늘 먹은 저당 제품을 기록하세요,restaurant,product_log,grade=low,daily,1,20,30,true
+weekly_5_logs,이번 주 5번 기록,꾸준히 기록하면 보너스,edit_calendar,product_log,,weekly,5,50,40,true

@@ -11,10 +11,27 @@ import '../ocr/ocr_service.dart';
 import '../result/result_screen.dart';
 import 'capture_controller.dart';
 
-/// 미등록 제품 제보: 전체샷·원재료·영양성분 3장 가이드 촬영 → 분석.
-class CaptureScreen extends ConsumerWidget {
+/// 사진 분석: 진입 즉시 전면 1장 촬영 → 빠른 매칭, 미등록 확정 시에만 3장 플로우.
+class CaptureScreen extends ConsumerStatefulWidget {
   const CaptureScreen({super.key, this.prefillBarcode});
   final String? prefillBarcode;
+
+  @override
+  ConsumerState<CaptureScreen> createState() => _CaptureScreenState();
+}
+
+class _CaptureScreenState extends ConsumerState<CaptureScreen> {
+  @override
+  void initState() {
+    super.initState();
+    // 진입 즉시 카메라부터 — 1단계에서는 슬롯 화면을 보여주지 않는다.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final state = ref.read(captureControllerProvider);
+      if (state.images.isEmpty && !state.quickChecked) {
+        _pick(context, ref, CaptureSlot.full, ImageSource.camera);
+      }
+    });
+  }
 
   Future<void> _pick(
     BuildContext context,
@@ -22,21 +39,38 @@ class CaptureScreen extends ConsumerWidget {
     CaptureSlot slot,
     ImageSource source,
   ) async {
+    // maxHeight 필수: CLOVA 비전은 긴 변 2240px 초과 이미지를 40063으로 거부한다.
+    // maxWidth만 걸면 세로로 긴 사진(갤러리 스크린샷 등)의 높이가 한도를 넘는다.
     final file = await ImagePicker().pickImage(
       source: source,
       maxWidth: 1280,
+      maxHeight: 1280,
       imageQuality: 80,
     );
-    if (file == null) return;
+    if (file == null) {
+      // 1단계(전면샷 전) 카메라 취소 = 촬영 자체를 그만둔 것 → 화면 닫기
+      final st = ref.read(captureControllerProvider);
+      if (slot == CaptureSlot.full &&
+          !st.quickChecked &&
+          st.images.isEmpty &&
+          context.mounted &&
+          Navigator.of(context).canPop()) {
+        Navigator.of(context).pop();
+      }
+      return;
+    }
     final bytes = await file.readAsBytes();
     ref.read(captureControllerProvider.notifier).setImage(slot, bytes);
-    // 전면샷이면 등록 제품 빠른 매칭 시도 — 성공 시 나머지 2장 생략
-    if (slot == CaptureSlot.full && context.mounted) {
+    // 전면샷 단계면 등록 제품 빠른 매칭부터 — 매칭되면 나머지 2장 생략
+    if (slot == CaptureSlot.full &&
+        !ref.read(captureControllerProvider).quickChecked &&
+        context.mounted) {
       _tryQuickMatch(context, ref, bytes);
     }
   }
 
-  /// 전면 1장 빠른 매칭 (비치명). 매칭되면 즉시 결과 화면, 실패하면 조용히 3장 플로우 계속.
+  /// 전면 1장 빠른 매칭 (비치명). 매칭되면 즉시 결과 화면,
+  /// 실패하면 quickChecked로 전환해 나머지 2장 슬롯을 연다.
   Future<void> _tryQuickMatch(
       BuildContext context, WidgetRef ref, Uint8List bytes) async {
     final ctrl = ref.read(captureControllerProvider.notifier);
@@ -55,10 +89,10 @@ class CaptureScreen extends ConsumerWidget {
         );
         return;
       }
-    } catch (_) {
-      // 비치명 — 현행 3장 플로우로 계속
+    } catch (e) {
+      debugPrint('quickMatch 예외(비치명): $e'); // 3장 플로우로 전환
     }
-    if (context.mounted) ctrl.setQuickMatching(false);
+    if (context.mounted) ctrl.markQuickChecked();
   }
 
   Future<void> _submit(BuildContext context, WidgetRef ref) async {
@@ -71,7 +105,7 @@ class CaptureScreen extends ConsumerWidget {
         fullB64: base64Encode(imgs[CaptureSlot.full]!),
         ingredientsB64: base64Encode(imgs[CaptureSlot.ingredients]!),
         nutritionB64: base64Encode(imgs[CaptureSlot.nutrition]!),
-        barcode: prefillBarcode,
+        barcode: widget.prefillBarcode,
       );
       if (!context.mounted) return;
       Navigator.of(context).pushReplacement(
@@ -80,8 +114,7 @@ class CaptureScreen extends ConsumerWidget {
                 product: result.product,
                 submissionImagePath: result.imagePath,
                 priceCatalogKey: result.priceCatalogKey,
-                priceCatalogName: result.priceCatalogName,
-                sugarUnknown: result.sugarUnknown)),
+                priceCatalogName: result.priceCatalogName)),
       );
     } catch (e) {
       ctrl.setError('$e');
@@ -89,10 +122,33 @@ class CaptureScreen extends ConsumerWidget {
   }
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  Widget build(BuildContext context) {
     final state = ref.watch(captureControllerProvider);
+    // 1단계(카메라·빠른 매칭): 슬롯 화면 없이 진행 상태만.
+    // 2단계(quickChecked): 미등록 확정 → 3장 플로우.
+    if (!state.quickChecked && !state.submitting) {
+      return Scaffold(
+        appBar: AppBar(title: const Text('사진으로 분석')),
+        body: Center(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const CircularProgressIndicator(color: CubedColors.brand),
+              const SizedBox(height: 16),
+              Text(
+                  state.quickMatching
+                      ? '등록된 제품인지 확인 중…\n맞으면 바로 결과로 이동해요'
+                      : '카메라를 여는 중…',
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(
+                      color: CubedColors.inkSoft, height: 1.5)),
+            ],
+          ),
+        ),
+      );
+    }
     return Scaffold(
-      appBar: AppBar(title: const Text('사진으로 분석 (3장)')),
+      appBar: AppBar(title: const Text('사진으로 분석')),
       body: state.submitting
           ? const Center(
               child: Column(
@@ -108,33 +164,12 @@ class CaptureScreen extends ConsumerWidget {
           : ListView(
               padding: const EdgeInsets.all(20),
               children: [
-                const Text('아래 3장을 모두 촬영하면 분석돼요',
-                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800)),
+                const Text('등록되지 않은 제품이에요',
+                    style:
+                        TextStyle(fontSize: 18, fontWeight: FontWeight.w800)),
                 const SizedBox(height: 4),
-                const Text('전체샷으로 카테고리를, 원재료·영양성분으로 대체당과 혈당 영향을 분석해요.',
+                const Text('원재료명·영양성분표까지 3장이 모이면 AI가 분석해요.',
                     style: TextStyle(color: CubedColors.inkSoft, height: 1.5)),
-                if (state.quickMatching) ...[
-                  const SizedBox(height: 12),
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 14, vertical: 11),
-                    decoration: BoxDecoration(
-                      color: CubedColors.brand.withValues(alpha: 0.08),
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: const Row(children: [
-                      SizedBox(
-                          width: 14,
-                          height: 14,
-                          child: CircularProgressIndicator(
-                              strokeWidth: 2, color: CubedColors.brand)),
-                      SizedBox(width: 10),
-                      Text('등록된 제품인지 확인 중… 맞으면 바로 결과로 이동해요',
-                          style: TextStyle(
-                              color: CubedColors.brandDeep, fontSize: 13)),
-                    ]),
-                  ),
-                ],
                 const SizedBox(height: 16),
                 for (final slot in CaptureSlot.values)
                   _SlotCard(
@@ -157,16 +192,21 @@ class CaptureScreen extends ConsumerWidget {
                     child: Text(state.error!, style: const TextStyle(color: CubedColors.caution)),
                   ),
                 ],
-                const SizedBox(height: 16),
-                FilledButton.icon(
-                  style: FilledButton.styleFrom(
-                    backgroundColor: CubedColors.brand,
-                    padding: const EdgeInsets.symmetric(vertical: 16),
+                if (state.quickChecked) ...[
+                  const SizedBox(height: 16),
+                  FilledButton.icon(
+                    style: FilledButton.styleFrom(
+                      backgroundColor: CubedColors.brand,
+                      padding: const EdgeInsets.symmetric(vertical: 16),
+                    ),
+                    onPressed:
+                        state.isComplete ? () => _submit(context, ref) : null,
+                    icon: const Icon(Icons.auto_awesome),
+                    label: Text(state.isComplete
+                        ? '분석·제보하기'
+                        : '3장을 모두 촬영해주세요 (${state.count}/3)'),
                   ),
-                  onPressed: state.isComplete ? () => _submit(context, ref) : null,
-                  icon: const Icon(Icons.auto_awesome),
-                  label: Text(state.isComplete ? '분석·제보하기' : '3장을 모두 촬영해주세요 (${state.count}/3)'),
-                ),
+                ],
               ],
             ),
     );

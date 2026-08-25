@@ -22,11 +22,13 @@ class CaptureState {
   final Map<CaptureSlot, Uint8List> images;
   final bool submitting;
   final bool quickMatching; // 전면 1장 빠른 매칭 진행 중
+  final bool quickChecked; // 빠른 매칭 실패 확정 → 3장 플로우로 전환됨
   final String? error;
   const CaptureState(
       {this.images = const {},
       this.submitting = false,
       this.quickMatching = false,
+      this.quickChecked = false,
       this.error});
 
   bool get isComplete => CaptureSlot.values.every(images.containsKey);
@@ -36,12 +38,14 @@ class CaptureState {
     Map<CaptureSlot, Uint8List>? images,
     bool? submitting,
     bool? quickMatching,
+    bool? quickChecked,
     Object? error = _sentinel,
   }) {
     return CaptureState(
       images: images ?? this.images,
       submitting: submitting ?? this.submitting,
       quickMatching: quickMatching ?? this.quickMatching,
+      quickChecked: quickChecked ?? this.quickChecked,
       error: identical(error, _sentinel) ? this.error : error as String?,
     );
   }
@@ -63,6 +67,10 @@ class CaptureController extends StateNotifier<CaptureState> {
 
   void setSubmitting(bool v) => state = state.copyWith(submitting: v);
   void setQuickMatching(bool v) => state = state.copyWith(quickMatching: v);
+
+  /// 빠른 매칭 실패 확정 — 이후 3장 플로우로 전환 (재시도 없음)
+  void markQuickChecked() =>
+      state = state.copyWith(quickMatching: false, quickChecked: true);
   void setError(String? e) => state = state.copyWith(error: e, submitting: false);
   void reset() => state = const CaptureState();
 }

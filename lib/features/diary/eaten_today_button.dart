@@ -3,10 +3,13 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart' show PostgrestException;
 
 import '../../core/rulebook.dart';
+import '../../core/sugar_baselines.dart';
 import '../../core/theme.dart';
 import '../../data/models/product.dart';
 import '../../providers/providers.dart';
 import '../auth/login_screen.dart';
+import '../missions/mission_models.dart';
+import '../missions/missions_controller.dart';
 import '../points/points_controller.dart';
 
 /// '오늘 이거 먹었어요' 토글 — DB 제품/촬영 제품 공용. 카카오 로그인 필요.
@@ -32,6 +35,13 @@ class EatenTodayButton extends ConsumerWidget {
     final today = ref.watch(todayLogProvider(key));
     final logged = today.valueOrNull != null;
     final busy = today.isLoading;
+    final rule =
+        sugarBaselineFor(category: product.category, name: product.name);
+    final points = sugarPointsFor(
+      category: product.category,
+      name: product.name,
+      sugar: product.sugar,
+    );
 
     Future<void> onTap() async {
       if (user == null) {
@@ -51,25 +61,36 @@ class EatenTodayButton extends ConsumerWidget {
               category: product.category,
               grade: grade.name,
               imagePath: submissionImagePath,
+              points: points,
             );
-        // 기록이 추가된 순간에만 적립한다(취소는 회수하지 않는다 —
-        // 취소로 포인트가 왔다갔다 하면 원장이 지저분해진다).
-        var earned = 0;
+        // 적립액은 sugarPointsFor 한 곳에서만 나온다(아낀 설탕 1g = 1P).
+        // DB(product_logs.points)가 원본이고, 원장에는 화면 표시용으로 같은 값을 남긴다.
+        // 취소는 회수하지 않는다 — 토글마다 ±가 반복되면 원장이 지저분해진다.
         if (added) {
-          earned = container.read(pointLedgerProvider.notifier).earnForLog(
-                grade: grade.name,
-                productName: product.name,
-              );
+          if (points > 0) {
+            container.read(pointLedgerProvider.notifier).earnSugarSaved(
+                  amount: points,
+                  productName: product.name,
+                );
+          }
+          // 먹은 기록 미션(예: 주 5회 기록)도 같은 순간에 진행된다.
+          container.read(missionsProvider.notifier).fire(
+            MissionTrigger.productLog,
+            {
+              'grade': grade.name,
+              if (product.brand != null) 'brand': product.brand!,
+            },
+          );
         }
         if (context.mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-            content: Text(!added
-                ? '기록을 취소했어요'
-                : earned > 0
-                    ? '기록 완료 · +${earned}P 적립'
-                    : '오늘 먹은 기록에 추가했어요'),
-            duration: const Duration(seconds: 2),
-          ));
+          if (added && points > 0) {
+            await _showEarnedDialog(context, points, rule?.basis);
+          } else {
+            ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+              content: Text(added ? '오늘 먹은 기록에 추가했어요' : '기록을 취소했어요'),
+              duration: const Duration(seconds: 1),
+            ));
+          }
         }
       } on PostgrestException catch (e) {
         // 동시 중복(unique 충돌)은 이미 기록된 것으로 간주 (스펙 §9)
@@ -85,6 +106,7 @@ class EatenTodayButton extends ConsumerWidget {
       } finally {
         container.invalidate(todayLogProvider(key));
         container.invalidate(monthLogsProvider); // 달력 전체 갱신
+        container.invalidate(myPointsProvider); // 마이페이지 포인트 갱신
       }
     }
 
@@ -94,7 +116,7 @@ class EatenTodayButton extends ConsumerWidget {
     final labelWidget = Text(label,
         style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 15));
 
-    return SizedBox(
+    final button = SizedBox(
       width: double.infinity,
       child: logged
           ? FilledButton.icon(
@@ -116,6 +138,89 @@ class EatenTodayButton extends ConsumerWidget {
               icon: iconWidget,
               label: labelWidget,
             ),
+    );
+
+    if (points <= 0) return button;
+    // 왜 기록하는지 먼저 보이게 — 일반 제품 대비 아끼는 당류를 문장으로
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Icon(Icons.eco_rounded,
+                size: 15, color: CubedColors.brandDeep),
+            const SizedBox(width: 5),
+            Flexible(
+              child: Text(
+                logged
+                    ? '설탕 ${points}g을 아꼈어요'
+                    : '${rule?.basis ?? '일반 제품'}보다 당류 ${points}g 덜 먹어요',
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w700,
+                    color: CubedColors.brandDeep),
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 8),
+        button,
+      ],
+    );
+  }
+
+  /// 적립 팝업 — 아낀 당류만큼 포인트 적립을 알린다.
+  Future<void> _showEarnedDialog(
+      BuildContext context, int points, String? basis) {
+    return showDialog<void>(
+      context: context,
+      builder: (context) => Dialog(
+        backgroundColor: CubedColors.inkCard,
+        shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(CubedFx.radiusHero)),
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(24, 28, 24, 20),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const SugarCubeStack(size: 56),
+              const SizedBox(height: 16),
+              Text('+${points}P',
+                  style: const TextStyle(
+                      fontSize: 34,
+                      fontWeight: FontWeight.w800,
+                      letterSpacing: -1,
+                      color: CubedColors.lime)),
+              const SizedBox(height: 8),
+              const Text('아낀 당류만큼 포인트를 적립했어요',
+                  style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w800,
+                      color: Colors.white)),
+              const SizedBox(height: 6),
+              Text('${basis ?? '일반 제품'}보다 설탕 ${points}g을 덜 먹었어요',
+                  textAlign: TextAlign.center,
+                  style:
+                      const TextStyle(fontSize: 13, color: Colors.white70)),
+              const SizedBox(height: 20),
+              SizedBox(
+                width: double.infinity,
+                child: FilledButton(
+                  style: FilledButton.styleFrom(
+                    backgroundColor: CubedColors.lime,
+                    foregroundColor: CubedColors.ink,
+                  ),
+                  onPressed: () => Navigator.of(context).pop(),
+                  child: const Text('좋아요',
+                      style: TextStyle(fontWeight: FontWeight.w800)),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 }

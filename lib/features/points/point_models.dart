@@ -2,8 +2,8 @@ import '../../data/models/brand_deal.dart';
 
 /// 포인트 적립/사용 사유.
 enum PointReason {
-  lowSugarLog('저당 제품 기록'),
-  midSugarLog('제품 기록'),
+  /// 일반 제품 대비 아낀 설탕만큼 적립 (1P = 1g). 금액은 sugarPointsFor 가 정한다.
+  sugarSaved('아낀 설탕'),
   mission('미션 달성'),
   redeem('상품 구매에 사용');
 
@@ -35,28 +35,20 @@ class PointEntry {
   bool get isEarn => delta > 0;
 }
 
-/// 포인트 정책 — 적립 공식은 아직 확정 전이라 값을 여기 한 곳에 모아 둔다.
-/// 나중에 로직이 정해지면 이 클래스만 고치면 된다.
+/// 포인트 사용 정책.
+///
+/// 적립 공식은 여기 없다 — core/sugar_baselines.dart 의 sugarPointsFor 가
+/// 유일한 출처다(아낀 설탕 1g = 1P). 미션 보상은 미션 정의가 정한다.
+/// 이 클래스는 '쓸 때'의 규칙만 갖는다.
 class PointPolicy {
   PointPolicy._();
 
   /// 1P 의 원화 가치. 결제액 차감에 쓴다.
   static const int wonPerPoint = 1;
 
-  /// 먹은 기록 1건당 적립 (제품 등급 기준).
-  static const int lowSugarEarn = 30;
-  static const int midSugarEarn = 10;
-  static const int cautionEarn = 0;
-
   /// 한 주문에 쓸 수 있는 최대 비율 — 전액 포인트 결제는 막는다.
   /// (적립 로직이 확정되기 전까지 안전장치)
   static const double maxUseRatio = 0.5;
-
-  static int earnFor(String? grade) => switch (grade) {
-        'low' => lowSugarEarn,
-        'mid' => midSugarEarn,
-        _ => cautionEarn,
-      };
 
   /// 이 상품에 쓸 수 있는 포인트 상한 (잔액과 비율 중 작은 쪽).
   static int usableFor(int price, int balance) {
