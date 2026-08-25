@@ -2,8 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/theme.dart';
+import '../auth/login_screen.dart';
 import '../points/point_card.dart' show won;
 import 'mission_models.dart';
+import '../../providers/providers.dart';
 import 'missions_controller.dart';
 
 /// 미션 화면 — 출석 도장판 + 미션 목록.
@@ -278,8 +280,15 @@ class AttendanceCard extends ConsumerWidget {
     );
   }
 
-  void _onCheckIn(BuildContext context, WidgetRef ref) {
-    final earned = ref.read(missionsProvider.notifier).checkIn();
+  Future<void> _onCheckIn(BuildContext context, WidgetRef ref) async {
+    // 로그인해야 계정에 쌓인다. 비로그인이면 로그인 화면으로 보낸다.
+    if (ref.read(currentUserProvider) == null) {
+      await Navigator.of(context).push(
+        MaterialPageRoute(builder: (_) => const LoginScreen()),
+      );
+      return;
+    }
+    final earned = await ref.read(missionsProvider.notifier).checkIn();
     if (!context.mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(SnackBar(
       content: Text(earned > 0 ? '출석 완료 · +${won(earned)}P' : '오늘은 이미 출석했어요'),

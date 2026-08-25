@@ -5,7 +5,6 @@ import 'package:url_launcher/url_launcher.dart';
 
 import '../../core/theme.dart';
 import 'point_card.dart' show won;
-import '../../providers/providers.dart';
 import 'point_models.dart';
 import 'points_controller.dart';
 
@@ -35,17 +34,11 @@ class _RedeemSheet extends ConsumerStatefulWidget {
 }
 
 class _RedeemSheetState extends ConsumerState<_RedeemSheet> {
-  /// 이번 주문에 쓸 포인트. 기본은 쓸 수 있는 만큼 다 쓴다.
-  int? _use;
-
   ShopItem get item => widget.item;
 
   @override
   Widget build(BuildContext context) {
     final balance = ref.watch(pointBalanceProvider);
-    final maxUse = item.maxUsablePoints(balance);
-    final use = (_use ?? maxUse).clamp(0, maxUse);
-    final pay = item.price - use * PointPolicy.wonPerPoint;
 
     return SafeArea(
       top: false,
@@ -115,103 +108,30 @@ class _RedeemSheetState extends ConsumerState<_RedeemSheet> {
             ]),
 
             const SizedBox(height: 20),
-            const Divider(color: CubedColors.line),
-            const SizedBox(height: 12),
 
-            // 포인트 사용
-            Row(children: [
-              const Text('포인트 사용',
-                  style:
-                      TextStyle(fontSize: 14, fontWeight: FontWeight.w800)),
-              const Spacer(),
-              Text('보유 ${won(balance)}P',
-                  style: const TextStyle(
-                      fontSize: 12, color: CubedColors.inkSoft)),
-            ]),
-            const SizedBox(height: 6),
-            if (maxUse == 0)
-              const Padding(
-                padding: EdgeInsets.symmetric(vertical: 10),
-                child: Text('사용할 수 있는 포인트가 없어요',
-                    style:
-                        TextStyle(fontSize: 13, color: CubedColors.inkSoft)),
-              )
-            else ...[
-              Row(children: [
-                Expanded(
-                  child: Slider(
-                    value: use.toDouble(),
-                    max: maxUse.toDouble(),
-                    divisions: maxUse < 20 ? maxUse : 20,
-                    activeColor: CubedColors.brand,
-                    onChanged: (v) => setState(() => _use = v.round()),
-                  ),
-                ),
-                SizedBox(
-                  width: 76,
-                  child: Text('−${won(use)}P',
-                      textAlign: TextAlign.right,
-                      style: const TextStyle(
-                          fontSize: 15,
-                          fontWeight: FontWeight.w800,
-                          color: CubedColors.brand)),
-                ),
-              ]),
-              // 전액 포인트 결제는 막아 둔다 — 적립 로직이 확정되기 전 안전장치.
-              Text(
-                '주문 금액의 ${(PointPolicy.maxUseRatio * 100).round()}%까지 쓸 수 있어요',
-                style:
-                    const TextStyle(fontSize: 11, color: CubedColors.inkSoft),
-              ),
-            ],
-
-            const SizedBox(height: 16),
+            // 포인트 사용은 아직 붙이지 않는다 — 아래 주석 참고.
             Container(
-              padding: const EdgeInsets.all(16),
+              padding: const EdgeInsets.all(14),
               decoration: BoxDecoration(
                 color: CubedColors.bg,
                 borderRadius: BorderRadius.circular(14),
               ),
-              child: Column(children: [
-                _Line(label: '상품 금액', value: '${won(item.price)}원'),
-                const SizedBox(height: 8),
-                _Line(
-                  label: '포인트 사용',
-                  value: '−${won(use * PointPolicy.wonPerPoint)}원',
-                  highlight: true,
+              child: Row(children: [
+                const Icon(Icons.savings_rounded,
+                    size: 18, color: CubedColors.inkSoft),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Text(
+                    balance > 0
+                        ? '보유 ${won(balance)}P — 포인트 사용처는 준비 중이에요'
+                        : '저당 제품을 기록하면 포인트가 쌓여요',
+                    style: const TextStyle(
+                        fontSize: 12.5, color: CubedColors.inkSoft),
+                  ),
                 ),
-                const Padding(
-                  padding: EdgeInsets.symmetric(vertical: 10),
-                  child: Divider(height: 1, color: CubedColors.line),
-                ),
-                Row(children: [
-                  const Text('결제 금액',
-                      style: TextStyle(
-                          fontSize: 15, fontWeight: FontWeight.w800)),
-                  const Spacer(),
-                  Text('${won(pay)}원',
-                      style: const TextStyle(
-                          fontSize: 19, fontWeight: FontWeight.w900)),
-                ]),
               ]),
             ),
 
-            const SizedBox(height: 16),
-            SizedBox(
-              width: double.infinity,
-              height: 52,
-              child: FilledButton(
-                style: FilledButton.styleFrom(
-                  backgroundColor: CubedColors.brand,
-                  shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(14)),
-                ),
-                onPressed: () => _onPay(use, pay),
-                child: Text('${won(pay)}원 결제하기',
-                    style: const TextStyle(
-                        fontSize: 16, fontWeight: FontWeight.w800)),
-              ),
-            ),
             const SizedBox(height: 8),
             // 특가와 합치면서, 브랜드몰로 바로 가는 원래 동선도 남긴다.
             SizedBox(
@@ -256,112 +176,7 @@ class _RedeemSheetState extends ConsumerState<_RedeemSheet> {
     }
   }
 
-  Future<void> _onPay(int use, int pay) async {
-    final method = await showModalBottomSheet<String>(
-      context: context,
-      backgroundColor: CubedColors.surface,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-      ),
-      builder: (_) => const _PayMethodSheet(),
-    );
-    if (method == null || !mounted) return;
 
-    // 차감은 서버에서 한다 — 잔액 검사도 서버가 하고, 앱 계산을 믿지 않는다.
-    var spent = 0;
-    if (use > 0) {
-      try {
-        spent = await ref.read(pointsRepositoryProvider).spend(
-              amount: use,
-              subject: item.name,
-              refId: item.deal.id,
-            );
-        ref.invalidate(serverBalanceProvider);
-        ref.invalidate(serverLedgerProvider);
-      } catch (e) {
-        if (!mounted) return;
-        ScaffoldMessenger.of(context)
-            .showSnackBar(SnackBar(content: Text('포인트 사용 실패: $e')));
-        return;
-      }
-    }
-    if (!mounted) return;
-    Navigator.of(context).pop();
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(spent > 0
-            ? '$method 결제 준비 완료 · 포인트 ${won(spent)}P 사용'
-            : '$method 결제 준비 완료'),
-      ),
-    );
-  }
 }
 
-class _Line extends StatelessWidget {
-  const _Line({
-    required this.label,
-    required this.value,
-    this.highlight = false,
-  });
-  final String label;
-  final String value;
-  final bool highlight;
 
-  @override
-  Widget build(BuildContext context) => Row(children: [
-        Text(label,
-            style: const TextStyle(fontSize: 13, color: CubedColors.inkSoft)),
-        const Spacer(),
-        Text(value,
-            style: TextStyle(
-                fontSize: 13,
-                fontWeight: FontWeight.w700,
-                color: highlight ? CubedColors.brand : CubedColors.ink)),
-      ]);
-}
-
-/// 결제수단 선택 — 실물 상품이라 외부 PG 를 쓸 수 있다(인앱결제 의무 아님).
-class _PayMethodSheet extends StatelessWidget {
-  const _PayMethodSheet();
-
-  @override
-  Widget build(BuildContext context) {
-    const methods = [
-      ('카카오페이', Icons.chat_bubble_rounded, Color(0xFFFEE500)),
-      ('토스페이', Icons.bolt_rounded, Color(0xFF3182F6)),
-      ('신용·체크카드', Icons.credit_card_rounded, CubedColors.inkSoft),
-    ];
-    return SafeArea(
-      top: false,
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          const SizedBox(height: 12),
-          Container(
-            width: 36,
-            height: 4,
-            decoration: BoxDecoration(
-              color: CubedColors.line,
-              borderRadius: BorderRadius.circular(2),
-            ),
-          ),
-          const SizedBox(height: 18),
-          const Text('결제수단 선택',
-              style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800)),
-          const SizedBox(height: 12),
-          for (final (label, icon, color) in methods)
-            ListTile(
-              leading: Icon(icon, color: color),
-              title: Text(label,
-                  style: const TextStyle(
-                      fontSize: 15, fontWeight: FontWeight.w700)),
-              trailing: const Icon(Icons.chevron_right_rounded,
-                  color: CubedColors.inkSoft),
-              onTap: () => Navigator.of(context).pop(label),
-            ),
-          const SizedBox(height: 12),
-        ],
-      ),
-    );
-  }
-}
