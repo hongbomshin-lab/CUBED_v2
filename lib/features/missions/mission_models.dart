@@ -94,8 +94,10 @@ class Mission {
         condition: ((m['condition'] as Map?) ?? const {})
             .map((k, v) => MapEntry(k.toString(), v.toString())),
         period: MissionPeriod.fromCode(m['period'] as String?),
-        target: (m['target'] as num?)?.toInt() ?? 1,
-        reward: (m['reward'] as num?)?.toInt() ?? 0,
+        // 정의(데이터)가 잘못 들어와도 앱이 손해 보지 않도록 여기서 막는다.
+        // target 0 이면 이벤트마다 즉시 달성되고, reward 음수면 잔액이 깎인다.
+        target: _atLeast(1, (m['target'] as num?)?.toInt()),
+        reward: _atLeast(0, (m['reward'] as num?)?.toInt()),
         sort: (m['sort'] as num?)?.toInt() ?? 0,
         active: (m['active'] as bool?) ?? true,
       );
@@ -112,6 +114,8 @@ class Mission {
         _ => Icons.flag_rounded,
       };
 }
+
+int _atLeast(int floor, int? v) => (v == null || v < floor) ? floor : v;
 
 /// 미션 진행 상황 (사용자 × 미션 × 기간).
 class MissionProgress {

@@ -51,7 +51,9 @@ class PointPolicy {
   static const double maxUseRatio = 0.5;
 
   /// 이 상품에 쓸 수 있는 포인트 상한 (잔액과 비율 중 작은 쪽).
+  /// 음수 잔액·음수 가격이 새어 나가면 결제액이 상품가보다 커지므로 0 으로 막는다.
   static int usableFor(int price, int balance) {
+    if (price <= 0 || balance <= 0) return 0;
     final byRatio = (price * maxUseRatio) ~/ 1;
     return byRatio < balance ? byRatio : balance;
   }

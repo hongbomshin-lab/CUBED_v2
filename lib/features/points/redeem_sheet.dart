@@ -1,6 +1,7 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../../core/theme.dart';
 import 'point_card.dart' show won;
@@ -210,7 +211,21 @@ class _RedeemSheetState extends ConsumerState<_RedeemSheet> {
                         fontSize: 16, fontWeight: FontWeight.w800)),
               ),
             ),
-            const SizedBox(height: 10),
+            const SizedBox(height: 8),
+            // 특가와 합치면서, 브랜드몰로 바로 가는 원래 동선도 남긴다.
+            SizedBox(
+              width: double.infinity,
+              height: 44,
+              child: TextButton.icon(
+                onPressed: () => _openMall(context),
+                icon: const Icon(Icons.open_in_new_rounded, size: 16),
+                label: Text('${item.brandName} 공식몰에서 보기',
+                    style: const TextStyle(
+                        fontSize: 13, fontWeight: FontWeight.w700)),
+                style: TextButton.styleFrom(
+                    foregroundColor: CubedColors.inkSoft),
+              ),
+            ),
             const Text(
               '결제 기능은 준비 중이에요. 지금은 포인트 차감만 됩니다.',
               textAlign: TextAlign.center,
@@ -220,6 +235,24 @@ class _RedeemSheetState extends ConsumerState<_RedeemSheet> {
         ),
       ),
     );
+  }
+
+  Future<void> _openMall(BuildContext context) async {
+    final url = item.deal.productUrl;
+    if (url.isEmpty) return;
+    try {
+      final ok = await launchUrl(Uri.parse(url),
+          mode: LaunchMode.externalApplication);
+      if (!ok && context.mounted) {
+        ScaffoldMessenger.of(context)
+            .showSnackBar(const SnackBar(content: Text('링크를 열 수 없어요')));
+      }
+    } catch (_) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context)
+            .showSnackBar(const SnackBar(content: Text('링크를 열 수 없어요')));
+      }
+    }
   }
 
   Future<void> _onPay(int use, int pay) async {
