@@ -1,5 +1,8 @@
 # ZERO DOT 개인정보처리방침
 
+> **안내**: 공식 게시본은 Notion 공개 페이지입니다 — <https://atlantic-whale-582.notion.site/ZERO-DOT-3ba28df6a5b981808860f00eb355ab05>
+> 앱 내 링크와 스토어(Play Console·App Store Connect)에 등록하는 URL은 위 Notion 페이지를 사용하며, 이 문서는 저장소 보관용 사본입니다. 방침 변경 시 Notion 페이지를 먼저 갱신하세요.
+
 시행일: 2026년 7월 17일
 
 ZERO DOT(이하 "서비스")는 이용자의 개인정보를 소중히 여기며, 「개인정보 보호법」 등 관련 법령을 준수합니다. 본 방침은 서비스가 어떤 정보를 수집하고 어떻게 이용·보관·파기하는지 설명합니다.
