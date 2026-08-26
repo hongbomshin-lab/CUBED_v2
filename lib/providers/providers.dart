@@ -20,12 +20,14 @@ import '../data/models/product_price.dart';
 import '../data/models/store.dart';
 import '../data/models/store_menu.dart';
 import '../data/models/store_review.dart';
+import '../data/points_repository.dart';
 import '../data/price_repository.dart';
 import '../data/product_repository.dart';
 import '../data/social_repository.dart';
 import '../data/store_repository.dart';
 import '../domain/interpretation.dart';
 import '../features/chat/chat_service.dart';
+import '../features/points/point_models.dart';
 
 final supabaseProvider =
     Provider<SupabaseClient>((ref) => Supabase.instance.client);
@@ -155,6 +157,29 @@ final brandLowSugarProvider =
 final storeMenusProvider =
     FutureProvider.autoDispose.family<List<StoreMenu>, String>((ref, storeId) {
   return ref.watch(storeRepositoryProvider).menus(storeId);
+});
+
+// ── 포인트·미션 ────────────────────────────────────────────
+final pointsRepositoryProvider = Provider<PointsRepository>(
+  (ref) => PointsRepository(ref.watch(supabaseProvider)),
+);
+
+/// 서버 잔액. 로그인 안 했으면 0 — 포인트는 계정에 귀속된다.
+final serverBalanceProvider = FutureProvider<int>((ref) async {
+  if (ref.watch(currentUserProvider) == null) return 0;
+  return ref.watch(pointsRepositoryProvider).balance();
+});
+
+/// 서버 원장 (적립·사용 내역).
+final serverLedgerProvider = FutureProvider<List<PointEntry>>((ref) async {
+  if (ref.watch(currentUserProvider) == null) return const [];
+  return ref.watch(pointsRepositoryProvider).ledger();
+});
+
+/// 오늘 더 적립할 수 있는 여유분 (일일 상한 기준).
+final dailyRoomProvider = FutureProvider<int>((ref) async {
+  if (ref.watch(currentUserProvider) == null) return 0;
+  return ref.watch(pointsRepositoryProvider).dailyRoom();
 });
 
 final authRepositoryProvider = Provider<AuthRepository>(

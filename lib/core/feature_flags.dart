@@ -19,7 +19,10 @@ class FeatureFlags {
   /// [demoLat]/[demoLng] 를 사용자 위치로 쓴다.
   ///
   /// 시연이 끝나면 `false` 로만 바꾸면 실제 GPS 로 돌아간다.
-  static const bool useDemoLocation = true;
+  ///
+  /// 지금은 꺼져 있다 — 실제 현재 위치를 쓴다.
+  /// 다시 시연할 때 `true` 로만 바꾸면 되도록 좌표는 남겨 둔다.
+  static const bool useDemoLocation = false;
 
   /// 전주 신시가지(홍산로 일대) — 저당 전문 매장과 프랜차이즈가 함께 몰려 있어
   /// 시연에서 두 종류가 같이 보인다.

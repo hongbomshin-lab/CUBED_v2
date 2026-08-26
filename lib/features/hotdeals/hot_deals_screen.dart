@@ -3,9 +3,11 @@ import 'dart:async';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:url_launcher/url_launcher.dart';
 
 import '../../core/theme.dart';
+import '../points/point_balance_bar.dart';
+import '../points/point_models.dart';
+import '../points/redeem_sheet.dart';
 import '../../data/deal_repository.dart';
 import '../../data/models/brand_deal.dart';
 import '../../providers/providers.dart';
@@ -20,6 +22,7 @@ class HotDealsScreen extends ConsumerStatefulWidget {
 }
 
 class _HotDealsScreenState extends ConsumerState<HotDealsScreen> {
+
   final _searchCtrl = TextEditingController();
   Timer? _debounce;
 
@@ -117,15 +120,9 @@ class _HotDealsScreenState extends ConsumerState<HotDealsScreen> {
     }
   }
 
-  Future<void> _open(BrandDeal d) async {
-    final uri = Uri.parse(d.productUrl);
-    if (!await launchUrl(uri, mode: LaunchMode.externalApplication)) {
-      if (mounted) {
-        ScaffoldMessenger.of(context)
-            .showSnackBar(const SnackBar(content: Text('링크를 열 수 없어요')));
-      }
-    }
-  }
+  /// 상품 탭 → 결제 시트. 거기서 포인트를 쓰거나 브랜드몰로 갈 수 있다.
+  /// (특가와 포인트 상점을 합치면서 진입점을 하나로 모았다)
+  Future<void> _open(BrandDeal d) => showRedeemSheet(context, ShopItem(d));
 
   @override
   Widget build(BuildContext context) {
@@ -146,9 +143,12 @@ class _HotDealsScreenState extends ConsumerState<HotDealsScreen> {
             ),
             const Padding(
               padding: EdgeInsets.fromLTRB(20, 0, 20, 8),
-              child: Text('라라스윗·널담·마이노멀 공식몰 특가를 한눈에',
+              child: Text('모은 포인트로 더 싸게 — 라라스윗·널담·마이노멀 공식몰',
                   style: TextStyle(color: CubedColors.inkSoft, fontSize: 13)),
             ),
+
+            // 포인트 잔액 + 미션 진입. 상품 바로 위에 둬야 '이만큼 깎인다'가 읽힌다.
+            const PointBalanceBar(),
 
             // 검색바
             _SearchBar(
@@ -320,6 +320,7 @@ class _HotDealsScreenState extends ConsumerState<HotDealsScreen> {
   }
 }
 
+/// 특가 / 포인트 상점 전환 — 저당맵의 모드 토글과 같은 패턴.
 class _SearchBar extends StatelessWidget {
   const _SearchBar({
     required this.controller,
