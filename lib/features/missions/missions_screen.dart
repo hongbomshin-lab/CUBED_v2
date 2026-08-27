@@ -256,25 +256,53 @@ class AttendanceCard extends ConsumerWidget {
             ],
           ),
           const SizedBox(height: 16),
-          SizedBox(
-            width: double.infinity,
-            height: 46,
-            child: FilledButton(
-              style: FilledButton.styleFrom(
-                backgroundColor:
-                    checked ? Colors.white.withValues(alpha: 0.12) : CubedColors.lime,
-                foregroundColor: checked ? Colors.white70 : CubedColors.ink,
-                shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(13)),
-              ),
-              onPressed: checked ? null : () => _onCheckIn(context, ref),
-              child: Text(
-                checked ? '오늘 출석 완료' : '출석체크하고 포인트 받기',
-                style: const TextStyle(
-                    fontSize: 15, fontWeight: FontWeight.w800),
-              ),
-            ),
-          ),
+          // 오늘 출석했으면 누르는 버튼 대신 '완료' 상태를 또렷하게 보여준다.
+          // (어두운 카드 위에서 잘 읽히도록 라임 체크 + 흰 글씨)
+          checked
+              ? Container(
+                  width: double.infinity,
+                  height: 46,
+                  decoration: BoxDecoration(
+                    color: CubedColors.lime.withValues(alpha: 0.16),
+                    borderRadius: BorderRadius.circular(13),
+                  ),
+                  alignment: Alignment.center,
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const Icon(Icons.check_circle_rounded,
+                          size: 18, color: CubedColors.lime),
+                      const SizedBox(width: 8),
+                      Text(
+                        streak.current > 1
+                            ? '오늘 출석 완료 · 연속 ${streak.current}일'
+                            : '오늘 출석 완료',
+                        style: const TextStyle(
+                            fontSize: 15,
+                            fontWeight: FontWeight.w800,
+                            color: Colors.white),
+                      ),
+                    ],
+                  ),
+                )
+              : SizedBox(
+                  width: double.infinity,
+                  height: 46,
+                  child: FilledButton(
+                    style: FilledButton.styleFrom(
+                      backgroundColor: CubedColors.lime,
+                      foregroundColor: CubedColors.ink,
+                      shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(13)),
+                    ),
+                    onPressed: () => _onCheckIn(context, ref),
+                    child: const Text(
+                      '출석체크하고 포인트 받기',
+                      style: TextStyle(
+                          fontSize: 15, fontWeight: FontWeight.w800),
+                    ),
+                  ),
+                ),
         ],
       ),
     );
