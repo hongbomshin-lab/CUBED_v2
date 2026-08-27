@@ -223,6 +223,33 @@ No on-screen text, no subtitles, no captions, no logos, no real product packagin
    확장 전에 클립 1을 확정할 것. 같은 + 메뉴의 **"점프 투(Jump to)"** 는 같은
    장면의 다른 샷으로 전환 — 카메라가 크게 바뀌는 클립 2는 확장이 어색하면
    점프 투가 더 잘 맞을 수 있음. 그래도 안 되면 @쿠앤크 + 새 생성도 무방
+
+   **확장 입력창용 프롬프트** (마지막 프레임에서 이어지므로 "다음에 일어날 일"만):
+   - 클립 2 (클립 1 뒤에):
+     ```
+     A manila document folder is SLAMMED onto the table from off-screen. The
+     character flinches hard, freezes for half a second, eyes darting, then blurts
+     out VERY FAST in Korean, voice cracking from defiant to panicked, almost
+     wailing: "아니 그게... 그러니까 그게요... 말티톨! 말티톨이 잔뜩 들어있긴 한데...
+     그래도 당류는 0이잖아요!!" Quick whip-zoom to a tight close-up on its panicking
+     face, handheld shake. Audio: sharp slam when the folder hits, dramatic sting,
+     fast tense strings. No on-screen text, no subtitles, no captions.
+     ```
+   - 클립 3 (클립 2 뒤에) — 의도적 톤 급전환(소란 → 차분), 시그니처 문장은 조용한
+     구간에 배치. CTA는 대사에 넣지 않고 편집 자막으로(문구 A/B 교체 용이):
+     ```
+     The character's panic deflates — it slumps back into the chair, head hanging
+     low in resignation, letting out a long defeated sigh. A rubber stamp comes
+     down from off-screen onto the document folder on the table with a firm thunk.
+     The room becomes slightly brighter and calmer. The character looks up at the
+     camera and gives a small guilty shrug, as if to say "sorry". A calm, confident
+     male detective voice narrates off-screen in Korean, slowly and clearly, in
+     contrast to the chaos before: "말티톨은 혈당을 올리는 당알코올이에요. 라벨은
+     0이어도, 혈당은 0이 아닐 수 있어요." Camera: settles into a steady static medium
+     shot, then a gentle slow zoom toward the stamped folder. Audio: the thunk of
+     the stamp, papers shuffling, the tense music resolving into a light minimal
+     outro. No on-screen text, no subtitles, no captions.
+     ```
 5. **씬빌더**: 클립 1→2→3 타임라인 배열·미리보기만 (정밀 편집은 CapCut)
 6. **1080p 다운로드** → CapCut 합성 (§4 편집 단계 지시 참조)
 - 크레딧: 오른쪽 조수 패널에 "생성 비용에 대해 알려 줘"로 구독 크레딧 소모율
