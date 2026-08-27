@@ -146,24 +146,34 @@ anywhere on screen. Audio-only dialogue. No logos, no real product packaging.
 > 「제로의 배신 ①편 | 쿠앤크 샌드 제로 (롯데)」. 제품 인식은 이 텍스트가 책임진다 (§3 ①겹).
 
 ### 클립 2 — 반전·자백 (릴스 8~16초): 실물 인서트 + 수치 자막이 얹힐 구간
+**독립 생성용 (v5 확정 — 확장 대신 새 생성, 측면 덧치앵글로 컷 전환)**
 
 ```
-9:16 vertical video. Pixar-style soft 3D animation. Same dim interrogation room,
-same cute anthropomorphized black cocoa sandwich cookie character (match the
-reference images exactly). The character is still riled up, arms crossed
-defiantly — then a manila document folder is SLAMMED onto the table from
+9:16 vertical video. Pixar-style soft 3D animation. IMPORTANT: absolutely no
+subtitles, no captions, no on-screen text, no letters, no typography anywhere in
+the frame — the dialogue is audio only, the image stays completely clean.
+
+The same dim police interrogation room: single harsh overhead lamp, deep ink-blue
+walls, subtle green rim light, metal table and metal chair. A cute
+anthropomorphized black cocoa sandwich cookie character (match the reference
+images exactly). Camera angle: side view with a slight dutch angle (different
+from a frontal shot). The character sits at the table, riled up with arms
+crossed — then a manila document folder is SLAMMED onto the table from
 off-screen. The character flinches hard, freezes for half a second, eyes darting,
-then breaks down and blurts out VERY FAST in Korean, voice cracking from defiant
-to panicked, almost wailing: "아니 그게... 그러니까 그게요... 말티톨! 말티톨이 잔뜩
-들어있긴 한데... 그래도 당류는 0이잖아요!!"
+then blurts out VERY FAST in Korean, voice cracking from defiant to panicked,
+almost wailing, saying "아니 그게... 그러니까 그게요... 말티톨! 말티톨이 잔뜩 들어있긴
+한데... 그래도 당류는 0이잖아요!!"
 
-Camera: quick dramatic whip-zoom to a tight close-up on the character's panicking
-face, slight dutch angle, handheld shake.
+Camera: quick whip-zoom from the side view into a tight close-up on its
+panicking face, handheld shake.
 
-Audio: a sharp slam when the folder hits the table, dramatic sting, fast tense
-strings, the character's voice rapid, high-pitched and cracking.
+Audio: a sharp slam at the very first frame when the folder hits the table,
+dramatic sting, fast tense strings, the character's voice rapid, high-pitched
+and cracking.
 
-No on-screen text, no subtitles, no captions, no logos, no real product packaging.
+Remember: NO subtitles, NO captions, NO text overlays, NO words or letters
+visible anywhere on screen. The folder and all papers are blank with no writing.
+No logos, no real product packaging.
 ```
 
 > 편집 단계 (인식 ②겹의 핵심):
@@ -174,24 +184,34 @@ No on-screen text, no subtitles, no captions, no logos, no real product packagin
 >    + 「출처: 제품 표시정보」 고정 표기.
 
 ### 클립 3 — 해설 + CTA (릴스 16~24초)
+**독립 생성용 (v5 확정 — 정면 미디엄샷, 의도적 톤 급전환: 소란 → 차분)**
 
 ```
-9:16 vertical video. Pixar-style soft 3D animation. Same interrogation room, now
-slightly brighter and calmer. The cute black cocoa sandwich cookie
-character (match the reference images exactly) sits with its head hung low in
-resignation. A rubber stamp comes down from off-screen onto the document folder
-on the table with a satisfying thunk. The character sighs and shrugs at the camera
-as if to say "sorry".
+9:16 vertical video. Pixar-style soft 3D animation. IMPORTANT: absolutely no
+subtitles, no captions, no on-screen text, no letters, no typography anywhere in
+the frame — all dialogue and narration are audio only, the image stays
+completely clean.
 
-Camera: static medium shot, then a gentle slow zoom toward the stamped folder.
+The same dim police interrogation room: single harsh overhead lamp, deep ink-blue
+walls, subtle green rim light, metal table and metal chair, now slightly brighter
+and calmer. A cute anthropomorphized black cocoa sandwich cookie character (match
+the reference images exactly). Camera angle: steady static medium shot from the
+front. The character slumps in the chair, head hanging low in resignation,
+letting out a long defeated sigh. A rubber stamp comes down from off-screen onto
+a blank manila folder on the table with a firm thunk. The character looks up at
+the camera and gives a small guilty shrug, as if to say "sorry". A calm,
+confident male detective voice narrates off-screen in Korean, slowly and clearly,
+saying "말티톨은 혈당을 올리는 당알코올이에요. 라벨은 0이어도, 혈당은 0이 아닐 수 있어요."
 
-A calm, confident male detective voice narrates off-screen in Korean: "말티톨은
-혈당을 올리는 당알코올이에요. 라벨은 0이어도, 혈당은 0이 아닐 수 있어요."
+Camera: holds the steady medium shot, then a gentle slow zoom toward the stamped
+folder.
 
-Audio: the thunk of the stamp, papers shuffling, light minimal background music
-turning from tense to resolved.
+Audio: the thunk of the stamp at the very first moment, papers shuffling, tense
+music resolving into a light minimal outro.
 
-No on-screen text, no subtitles, no captions, no logos, no real product packaging.
+Remember: NO subtitles, NO captions, NO text overlays, NO words or letters
+visible anywhere on screen. The folder and all papers are blank with no writing.
+No logos, no real product packaging.
 ```
 
 > 편집 단계: 마지막 2~3초에 CTA 자막 **「스캔하면 3초 만에 알려드려요 — 출시 알림은 프로필 링크」** + 라임(#C9F158) 타이틀 박스. AI 생성 콘텐츠 표기 포함.
@@ -229,6 +249,17 @@ No on-screen text, no subtitles, no captions, no logos, no real product packagin
    참고: 확장(Extend)은 모델 무관하게 지원되나 **"장면에 추가"로 씬빌더에 들어간
    클립에만 메뉴가 나타남** (2026-08-28 확인 — 클립 화면에는 확장 버튼이 없어
    미지원으로 오인하기 쉬움)
+
+   **확정 워크플로(2026-08-28): 확장 대신 독립 생성 + 컷 편집.** 확장이 불안정해
+   클립 1·2·3을 각각 새 생성으로 만들어 CapCut에서 하드컷으로 이어붙인다.
+   Veo는 단일 생성이 8초 고정이라 "하나를 길게"는 불가. 취조물은 앵글 전환이
+   문법인 장르라 컷 편집이 오히려 자연스럽고 시청 유지율에도 유리. 규칙 3가지:
+   ① @쿠앤크 고정 ② 취조실 묘사 보일러플레이트("The same dim police interrogation
+   room: single harsh overhead lamp, deep ink-blue walls, subtle green rim light,
+   metal table and metal chair")를 매 클립 동일 복붙 ③ 앵글만 교체 — 클립1 정면
+   로우앵글 / 클립2 측면 덧치앵글 / 클립3 정면 미디엄. 각 클립 첫머리 효과음(쾅)이
+   컷 경계를 덮는 사운드 브리지 역할. 씬빌더는 생략하고 클립별 다운로드 →
+   CapCut에서 컷·자막 일괄 작업. 독립 생성용 ②③ 전체 프롬프트는 아래 4번 참조.
 3. **클립 1 생성** (§4 프롬프트, 캐릭터 묘사 대신 @쿠앤크) → 2안 비교, 한국어
    발음 어색하면 같은 프롬프트 재생성 2~3회 → Fast로 톤 확정 후 필요시 Quality 재생성
 4. **클립 2·3 — 확장(Extend) 정확한 경로** (확장 메뉴는 씬빌더 안에 있음):
