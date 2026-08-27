@@ -53,23 +53,47 @@ CapCut(또는 VN): 클립 연결 + 수치 자막 + 타이틀 박스 + 출처 문
 
 ---
 
-## 3. 캐릭터 시트 프롬프트 (Nano Banana / Gemini 이미지 — 1회 생성 후 전 편 재사용)
+## 3. 제품 인식(실감) 전략 — 캐릭터 혼자 책임지지 않는다 (2026-08-27 v2 수정)
 
-콘셉트: "제로수사대" 취조실에 앉은 **의인화 쿠키앤크림 아이스크림 샌드** 캐릭터.
-상표권 가드레일: 실제 패키지·로고·브랜드 폰트를 일절 묘사하지 않은 일반형(generic) 디자인.
+**문제**: 1차 캐릭터 시트가 실제 제품과 너무 달라 "그 제품"이라는 실감이 없음.
+원인 진단 — ① 1차 프롬프트가 "아이스크림 샌드"로 잘못 설정됨 (실제 제품은 **검은
+코코아 쿠키 샌드 과자**), ② 상표권 가드레일 때문에 캐릭터를 변형하는 이상, 캐릭터
+단독으로는 어떤 경우에도 제품 특정이 안 됨. 벤치마크 Unlabel도 캐릭터가 아니라
+**자막("난 bhc야!")으로 이름을 박아서** 인식을 해결했다.
+
+**해결: 인식 3겹 구조** — 리스크는 "패키지·로고를 그대로 본뜬 비주얼"과 "비방 단정
+표현"에 있지, 제품명을 사실 적시로 부르는 것에 있지 않다 (시리즈 소재표 자체가
+실명 기반이고, 출처 표기도 제품 특정을 전제로 함).
+
+| 겹 | 수단 | 리스크 |
+|---|---|---|
+| ① 텍스트 | 타이틀 박스에 제품명 명시: 「제로의 배신 ①편 \| 쿠앤크 샌드 제로 (롯데)」 — 첫 프레임부터 고정. Unlabel 공식과 동일 | 사실 적시 + 표시정보 인용 → 안전 |
+| ② 실물 인서트 | **제품을 직접 구매해 촬영한 실물 컷 1~2초** (영양성분표 클로즈업)를 반전 구간에 삽입. 수치 방어(출처 캡처)와 실감을 동시에 해결 | 정보 제공 목적 실물 촬영 → 통용. 출처 폴더 보관용 캡처와 동일 소스 |
+| ③ 캐릭터 근접화 | 캐릭터를 실제 형태(검은 코코아 쿠키 + 흰 크림 샌드)에 가깝게 재설계. 단, 쿠키 표면의 "ZERO" 각인·패키지(크림색 상자)·로고는 금지 — 원형 검은 샌드 쿠키 형태 자체는 여러 브랜드가 공유하는 일반형이라 사용 가능 | 각인·패키지만 피하면 안전 |
+
+## 3-1. 캐릭터 시트 프롬프트 v2 (Nano Banana / Gemini 이미지 — 1회 생성 후 전 편 재사용)
+
+콘셉트: "제로수사대" 취조실에 앉은 **의인화 검은 코코아 샌드 쿠키** 캐릭터.
+얼굴은 검은 쿠키 앞면에, 흰 크림이 옆면으로 보이는 구조 — 실제 제품의 쿠키 실물과
+같은 형태이되, "ZERO" 각인·로고·패키지는 없음.
 
 ```
-A character design sheet of a cute 3D-animated anthropomorphized cookies-and-cream
-ice cream sandwich character. Round vanilla ice cream disc pressed between two dark
-chocolate cookie wafers, the white cream visibly speckled with cookie crumbs. Stubby
-little arms and legs, oversized nervous glossy eyes, tiny beads of melting sweat on
-its forehead. Sitting posture and standing posture, front view, three-quarter view,
-and side view. Pixar-style soft 3D render, rounded shapes, soft studio lighting.
-Plain deep ink-blue background (#1A2340). No logos, no brand markings, no packaging,
-no text anywhere. Character sheet layout, consistent proportions across all views.
+A character design sheet of a cute 3D-animated anthropomorphized chocolate sandwich
+cookie character, shaped exactly like a classic round black cocoa sandwich cookie:
+two nearly-black dark cocoa biscuits with a thick layer of smooth white vanilla
+cream filling clearly visible between them from the side. The character's face is
+on the front black biscuit — oversized nervous glossy eyes and a worried mouth.
+The biscuit surface has a subtle generic embossed dot-and-ring pattern (no letters,
+no words). Crumbly matte cookie texture. Stubby little cookie arms and legs, tiny
+beads of sweat on its forehead. Sitting posture and standing posture, front view,
+three-quarter view, and side view showing the white cream layer. Pixar-style soft
+3D render, soft studio lighting. Plain deep ink-blue background (#1A2340).
+No logos, no brand markings, no packaging, no text anywhere. Character sheet
+layout, consistent proportions across all views.
 ```
 
 - 결과물 중 마음에 드는 **3장(정면/측면/앉은 자세)을 확정본으로 저장** → 이후 모든 Veo 생성에 레퍼런스로 첨부.
+- 측면 뷰에서 **흰 크림 층이 뚜렷하게 보이는 컷**을 반드시 포함할 것 — "쿠앤크"임을 시각적으로 말해주는 핵심 단서.
 - 이 시트는 A-2편(나랑드 콤부차) 제작 시 "캔 음료 캐릭터" 버전으로 같은 문장 구조만 바꿔 재사용.
 
 ---
@@ -84,9 +108,10 @@ no text anywhere. Character sheet layout, consistent proportions across all view
 ```
 9:16 vertical video. Pixar-style soft 3D animation. A dim police interrogation room
 with a single harsh overhead lamp, deep ink-blue walls, subtle green rim light.
-A cute anthropomorphized cookies-and-cream ice cream sandwich character (match the
-reference images exactly: round vanilla ice cream between two dark chocolate cookie
-wafers, cream speckled with cookie crumbs, stubby arms, big nervous eyes) sits alone
+A cute anthropomorphized black cocoa sandwich cookie character (match the
+reference images exactly: two nearly-black cocoa biscuits with a white vanilla
+cream layer visible between them, face on the front biscuit, stubby arms, big
+nervous eyes) sits alone
 on a metal chair at a metal table, fidgeting nervously, a bead of melty sweat
 rolling down its wafer.
 
@@ -102,11 +127,14 @@ suspenseful piano note at the end.
 No on-screen text, no subtitles, no captions, no logos, no real product packaging.
 ```
 
-### 클립 2 — 반전·자백 (릴스 8~16초): 수치 자막이 얹힐 구간
+> 편집 단계: **첫 프레임부터** 상단 타이틀 박스(그린 #0FA678) 고정 —
+> 「제로의 배신 ①편 | 쿠앤크 샌드 제로 (롯데)」. 제품 인식은 이 텍스트가 책임진다 (§3 ①겹).
+
+### 클립 2 — 반전·자백 (릴스 8~16초): 실물 인서트 + 수치 자막이 얹힐 구간
 
 ```
 9:16 vertical video. Pixar-style soft 3D animation. Same dim interrogation room,
-same cute anthropomorphized cookies-and-cream ice cream sandwich character sitting
+same cute anthropomorphized black cocoa sandwich cookie character sitting
 at the metal table (match the reference images exactly). The overhead lamp swings
 slightly. A manila document folder slides across the table into frame from
 off-screen. The character stares at the folder, gulps, eyes darting left and right,
@@ -124,13 +152,18 @@ the character's voice nervous and cracking.
 No on-screen text, no subtitles, no captions, no logos, no real product packaging.
 ```
 
-> 편집 단계: 이 클립 위에 큰 자막 **「당류 0g / 말티톨 31g / 탄수화물 65g」** + 「출처: 제품 표시정보」 고정 표기.
+> 편집 단계 (인식 ②겹의 핵심):
+> 1. 자백 대사 직후, **직접 구매해 촬영한 실물 영양성분표 클로즈업 컷 1~2초 삽입**
+>    (말티톨 31g 표기 부분을 라임 #C9F158 박스로 강조). "그 제품"이라는 실감과
+>    수치 방어(출처 캡처)를 이 한 컷이 동시에 해결한다.
+> 2. 실물 컷과 캐릭터 컷 위에 큰 자막 **「당류 0g / 말티톨 31g / 탄수화물 65g」**
+>    + 「출처: 제품 표시정보」 고정 표기.
 
 ### 클립 3 — 해설 + CTA (릴스 16~24초)
 
 ```
 9:16 vertical video. Pixar-style soft 3D animation. Same interrogation room, now
-slightly brighter and calmer. The cute cookies-and-cream ice cream sandwich
+slightly brighter and calmer. The cute black cocoa sandwich cookie
 character (match the reference images exactly) sits with its head hung low in
 resignation. A rubber stamp comes down from off-screen onto the document folder
 on the table with a satisfying thunk. The character sighs and shrugs at the camera
@@ -166,8 +199,8 @@ No on-screen text, no subtitles, no captions, no logos, no real product packagin
 
 ## 6. 이번 주 남은 작업과의 연결
 
-- [ ] Nano Banana 캐릭터 시트 생성 → 확정 3장 보관 (체크리스트 "캐릭터 스타일 프롬프트 확정" 충족)
+- [ ] Nano Banana 캐릭터 시트 v2 생성 (§3-1) → 확정 3장 보관 (체크리스트 "캐릭터 스타일 프롬프트 확정" 충족)
+- [ ] **제품 실물 구매 + 영양성분표 접사 촬영** (인서트 컷 겸 출처 캡처, 말티톨 31g 수치 대조)
 - [ ] Veo 3.1로 클립 1~3 생성 (본 문서 §4)
-- [ ] 표시정보 캡처 확보·대조 (말티톨 31g) → 출처 폴더 보관
 - [ ] CapCut 합성: 수치 자막·타이틀 박스(팔레트)·출처 문구·AI 표기
 - [ ] 발행 전 A-2편 훅 변형 준비
