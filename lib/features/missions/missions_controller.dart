@@ -9,7 +9,7 @@ import 'mission_repository.dart';
 class MissionState {
   final List<Mission> missions;
 
-  /// 미션코드 → 현재 기간의 진행.
+  /// '미션코드|기간키' → 그 기간의 진행. 같은 미션도 기간이 다르면 다른 항목이다.
   final Map<String, MissionProgress> progress;
   final StreakState streak;
   final bool loading;
@@ -38,8 +38,19 @@ class MissionState {
   bool get checkedInToday =>
       streak.lastDate == PeriodKey.day(DateTime.now());
 
+  /// 이 미션의 **지금 기간** 진행. 지난 기간의 완료가 새 기간에 새어 나오지 않게,
+  /// 미션의 period 에 맞는 현재 기간키로만 조회한다.
   MissionProgress progressOf(Mission m) =>
-      progress[m.code] ?? const MissionProgress(periodKey: '');
+      progress['${m.code}|${currentKeyFor(m)}'] ??
+      const MissionProgress(periodKey: '');
+
+  /// 미션 period 별 '지금' 기간키. mission_progress.period_key 와 같은 규칙이다.
+  String currentKeyFor(Mission m) => switch (m.period) {
+        MissionPeriod.daily => PeriodKey.day(DateTime.now()),
+        MissionPeriod.weekly => PeriodKey.week(DateTime.now()),
+        MissionPeriod.streak => streak.startDate ?? '',
+        MissionPeriod.once => '',
+      };
 }
 
 /// 미션 화면 상태.
@@ -77,11 +88,12 @@ class MissionsController extends StateNotifier<MissionState> {
       final st = await repo.streak();
       state = state.copyWith(
         progress: {
-          for (final e in rows.entries)
-            e.key: MissionProgress(
-              periodKey: '',
-              count: e.value.count,
-              completedAt: e.value.done ? DateTime.now() : null,
+          for (final r in rows)
+            '${r.code}|${r.periodKey}': MissionProgress(
+              periodKey: r.periodKey,
+              count: r.count,
+              // 완료 시각 자체는 안 쓰고 '완료여부'만 본다(done = 시각 != null).
+              completedAt: r.done ? DateTime.now() : null,
             ),
         },
         streak: StreakState(
@@ -89,7 +101,8 @@ class MissionsController extends StateNotifier<MissionState> {
           best: st.best,
           lastDate:
               st.lastDate == null ? null : PeriodKey.day(st.lastDate!),
-          startDate: null,
+          // streak 미션 진행을 현재 연속의 행과 맞추려면 시작일이 필요하다.
+          startDate: st.startDate,
         ),
         loading: false,
       );
