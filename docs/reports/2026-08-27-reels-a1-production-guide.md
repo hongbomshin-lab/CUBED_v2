@@ -110,16 +110,24 @@ layout, consistent proportions across all views.
 > Veo 템포 3원칙: ① 대사를 길고 잘게 쪼갠 문장으로(짧으면 8초에 맞춰 늘여 말해 느려짐)
 > ② 말하기 지시 대문자 강조(VERY FAST) ③ "영상이 대사 중간부터 즉시 시작" 명시.
 
+> **자막 억제 (v4)**: 한글 대사 시 Veo가 깨진 자막을 자동 삽입하는 문제 →
+> ① 억제 지시를 프롬프트 **맨 앞에 선배치** + 맨 뒤에 반복 ② 자막을 유발하는
+> `says: "..."` 콜론 패턴 대신 `saying "..."` 사용 ③ 서류 등 소품도 "글자 없는
+> 빈 종이"로 지정. 그래도 나오면 해당 컷만 재생성 2~3회 (확률 문제).
+
 ```
-9:16 vertical video. Pixar-style soft 3D animation. A dim police interrogation
-room with a single harsh overhead lamp, deep ink-blue walls, subtle green rim
-light. A cute anthropomorphized black cocoa sandwich cookie character (match the
-reference images exactly). The video starts INSTANTLY mid-argument — no slow
-build-up, no pause before speaking. The character slams its stubby arms on the
-metal table, leans in toward the camera, worked up and indignant, and speaks
-VERY FAST in Korean with a raised, defensive, almost shouting voice, words
-tumbling out: "아니, 저 진짜 제로라니까요?! 라벨 보세요, 라벨! 당류 0그램! 빵이에요 빵!
-뭐가 문제냐고요!"
+9:16 vertical video. Pixar-style soft 3D animation. IMPORTANT: absolutely no
+subtitles, no captions, no on-screen text, no letters, no typography anywhere in
+the frame — the dialogue is audio only, the image stays completely clean.
+
+A dim police interrogation room with a single harsh overhead lamp, deep ink-blue
+walls, subtle green rim light. A cute anthropomorphized black cocoa sandwich
+cookie character (match the reference images exactly). The video starts INSTANTLY
+mid-argument — no slow build-up, no pause before speaking. The character slams its
+stubby arms on the metal table, leans in toward the camera, worked up and
+indignant, speaking VERY FAST in Korean with a raised, defensive, almost shouting
+voice, words tumbling out, saying "아니, 저 진짜 제로라니까요?! 라벨 보세요, 라벨!
+당류 0그램! 빵이에요 빵! 뭐가 문제냐고요!"
 
 Camera: fast snap zoom-in to a close-up as it slams the table, slight handheld
 shake, punchy high-energy cuts.
@@ -128,7 +136,8 @@ Audio: a loud slam of hands on the metal table at the very first frame, a punchy
 dramatic hit, fast tense percussion driving underneath, the character's voice
 loud, rapid, agitated and slightly squeaky.
 
-No on-screen text, no subtitles, no captions, no logos, no real product packaging.
+Remember: NO subtitles, NO captions, NO text overlays, NO words or letters visible
+anywhere on screen. Audio-only dialogue. No logos, no real product packaging.
 ```
 
 > Flow에서는 캐릭터 묘사 문장 대신 `@쿠앤크` 태그 사용.
@@ -232,28 +241,44 @@ No on-screen text, no subtitles, no captions, no logos, no real product packagin
    **확장 입력창용 프롬프트** (마지막 프레임에서 이어지므로 "다음에 일어날 일"만):
    - 클립 2 (클립 1 뒤에):
      ```
+     Absolutely no subtitles, no captions, no on-screen text of any kind —
+     dialogue is audio only, the frame stays clean.
+
      A manila document folder is SLAMMED onto the table from off-screen. The
      character flinches hard, freezes for half a second, eyes darting, then blurts
      out VERY FAST in Korean, voice cracking from defiant to panicked, almost
-     wailing: "아니 그게... 그러니까 그게요... 말티톨! 말티톨이 잔뜩 들어있긴 한데...
-     그래도 당류는 0이잖아요!!" Quick whip-zoom to a tight close-up on its panicking
-     face, handheld shake. Audio: sharp slam when the folder hits, dramatic sting,
-     fast tense strings. No on-screen text, no subtitles, no captions.
+     wailing, saying "아니 그게... 그러니까 그게요... 말티톨! 말티톨이 잔뜩 들어있긴
+     한데... 그래도 당류는 0이잖아요!!"
+
+     Camera: quick whip-zoom to a tight close-up on its panicking face, handheld
+     shake. Audio: sharp slam when the folder hits, dramatic sting, fast tense
+     strings.
+
+     Remember: NO subtitles, NO captions, NO text overlays, NO words or letters
+     visible anywhere on screen.
      ```
    - 클립 3 (클립 2 뒤에) — 의도적 톤 급전환(소란 → 차분), 시그니처 문장은 조용한
      구간에 배치. CTA는 대사에 넣지 않고 편집 자막으로(문구 A/B 교체 용이):
      ```
+     Absolutely no subtitles, no captions, no on-screen text of any kind — all
+     dialogue and narration are audio only, the frame stays clean.
+
      The character's panic deflates — it slumps back into the chair, head hanging
      low in resignation, letting out a long defeated sigh. A rubber stamp comes
      down from off-screen onto the document folder on the table with a firm thunk.
      The room becomes slightly brighter and calmer. The character looks up at the
      camera and gives a small guilty shrug, as if to say "sorry". A calm, confident
      male detective voice narrates off-screen in Korean, slowly and clearly, in
-     contrast to the chaos before: "말티톨은 혈당을 올리는 당알코올이에요. 라벨은
-     0이어도, 혈당은 0이 아닐 수 있어요." Camera: settles into a steady static medium
-     shot, then a gentle slow zoom toward the stamped folder. Audio: the thunk of
-     the stamp, papers shuffling, the tense music resolving into a light minimal
-     outro. No on-screen text, no subtitles, no captions.
+     contrast to the chaos before, saying "말티톨은 혈당을 올리는 당알코올이에요.
+     라벨은 0이어도, 혈당은 0이 아닐 수 있어요."
+
+     Camera: settles into a steady static medium shot, then a gentle slow zoom
+     toward the stamped folder. Audio: the thunk of the stamp, papers shuffling,
+     the tense music resolving into a light minimal outro.
+
+     Remember: NO subtitles, NO captions, NO text overlays, NO words or letters
+     visible anywhere on screen. The stamped folder and all papers are blank with
+     no writing.
      ```
 5. **씬빌더**: 클립 1→2→3 타임라인 배열·미리보기만 (정밀 편집은 CapCut)
 6. **1080p 다운로드** → CapCut 합성 (§4 편집 단계 지시 참조)
