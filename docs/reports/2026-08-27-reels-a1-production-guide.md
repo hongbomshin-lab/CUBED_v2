@@ -103,29 +103,35 @@ layout, consistent proportions across all views.
 공통 설정: 세로 9:16, 오디오 생성 ON, 캐릭터 레퍼런스 이미지 3장 첨부.
 프롬프트 본문은 영어(모델 이해도 최적), **대사만 한국어**로 따옴표 안에 지정.
 
-### 클립 1 — 훅 (릴스 0~8초): "저 제로예요"
+### 클립 1 — 훅 (릴스 0~8초): 억울한 항변 (v3 — 빠른 템포·고양된 목소리)
+
+> v2까지의 "겁먹은 소곤 자백" 톤은 시네마틱하나 3초 훅이 약해 폐기.
+> 연기 방향 = **"억울해서 따지는 항변"**: 템포·성량이 올라가고 클립 2 반전이 세짐.
+> Veo 템포 3원칙: ① 대사를 길고 잘게 쪼갠 문장으로(짧으면 8초에 맞춰 늘여 말해 느려짐)
+> ② 말하기 지시 대문자 강조(VERY FAST) ③ "영상이 대사 중간부터 즉시 시작" 명시.
 
 ```
-9:16 vertical video. Pixar-style soft 3D animation. A dim police interrogation room
-with a single harsh overhead lamp, deep ink-blue walls, subtle green rim light.
-A cute anthropomorphized black cocoa sandwich cookie character (match the
-reference images exactly: two nearly-black cocoa biscuits with a white vanilla
-cream layer visible between them, face on the front biscuit, stubby arms, big
-nervous eyes) sits alone
-on a metal chair at a metal table, fidgeting nervously, a bead of melty sweat
-rolling down its wafer.
+9:16 vertical video. Pixar-style soft 3D animation. A dim police interrogation
+room with a single harsh overhead lamp, deep ink-blue walls, subtle green rim
+light. A cute anthropomorphized black cocoa sandwich cookie character (match the
+reference images exactly). The video starts INSTANTLY mid-argument — no slow
+build-up, no pause before speaking. The character slams its stubby arms on the
+metal table, leans in toward the camera, worked up and indignant, and speaks
+VERY FAST in Korean with a raised, defensive, almost shouting voice, words
+tumbling out: "아니, 저 진짜 제로라니까요?! 라벨 보세요, 라벨! 당류 0그램! 빵이에요 빵!
+뭐가 문제냐고요!"
 
-Camera: slow push-in from a low angle toward the character's face, shallow depth
-of field.
+Camera: fast snap zoom-in to a close-up as it slams the table, slight handheld
+shake, punchy high-energy cuts.
 
-The character looks up at the camera, forces an innocent smile, and says in Korean,
-in a squeaky nervous voice: "안녕하세요... 저, 제로예요. 라벨 보세요, 당류 0이에요."
-
-Audio: tense quiet room tone, faint hum of the fluorescent lamp, one soft
-suspenseful piano note at the end.
+Audio: a loud slam of hands on the metal table at the very first frame, a punchy
+dramatic hit, fast tense percussion driving underneath, the character's voice
+loud, rapid, agitated and slightly squeaky.
 
 No on-screen text, no subtitles, no captions, no logos, no real product packaging.
 ```
+
+> Flow에서는 캐릭터 묘사 문장 대신 `@쿠앤크` 태그 사용.
 
 > 편집 단계: **첫 프레임부터** 상단 타이틀 박스(그린 #0FA678) 고정 —
 > 「제로의 배신 ①편 | 쿠앤크 샌드 제로 (롯데)」. 제품 인식은 이 텍스트가 책임진다 (§3 ①겹).
@@ -134,20 +140,19 @@ No on-screen text, no subtitles, no captions, no logos, no real product packagin
 
 ```
 9:16 vertical video. Pixar-style soft 3D animation. Same dim interrogation room,
-same cute anthropomorphized black cocoa sandwich cookie character sitting
-at the metal table (match the reference images exactly). The overhead lamp swings
-slightly. A manila document folder slides across the table into frame from
-off-screen. The character stares at the folder, gulps, eyes darting left and right,
-sweating more heavily now.
+same cute anthropomorphized black cocoa sandwich cookie character (match the
+reference images exactly). The character is still riled up, arms crossed
+defiantly — then a manila document folder is SLAMMED onto the table from
+off-screen. The character flinches hard, freezes for half a second, eyes darting,
+then breaks down and blurts out VERY FAST in Korean, voice cracking from defiant
+to panicked, almost wailing: "아니 그게... 그러니까 그게요... 말티톨! 말티톨이 잔뜩
+들어있긴 한데... 그래도 당류는 0이잖아요!!"
 
-Camera: quick dramatic zoom from medium shot to close-up on the character's guilty
-face, slight dutch angle.
+Camera: quick dramatic whip-zoom to a tight close-up on the character's panicking
+face, slight dutch angle, handheld shake.
 
-The character breaks down and blurts out in Korean, voice cracking: "...근데요,
-사실은... 저 안에 말티톨이 잔뜩 들어있어요!" then covers its face with its stubby arms.
-
-Audio: dramatic orchestral sting when the folder lands, tense strings underneath,
-the character's voice nervous and cracking.
+Audio: a sharp slam when the folder hits the table, dramatic sting, fast tense
+strings, the character's voice rapid, high-pitched and cracking.
 
 No on-screen text, no subtitles, no captions, no logos, no real product packaging.
 ```
@@ -195,6 +200,10 @@ No on-screen text, no subtitles, no captions, no logos, no real product packagin
 2. 시안은 **Veo 3.1 Fast**($0.10/초)로 3~4개 뽑아 훅 연기 톤을 고른 뒤, 확정 프롬프트만 **Veo 3.1 표준**으로 재생성
 3. 대사가 8초에 안 붙으면 대사를 한 문장으로 줄이는 게 정답 (말 빠르기 조절 지시는 잘 안 먹음)
 4. 한국어 발음이 어색한 컷이 나오면: 같은 프롬프트 재생성 2~3회가 프롬프트 수정보다 빠름
+5. **템포가 느릴 때** (v3 반영): ① 같은 프롬프트 재생성 2~3회(연기 편차 큼) →
+   ② 대사를 더 길게 쪼개기(대사가 길수록 말이 빨라짐) → ③ 최후 수단: CapCut에서
+   1.1~1.15배속(음정 유지 옵션 필수). 클립 3 내레이션은 의도적으로 차분하게 유지 —
+   앞의 소란과 톤 대비로 핵심 문장("라벨은 0이어도...")이 더 박힘
 5. A-2편(나랑드 콤부차)은 이 프롬프트 3개에서 캐릭터 묘사와 대사만 교체 — 브리프의 "1변수 원칙(훅 문구만 변경)" 유지
 
 ## 5-1. Google Flow 실행 순서 (2026-08-28 추가 — 캐릭터 등록 완료 상태 기준)
