@@ -85,6 +85,11 @@ watermarks, no other characters.
 
 ## 6. Veo 3.1 연기 프롬프트 (캐릭터 스틸을 첫 프레임으로 첨부, 각 8초, 9:16)
 
+> **대사 밀도 (v2.1)**: 레퍼런스는 8초 내내 쉼 없이 떠드는 구성 + Veo는 대사가
+> 짧으면 늘여 말해 느려짐 → 대사를 8초 꽉 차게(빠른 발화 기준 45~55음절) 작성하고
+> "talking non-stop from the very first frame / no long pauses"로 강제.
+> 안 붙으면 각 비트 마지막 문장부터 삭제. 수치는 여전히 대사 금지(자막 담당).
+
 공통 앞머리(자막 억제) — 세 클립 모두 동일:
 
 ```
@@ -99,12 +104,13 @@ anywhere — dialogue is audio only.
 ```
 [공통 앞머리]
 
-The package mascot stands in the snack aisle, hands on hips, chest puffed out,
-grinning confidently at the camera. It gives a thumbs up and brags VERY FAST in
-Korean with a smug, energetic voice, saying "난 쿠앤크 샌드 제로! 당류 0그램이지~!"
-Then its face suddenly falls — eyes dart sideways, nervous sweat, shoulders
-shrink — and it mumbles quickly in a guilty cracking voice, saying "...근데...
-말티톨이 좀 많이 들어있긴 해..."
+The package mascot stands in the snack aisle talking non-stop from the very
+first frame. First beat: hands on hips, chest puffed, grinning, bragging VERY
+FAST in Korean with a smug energetic voice, saying "난 쿠앤크 샌드 제로! 설탕 제로,
+당류도 0그램! 다이어트엔 역시 나지~!" Second beat: its face suddenly falls, eyes
+dart sideways, nervous sweat, shoulders shrinking, and it keeps talking fast in
+a guilty cracking voice, saying "...근데 사실... 나 말티톨 범벅이야... 그거 혈당
+올리는 당알코올이거든..."
 
 Camera: static medium-full shot, small punch-in when the bragging line lands,
 slight handheld feel.
@@ -121,11 +127,13 @@ Remember: NO subtitles, NO captions, NO added text anywhere on screen.
 ```
 [공통 앞머리]
 
-The package mascot stands in the instant noodle aisle, arms crossed like a tough
-guy, smirking at the camera. It flexes and shouts VERY FAST in Korean with a
-proud, punchy voice, saying "난 비빔면 제로슈거! 설탕 싹 다 뺐다!" Then it freezes,
-eyes widen, looks left and right nervously, and admits quickly in a deflating
-embarrassed voice, saying "...근데 면은... 면은 그대로라... 탄수화물은 많아..."
+The package mascot stands in the instant noodle aisle talking non-stop from the
+very first frame. First beat: arms crossed like a tough guy, smirking, then
+flexing, shouting VERY FAST in Korean with a proud punchy voice, saying "난 팔도
+비빔면 제로슈거! 설탕 싹 뺐어! 죄책감 없이 비벼 먹으라구~!" Second beat: it freezes,
+eyes widen, glances left and right, and keeps talking fast in a deflating
+embarrassed voice, saying "...근데 면은 그대로거든... 탄수화물이 밥 한 공기만큼
+있어... 어쩔 수 없잖아..."
 
 Camera: static medium-full shot, quick punch-in on the flex, slight handheld
 feel.
@@ -142,12 +150,13 @@ Remember: NO subtitles, NO captions, NO added text anywhere on screen.
 ```
 [공통 앞머리]
 
-The soft bread package mascot stands by the chilled bakery shelf, doing a cute
-little proud dance, smiling sweetly at the camera. It says VERY FAST in Korean
-with an adorable confident voice, saying "난 저당 생크림빵~ 혈당 걱정 없지!" Then it
-suddenly stops dancing, clutches its belly with both gloved hands, cheeks
-puffed, eyes darting in panic, and whispers quickly in an embarrassed voice,
-saying "...근데 나 많이 먹으면... 배가 좀... 부글부글할 수도 있어..."
+The soft bread package mascot stands by the chilled bakery shelf talking
+non-stop from the very first frame. First beat: doing a cute proud little dance,
+smiling sweetly, saying VERY FAST in Korean with an adorable confident voice,
+"난 연세 저당 생크림빵! 당류 확 줄여서 혈당 걱정 없다구~!" Second beat: it abruptly
+stops dancing, clutches its belly with both gloved hands, cheeks puffed, eyes
+darting in panic, and keeps talking fast in an embarrassed whisper, saying
+"...근데 나 에리스리톨 폭탄이라... 많이 먹으면... 화장실 직행일 수도 있어..."
 
 Camera: static medium-full shot, gentle bounce with the dance, quick punch-in
 when it clutches its belly.
