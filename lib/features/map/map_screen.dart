@@ -419,11 +419,11 @@ class _ModeToggle extends StatelessWidget {
       color: CubedColors.bg,
       padding: const EdgeInsets.fromLTRB(12, 10, 12, 4),
       child: Container(
-        height: 40,
-        padding: const EdgeInsets.all(3),
+        height: 44,
+        padding: const EdgeInsets.all(4),
         decoration: BoxDecoration(
           color: CubedColors.surface,
-          borderRadius: BorderRadius.circular(20),
+          borderRadius: BorderRadius.circular(13),
           border: Border.all(color: CubedColors.line),
         ),
         child: Row(children: [
@@ -444,7 +444,7 @@ class _ModeToggle extends StatelessWidget {
           alignment: Alignment.center,
           decoration: BoxDecoration(
             color: selected ? CubedColors.brand : Colors.transparent,
-            borderRadius: BorderRadius.circular(17),
+            borderRadius: BorderRadius.circular(10),
           ),
           child: Row(
             mainAxisSize: MainAxisSize.min,

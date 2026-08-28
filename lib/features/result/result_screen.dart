@@ -432,10 +432,16 @@ class _Alternatives extends ConsumerWidget {
                   MaterialPageRoute(
                       builder: (_) => ResultScreen(product: alt.product)),
                 ),
-                leading: CircleAvatar(
-                  backgroundColor:
-                      CubedColors.grade(alt.grade).withValues(alpha: 0.15),
-                  child: Text(gradeText[alt.grade]!.emoji),
+                leading: Transform.rotate(
+                  angle: -0.09,
+                  child: Container(
+                    width: 28,
+                    height: 28,
+                    decoration: BoxDecoration(
+                      color: CubedColors.grade(alt.grade),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                  ),
                 ),
                 title: Text(alt.product.name,
                     maxLines: 1,

@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/product_thumb.dart';
 import '../../core/theme.dart';
+import '../../domain/interpretation.dart';
 import '../../providers/providers.dart';
 import '../result/result_screen.dart';
 
@@ -48,20 +49,67 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
                     child: Text('검색 결과가 없어요', style: TextStyle(color: CubedColors.inkSoft)),
                   );
                 }
-                return ListView.separated(
-                  padding: const EdgeInsets.symmetric(horizontal: 20),
+                // 시안4 — 행마다 큐브 마커. 색은 rulebook 이 계산한 등급을 그대로 쓴다.
+                // 기준 데이터는 앱 시작 시 캐시되므로 목록에서 동기로 해석할 수 있다.
+                const tilts = [-0.12, 0.08, -0.05, 0.14, -0.09, 0.04, 0.11, -0.07];
+                final refData = ref.watch(referenceProvider).valueOrNull;
+                return ListView.builder(
+                  padding: const EdgeInsets.fromLTRB(20, 4, 20, 24),
                   itemCount: list.length,
-                  separatorBuilder: (_, __) => const Divider(height: 1, color: CubedColors.line),
                   itemBuilder: (_, i) {
                     final p = list[i];
-                    return ListTile(
-                      contentPadding: const EdgeInsets.symmetric(vertical: 6),
-                      leading: ProductThumb(imageFile: p.imageFile, size: 44, radius: 12),
-                      title: Text(p.name, style: const TextStyle(fontWeight: FontWeight.w700)),
-                      subtitle: Text('${p.brand ?? ''} · ${p.category ?? ''}'),
-                      trailing: const Icon(Icons.arrow_forward_ios_rounded, size: 14),
+                    final grade = refData == null
+                        ? null
+                        : Interpretation.of(p, refData).grade;
+                    final markColor = grade == null
+                        ? CubedColors.line
+                        : CubedColors.grade(grade);
+                    return InkWell(
                       onTap: () => Navigator.of(context).push(
                         MaterialPageRoute(builder: (_) => ResultScreen(product: p)),
+                      ),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                        decoration: const BoxDecoration(
+                          border: Border(
+                              bottom: BorderSide(color: CubedColors.line)),
+                        ),
+                        child: Row(
+                          children: [
+                            Transform.rotate(
+                              angle: tilts[i % tilts.length],
+                              child: Container(
+                                width: 13,
+                                height: 13,
+                                decoration: BoxDecoration(
+                                  color: markColor,
+                                  borderRadius: BorderRadius.circular(3.6),
+                                ),
+                              ),
+                            ),
+                            const SizedBox(width: 13),
+                            ProductThumb(imageFile: p.imageFile, size: 44, radius: 12),
+                            const SizedBox(width: 13),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(p.name,
+                                      style: const TextStyle(
+                                          fontSize: 14.5,
+                                          fontWeight: FontWeight.w800,
+                                          height: 1.3,
+                                          letterSpacing: -0.4)),
+                                  const SizedBox(height: 2),
+                                  Text(p.brand ?? '',
+                                      style: const TextStyle(
+                                          color: CubedColors.inkSoft,
+                                          fontSize: 12.5)),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
                     );
                   },

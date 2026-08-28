@@ -415,7 +415,7 @@ class _DealCard extends StatelessWidget {
     final (tag, cleanName) = deal.tagAndName;
     return Material(
       color: CubedColors.surface,
-      borderRadius: BorderRadius.circular(16),
+      borderRadius: BorderRadius.circular(18),
       clipBehavior: Clip.antiAlias,
       child: InkWell(
         onTap: onTap,
@@ -492,11 +492,22 @@ class _DealCard extends StatelessWidget {
                       crossAxisAlignment: CrossAxisAlignment.baseline,
                       textBaseline: TextBaseline.alphabetic,
                       children: [
-                        Text('${deal.discountRate.round()}%',
-                            style: const TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.w900,
-                                color: CubedColors.caution)),
+                        Transform.rotate(
+                          angle: -0.05,
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 7, vertical: 3),
+                            decoration: BoxDecoration(
+                              color: CubedColors.caution,
+                              borderRadius: BorderRadius.circular(7),
+                            ),
+                            child: Text('${deal.discountRate.round()}%',
+                                style: const TextStyle(
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.w900,
+                                    color: Colors.white)),
+                          ),
+                        ),
                         const SizedBox(width: 5),
                         Text('${_won(deal.salePrice)}원',
                             style: const TextStyle(
