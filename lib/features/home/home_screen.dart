@@ -154,6 +154,23 @@ class HomeScreen extends ConsumerWidget {
               ),
             ),
 
+            // 바코드 스캔 — FeatureFlags.barcodeScan 으로 노출을 제어한다.
+            // 플래그가 꺼져 있어도 경로는 살려 둔다.
+            if (FeatureFlags.barcodeScan) ...[
+              const SizedBox(height: 12),
+              Reveal(
+                delayMs: 120,
+                child: _CubeTile(
+                  glyph: CubeGlyph.shoot,
+                  title: '바코드를 비추면 끝',
+                  sub: '',
+                  onTap: () => Navigator.of(context).push(
+                    MaterialPageRoute(builder: (_) => const ScanScreen()),
+                  ),
+                ),
+              ),
+            ],
+
             const SizedBox(height: 30),
 
             // 기능 — 크기를 일부러 고르지 않게 둔다
@@ -445,23 +462,6 @@ class _DataBadge extends StatelessWidget {
   }
 }
 
-class _DotGridPainter extends CustomPainter {
-  const _DotGridPainter();
-  @override
-  void paint(Canvas canvas, Size size) {
-    final p = Paint()..color = CubedColors.lime.withValues(alpha: 0.09);
-    for (double y = 12; y < size.height; y += 20) {
-      for (double x = 12; x < size.width; x += 20) {
-        canvas.drawCircle(Offset(x, y), 1.4, p);
-      }
-    }
-  }
-
-  @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
-}
-
-/// 큐브 픽토그램이 붙은 기능 타일. 높이를 두 종류로 둔다.
 class _CubeTile extends StatelessWidget {
   const _CubeTile({
     required this.glyph,
