@@ -27,7 +27,7 @@
 - 스캔 카드 → **ZERO DOT 혈당 신호등 판정 카드** (제품 실사진 + 🔴/🟡 등급 + "자체 룰북 기준" 표기)
 - 타이틀 박스 문구 → 비방어 회피: ~~"대기업이 속인"~~ → **「제로라며… 몸은 아니래요 TOP 3 (1편)」** (흰 배경 + 빨간 글씨는 레퍼런스 그대로 — 검증된 어그로 요소)
 - 모든 수치는 표시정보 실측(자체 DB) + 「출처: 제품 표시정보」 고정 + AI 생성 표기
-- 엔딩: 앱 미출시이므로 앱스토어 화면 대신 **랜딩 목업 + "출시 알림은 프로필 링크"**
+- 엔딩: 앱 아이콘("0.")을 마스코트화한 **ZERO DOT 캐릭터 8초 엔딩 클립**(§5-1, §6 클립 4) — 전 편 재사용 브랜드 자산. 앱 미출시이므로 CTA는 "출시 알림은 프로필 링크"
 
 ## 3. 제품 3종 선정 (Supabase DB 실측, 2026-08-28 조회)
 
@@ -82,6 +82,28 @@ watermarks, no other characters.
 - #2 비빔면: `[SETTING]` = "a Korean convenience store instant noodle aisle with ramyeon packages blurred in the background"
 - #3 생크림빵: `[SETTING]` = "a Korean convenience store chilled bakery shelf with packaged breads blurred in the background"
 - 표정 변형: 같은 프롬프트 끝에 "confident smug expression" / "nervous guilty expression, sweat drops" 두 버전을 뽑아두면 Veo 연기 유도와 썸네일에 모두 사용 가능
+
+### 5-1. ZERO DOT 마스코트화 (엔딩용, 앱 아이콘 이미지 첨부 — 전 편 엔딩 재사용 자산)
+
+아이콘 사진은 Veo에 직접 넣지 않고 이 단계에 넣는다(브랜드 색·형태 픽셀 유지).
+폰 화면은 "초록 빛만"으로 생성 — UI 텍스트는 AI가 깨뜨리므로 편집에서 판정 카드를 얹는다.
+
+```
+Using the attached app icon — a bold dark green number "0" with a small round
+green dot at its lower right — turn it into a cute 3D mascot character while
+keeping the exact shapes and colors of the icon. The dark green "0" is the body:
+add two huge glossy cartoon eyes with confident eyebrows and a bright heroic
+smile on the upper front of the "0", skinny arms with white cartoon gloves, and
+skinny legs with sneakers (matching the style of product-package mascots). The
+small green dot floats next to it like a cute glowing sidekick orb with two tiny
+eyes. The mascot holds a smartphone in one hand; the phone screen shows only a
+soft glowing green light, no text. Pixar-style soft 3D render. Place the mascot
+standing confidently like an inspector in a bright Korean convenience store
+snack aisle, shelves blurred in the background, bright realistic lighting,
+shallow depth of field, 9:16 vertical composition, full body centered with
+headroom at the top. No extra text, no logos other than the icon shapes, no
+watermarks.
+```
 
 ## 6. Veo 3.1 연기 프롬프트 (캐릭터 스틸을 첫 프레임으로 첨부, 각 8초, 9:16)
 
@@ -168,6 +190,40 @@ voice fast and expressive.
 Remember: NO subtitles, NO captions, NO added text anywhere on screen.
 ```
 
+### 클립 4 — ZERO DOT 엔딩 (해결사 등장, 유일하게 무너지지 않는 캐릭터)
+
+```
+9:16 vertical video, 3D animated mascot, start from the input image and keep the
+mascot's dark green "0" body, green dot sidekick, and colors exactly as in the
+image. IMPORTANT: absolutely no subtitles, no captions, no added on-screen text,
+no extra letters anywhere — dialogue is audio only. The phone screen shows only
+a soft glowing green light with no text.
+
+The "0" mascot struts down the convenience store aisle like a confident food
+inspector, talking non-stop from the very first frame. First beat: it spins once,
+points at the shelves, and says VERY FAST in Korean with a bright heroic
+confident voice, saying "라벨은 0이어도, 혈당은 0이 아닐 수 있다구!" Second beat: it
+raises the smartphone toward the camera — the phone pulses with a green scanning
+glow, the little green dot orb does an excited flip — and the mascot winks and
+keeps talking fast, saying "헷갈리면 제로닷! 스캔 한 번이면 3초 만에 끝! 출시 알림
+눌러줘~!"
+
+Camera: smooth push-in following the strut, quick punch-in when the phone is
+raised toward the camera, ending on a medium close-up of the mascot and the
+glowing phone.
+
+Audio: bright store ambience, an upbeat heroic jingle building through the clip,
+a satisfying "ding" chime when the phone glows, the mascot's voice fast, cheerful
+and confident with no long pauses.
+
+Remember: NO subtitles, NO captions, NO added text anywhere on screen, and no
+text on the phone screen.
+```
+
+- 구조 의도: 앞 3클립은 "능글→자백"으로 무너지고, 엔딩만 무너지지 않는 해결사
+  (우리 마스코트) — 대비로 마무리. 시그니처 서사를 마스코트 첫 대사에 배치
+- "제로닷" 발음이 이상하면 해당 컷만 2~3회 재생성
+
 ## 7. CapCut 합성 스펙 (레퍼런스 오버레이 재현)
 
 | 레이어 | 스펙 | 타이밍 |
@@ -178,7 +234,7 @@ Remember: NO subtitles, NO captions, NO added text anywhere on screen.
 | 라벨 캡처 | 직접 촬영한 표시정보 캡처 + 해당 수치에 빨간 동그라미 (쿠앤크: 당알코올 31g / 비빔면: 탄수 67g / 연세빵: 에리스리톨 40g + "과량 섭취 시 설사" 문구) | 각 자백 비트 |
 | 수치 자막 | 「당류 0g / 말티톨 31g」「당류 0g / 탄수 67g ≈ 흰밥 한 공기」「에리스리톨 40g / 혈당엔 무해」 | 자백 비트 |
 | 파티클 | 설탕가루 낙하 효과 (CapCut 이펙트) | 자백 비트 |
-| 엔딩 CTA | 랜딩 목업 + 「스캔 한 번이면 3초 — 출시 알림은 프로필 링크」 (2~3초, 정지화면이라 Veo 불필요) | 마지막 |
+| 엔딩 CTA | 클립 4 위에: 폰 상승 순간 신호등 판정 카드(쿠앤크 🔴 재사용) + 마지막 2초 앱 아이콘·「제로닷 — 출시 알림은 프로필 링크」 라임 박스 | 클립 4 |
 | 고정 표기 | 「출처: 제품 표시정보」 + AI 생성 콘텐츠 표기 | 전 구간 하단 |
 
 ## 8. 리스크 기록 (v2 결정 반영)
