@@ -56,3 +56,8 @@ scripts/.env
 .claude/
 **/.omc/
 .playwright-mcp/
+
+# 릴리즈 서명 — 비밀번호·키스토어는 절대 커밋 금지
+android/key.properties
+*.jks
+*.keystore
