@@ -35,8 +35,9 @@ class _MapScreenState extends ConsumerState<MapScreen> {
   bool _fetching = false;
   Timer? _debounce;
 
-  /// store_type 별 마커 아이콘 캐시 (위젯→이미지 변환은 비싸서 1회만)
-  final Map<StoreType, NOverlayImage> _iconCache = {};
+  /// 마커 아이콘 캐시 (위젯→이미지 변환은 비싸서 1회만).
+  /// 이름을 마커에 새겨 넣으므로 '타입|이름' 으로 키잉한다(같은 이름은 재사용).
+  final Map<String, NOverlayImage> _iconCache = {};
 
   // 검색 상태
   final _searchCtrl = TextEditingController();
@@ -192,18 +193,24 @@ class _MapScreenState extends ConsumerState<MapScreen> {
     await _renderMarkers(c, _lastStores);
   }
 
-  /// store_type별 커스텀 마커 아이콘(위젯 렌더링) — 캐시 활용.
-  Future<NOverlayImage> _iconFor(StoreType type) async {
-    final cached = _iconCache[type];
+  /// 이름을 새긴 커스텀 마커 아이콘(위젯 렌더링) — 캐시 활용.
+  /// 라벨(핀 위 흰 알약)까지 한 이미지로 그려, 캡션으로는 안 되는
+  /// '위 배치 + 2줄 줄바꿈'을 구현한다.
+  Future<NOverlayImage> _iconFor(StoreType type, String label) async {
+    final key = '${type.dbValue}|$label';
+    final cached = _iconCache[key];
     if (cached != null) return cached;
     final img = await NOverlayImage.fromWidget(
-      widget: _MarkerPin(color: type.markerColor, icon: type.icon),
-      size: const Size(40, 48),
+      widget: _MarkerPin(color: type.markerColor, icon: type.icon, label: label),
+      size: _markerSize,
       context: context,
     );
-    _iconCache[type] = img;
+    _iconCache[key] = img;
     return img;
   }
+
+  /// 라벨(최대 2줄) + 핀을 담는 마커 전체 크기.
+  static const Size _markerSize = Size(150, 96);
 
   Future<void> _renderMarkers(NaverMapController c, List<Store> stores) async {
     await c.clearOverlays(type: NOverlayType.marker);
@@ -212,17 +219,14 @@ class _MapScreenState extends ConsumerState<MapScreen> {
     final markers = <NMarker>{};
     // 프랜차이즈를 먼저 넣어 저당 전문 매장 마커가 위에 오도록 한다.
     for (final s in [..._franchise, ...stores]) {
+      // 이름은 마커 이미지에 직접 새긴다(캡션 미사용) — 핀 위, 최대 2줄.
       final marker = NMarker(
         id: s.id,
         position: NLatLng(s.lat, s.lng),
-        icon: await _iconFor(s.type),
-        size: const Size(40, 48),
-        caption: NOverlayCaption(
-          text: dict.store(s.name),
-          textSize: 12,
-          color: CubedColors.ink,
-          haloColor: Colors.white,
-        ),
+        icon: await _iconFor(s.type, dict.store(s.name)),
+        size: _markerSize,
+        // 좌표에 닿는 지점은 핀 꼬리 끝(맨 아래 가운데). 라벨은 그 위로 쌓인다.
+        anchor: const NPoint(0.5, 1.0),
       );
       marker.setOnTapListener((_) => _onMarkerTap(s));
       markers.add(marker);
@@ -622,18 +626,54 @@ class _SearchResults extends StatelessWidget {
 
 /// 커스텀 지도 마커 — 색상 원형 배지 + 흰 아이콘 + 물방울 꼬리.
 class _MarkerPin extends StatelessWidget {
-  const _MarkerPin({required this.color, required this.icon});
+  const _MarkerPin({required this.color, required this.icon, this.label});
   final Color color;
   final IconData icon;
 
+  /// 핀 위에 새길 식당 이름. null/빈값이면 핀만 그린다.
+  final String? label;
+
   @override
   Widget build(BuildContext context) {
+    // 라벨을 위, 핀을 아래에 두고 바닥 정렬한다 → 핀 꼬리 끝이 항상 맨 아래(anchor 지점).
     return SizedBox(
-      width: 40,
-      height: 48,
+      width: 150,
+      height: 96,
       child: Column(
-        mainAxisSize: MainAxisSize.min,
+        mainAxisAlignment: MainAxisAlignment.end,
+        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
+          if (label != null && label!.trim().isNotEmpty)
+            Container(
+              constraints: const BoxConstraints(maxWidth: 142),
+              margin: const EdgeInsets.only(bottom: 3),
+              padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(9),
+                border: Border.all(color: color.withValues(alpha: 0.35)),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.20),
+                    blurRadius: 3,
+                    offset: const Offset(0, 1),
+                  ),
+                ],
+              ),
+              child: Text(
+                label!,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+                textAlign: TextAlign.center,
+                style: const TextStyle(
+                  fontSize: 11,
+                  height: 1.15,
+                  fontWeight: FontWeight.w800,
+                  color: CubedColors.ink,
+                ),
+              ),
+            ),
+          // 핀 본체(원 + 아이콘)
           Container(
             width: 40,
             height: 40,
