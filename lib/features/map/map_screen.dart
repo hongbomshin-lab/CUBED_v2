@@ -77,8 +77,7 @@ class _MapScreenState extends ConsumerState<MapScreen> {
     }
     _searchDebounce = Timer(const Duration(milliseconds: 300), () async {
       try {
-        final results =
-            await ref.read(storeRepositoryProvider).searchByName(q);
+        final results = await ref.read(storeRepositoryProvider).searchByName(q);
         if (!mounted) return;
         setState(() {
           _searchResults = results;
@@ -201,7 +200,8 @@ class _MapScreenState extends ConsumerState<MapScreen> {
     final cached = _iconCache[key];
     if (cached != null) return cached;
     final img = await NOverlayImage.fromWidget(
-      widget: _MarkerPin(color: type.markerColor, icon: type.icon, label: label),
+      widget:
+          _MarkerPin(color: type.markerColor, icon: type.icon, label: label),
       size: _markerSize,
       context: context,
     );
@@ -497,7 +497,8 @@ class _SearchBar extends StatelessWidget {
           border: Border.all(color: CubedColors.line),
         ),
         child: Row(children: [
-          const Icon(Icons.search_rounded, size: 20, color: CubedColors.inkSoft),
+          const Icon(Icons.search_rounded,
+              size: 20, color: CubedColors.inkSoft),
           const SizedBox(width: 8),
           Expanded(
             child: TextField(
@@ -508,8 +509,8 @@ class _SearchBar extends StatelessWidget {
                 isCollapsed: true,
                 border: InputBorder.none,
                 hintText: hint,
-                hintStyle: const TextStyle(
-                    color: CubedColors.inkSoft, fontSize: 14),
+                hintStyle:
+                    const TextStyle(color: CubedColors.inkSoft, fontSize: 14),
               ),
               style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
             ),
@@ -584,8 +585,8 @@ class _SearchResults extends StatelessWidget {
                 return InkWell(
                   onTap: () => onTap(s),
                   child: Padding(
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 14, vertical: 11),
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 14, vertical: 11),
                     child: Row(children: [
                       Icon(s.type.icon, size: 18, color: s.type.markerColor),
                       const SizedBox(width: 10),
@@ -636,70 +637,75 @@ class _MarkerPin extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     // 라벨을 위, 핀을 아래에 두고 바닥 정렬한다 → 핀 꼬리 끝이 항상 맨 아래(anchor 지점).
-    return SizedBox(
-      width: 150,
-      height: 96,
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.end,
-        crossAxisAlignment: CrossAxisAlignment.center,
-        children: [
-          if (label != null && label!.trim().isNotEmpty)
+    // Directionality 로 감싼다 — fromWidget 이 격리된 트리에서 렌더하므로,
+    // Text 가 방향성 조상을 못 찾아 예외 나면 마커가 통째로 안 그려질 수 있다.
+    return Directionality(
+      textDirection: TextDirection.ltr,
+      child: SizedBox(
+        width: 150,
+        height: 96,
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.end,
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            if (label != null && label!.trim().isNotEmpty)
+              Container(
+                constraints: const BoxConstraints(maxWidth: 142),
+                margin: const EdgeInsets.only(bottom: 3),
+                padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(9),
+                  border: Border.all(color: color.withValues(alpha: 0.35)),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.20),
+                      blurRadius: 3,
+                      offset: const Offset(0, 1),
+                    ),
+                  ],
+                ),
+                child: Text(
+                  label!,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(
+                    fontSize: 11,
+                    height: 1.15,
+                    fontWeight: FontWeight.w800,
+                    color: CubedColors.ink,
+                  ),
+                ),
+              ),
+            // 핀 본체(원 + 아이콘)
             Container(
-              constraints: const BoxConstraints(maxWidth: 142),
-              margin: const EdgeInsets.only(bottom: 3),
-              padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
+              width: 40,
+              height: 40,
               decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(9),
-                border: Border.all(color: color.withValues(alpha: 0.35)),
+                color: color,
+                shape: BoxShape.circle,
+                border: Border.all(color: Colors.white, width: 2.5),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.20),
-                    blurRadius: 3,
-                    offset: const Offset(0, 1),
+                    color: Colors.black.withValues(alpha: 0.25),
+                    blurRadius: 4,
+                    offset: const Offset(0, 2),
                   ),
                 ],
               ),
-              child: Text(
-                label!,
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
-                textAlign: TextAlign.center,
-                style: const TextStyle(
-                  fontSize: 11,
-                  height: 1.15,
-                  fontWeight: FontWeight.w800,
-                  color: CubedColors.ink,
-                ),
+              child: Icon(icon, color: Colors.white, size: 20),
+            ),
+            // 아래쪽 꼬리(삼각형)
+            Transform.translate(
+              offset: const Offset(0, -4),
+              child: CustomPaint(
+                size: const Size(12, 8),
+                painter: _PinTailPainter(color),
               ),
             ),
-          // 핀 본체(원 + 아이콘)
-          Container(
-            width: 40,
-            height: 40,
-            decoration: BoxDecoration(
-              color: color,
-              shape: BoxShape.circle,
-              border: Border.all(color: Colors.white, width: 2.5),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.25),
-                  blurRadius: 4,
-                  offset: const Offset(0, 2),
-                ),
-              ],
-            ),
-            child: Icon(icon, color: Colors.white, size: 20),
-          ),
-          // 아래쪽 꼬리(삼각형)
-          Transform.translate(
-            offset: const Offset(0, -4),
-            child: CustomPaint(
-              size: const Size(12, 8),
-              painter: _PinTailPainter(color),
-            ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
@@ -791,55 +797,55 @@ class _FranchiseChip extends StatelessWidget {
     final radius = uiText('franchiseNearby', lang)
         .replaceFirst('{n}', franchiseRadiusM.round().toString());
     return GestureDetector(
-        onTap: onTap,
-        child: Container(
-          height: 36,
-          padding: const EdgeInsets.symmetric(horizontal: 12),
-          alignment: Alignment.center,
-          // 지도 위에 얹히므로 반투명 — 아래 지형·상호가 비쳐 보이게 한다.
-          // 글자는 불투명하게 두어 가독성은 유지.
-          decoration: BoxDecoration(
+      onTap: onTap,
+      child: Container(
+        height: 36,
+        padding: const EdgeInsets.symmetric(horizontal: 12),
+        alignment: Alignment.center,
+        // 지도 위에 얹히므로 반투명 — 아래 지형·상호가 비쳐 보이게 한다.
+        // 글자는 불투명하게 두어 가독성은 유지.
+        decoration: BoxDecoration(
+          color: active
+              ? color.withValues(alpha: 0.78)
+              : CubedColors.surface.withValues(alpha: 0.72),
+          borderRadius: BorderRadius.circular(18),
+          border: Border.all(
             color: active
-                ? color.withValues(alpha: 0.78)
-                : CubedColors.surface.withValues(alpha: 0.72),
-            borderRadius: BorderRadius.circular(18),
-            border: Border.all(
-              color: active
-                  ? color.withValues(alpha: 0.5)
-                  : CubedColors.line.withValues(alpha: 0.6),
-            ),
-            boxShadow: [
-              BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.08),
-                  blurRadius: 4,
-                  offset: const Offset(0, 1)),
-            ],
+                ? color.withValues(alpha: 0.5)
+                : CubedColors.line.withValues(alpha: 0.6),
           ),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(Icons.coffee_rounded,
-                  size: 15, color: active ? Colors.white : color),
-              const SizedBox(width: 5),
-              Text(
-                uiText('franchiseToggle', lang),
-                style: TextStyle(
-                  fontSize: 13,
-                  fontWeight: FontWeight.w700,
-                  color: active ? Colors.white : CubedColors.inkSoft,
-                ),
-              ),
-              if (active) ...[
-                const SizedBox(width: 5),
-                Text(radius,
-                    style: const TextStyle(
-                        fontSize: 11,
-                        fontWeight: FontWeight.w600,
-                        color: Colors.white70)),
-              ],
-            ],
-          ),
+          boxShadow: [
+            BoxShadow(
+                color: Colors.black.withValues(alpha: 0.08),
+                blurRadius: 4,
+                offset: const Offset(0, 1)),
+          ],
         ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(Icons.coffee_rounded,
+                size: 15, color: active ? Colors.white : color),
+            const SizedBox(width: 5),
+            Text(
+              uiText('franchiseToggle', lang),
+              style: TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w700,
+                color: active ? Colors.white : CubedColors.inkSoft,
+              ),
+            ),
+            if (active) ...[
+              const SizedBox(width: 5),
+              Text(radius,
+                  style: const TextStyle(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w600,
+                      color: Colors.white70)),
+            ],
+          ],
+        ),
+      ),
     );
   }
 }
@@ -906,7 +912,8 @@ class _FetchingChip extends StatelessWidget {
             height: 14,
             child: CircularProgressIndicator(strokeWidth: 2)),
         SizedBox(width: 8),
-        Text('불러오는 중', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600)),
+        Text('불러오는 중',
+            style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600)),
       ]),
     );
   }
