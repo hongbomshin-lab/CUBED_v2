@@ -193,8 +193,8 @@ class _MapScreenState extends ConsumerState<MapScreen> {
   }
 
   /// 이름을 새긴 커스텀 마커 아이콘(위젯 렌더링) — 캐시 활용.
-  /// 라벨(핀 위 흰 알약)까지 한 이미지로 그려, 캡션으로는 안 되는
-  /// '위 배치 + 2줄 줄바꿈'을 구현한다.
+  /// 아이콘+이름을 한 칩 이미지로 그려, 캡션으로는 안 되는
+  /// '이름을 마커에 붙이기 + 줄바꿈'을 구현한다.
   Future<NOverlayImage> _iconFor(StoreType type, String label) async {
     final key = '${type.dbValue}|$label';
     final cached = _iconCache[key];
@@ -209,8 +209,8 @@ class _MapScreenState extends ConsumerState<MapScreen> {
     return img;
   }
 
-  /// 라벨(최대 2줄) + 핀을 담는 마커 전체 크기.
-  static const Size _markerSize = Size(150, 96);
+  /// 인라인 칩(아이콘+이름) + 꼬리를 담는 마커 전체 크기.
+  static const Size _markerSize = Size(184, 60);
 
   Future<void> _renderMarkers(NaverMapController c, List<Store> stores) async {
     await c.clearOverlays(type: NOverlayType.marker);
@@ -219,7 +219,7 @@ class _MapScreenState extends ConsumerState<MapScreen> {
     final markers = <NMarker>{};
     // 프랜차이즈를 먼저 넣어 저당 전문 매장 마커가 위에 오도록 한다.
     for (final s in [..._franchise, ...stores]) {
-      // 이름은 마커 이미지에 직접 새긴다(캡션 미사용) — 핀 위, 최대 2줄.
+      // 이름은 마커 칩 이미지에 직접 새긴다(캡션 미사용) — 아이콘 옆, 최대 2줄.
       final marker = NMarker(
         id: s.id,
         position: NLatLng(s.lat, s.lng),
@@ -625,83 +625,84 @@ class _SearchResults extends StatelessWidget {
   }
 }
 
-/// 커스텀 지도 마커 — 색상 원형 배지 + 흰 아이콘 + 물방울 꼬리.
+/// 커스텀 지도 마커 — 카카오맵 스타일 인라인 칩.
+/// 흰 라운드 칩 안에 [색 아이콘 배지][매장 이름]을 한 줄로, 아래 말풍선 꼬리.
+/// 색은 원 풀필 대신 작은 아이콘 배지로만 써서 가볍고 세련되게.
 class _MarkerPin extends StatelessWidget {
   const _MarkerPin({required this.color, required this.icon, this.label});
   final Color color;
   final IconData icon;
 
-  /// 핀 위에 새길 식당 이름. null/빈값이면 핀만 그린다.
+  /// 칩에 넣을 매장 이름. null/빈값이면 아이콘 배지만.
   final String? label;
 
   @override
   Widget build(BuildContext context) {
-    // 라벨을 위, 핀을 아래에 두고 바닥 정렬한다 → 핀 꼬리 끝이 항상 맨 아래(anchor 지점).
-    // Directionality 로 감싼다 — fromWidget 이 격리된 트리에서 렌더하므로,
+    final name = label?.trim() ?? '';
+    // Directionality 로 감싼다 — fromWidget 이 격리 트리에서 렌더하므로,
     // Text 가 방향성 조상을 못 찾아 예외 나면 마커가 통째로 안 그려질 수 있다.
     return Directionality(
       textDirection: TextDirection.ltr,
+      // 바닥 정렬 → 꼬리 끝이 항상 맨 아래(anchor 0.5,1.0 지점 = 좌표).
       child: SizedBox(
-        width: 150,
-        height: 96,
+        width: 184,
+        height: 60,
         child: Column(
           mainAxisAlignment: MainAxisAlignment.end,
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
-            if (label != null && label!.trim().isNotEmpty)
-              Container(
-                constraints: const BoxConstraints(maxWidth: 142),
-                margin: const EdgeInsets.only(bottom: 3),
-                padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(9),
-                  border: Border.all(color: color.withValues(alpha: 0.35)),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withValues(alpha: 0.20),
-                      blurRadius: 3,
-                      offset: const Offset(0, 1),
-                    ),
-                  ],
-                ),
-                child: Text(
-                  label!,
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                  textAlign: TextAlign.center,
-                  style: const TextStyle(
-                    fontSize: 11,
-                    height: 1.15,
-                    fontWeight: FontWeight.w800,
-                    color: CubedColors.ink,
-                  ),
-                ),
-              ),
-            // 핀 본체(원 + 아이콘)
             Container(
-              width: 40,
-              height: 40,
+              padding: EdgeInsets.fromLTRB(4, 4, name.isEmpty ? 4 : 11, 4),
               decoration: BoxDecoration(
-                color: color,
-                shape: BoxShape.circle,
-                border: Border.all(color: Colors.white, width: 2.5),
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(22),
+                border: Border.all(color: Colors.black.withValues(alpha: 0.06)),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.25),
-                    blurRadius: 4,
+                    color: Colors.black.withValues(alpha: 0.16),
+                    blurRadius: 6,
                     offset: const Offset(0, 2),
                   ),
                 ],
               ),
-              child: Icon(icon, color: Colors.white, size: 20),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  // 컬러 아이콘 배지 (색은 여기만 — 가벼운 강조)
+                  Container(
+                    width: 26,
+                    height: 26,
+                    decoration:
+                        BoxDecoration(color: color, shape: BoxShape.circle),
+                    alignment: Alignment.center,
+                    child: Icon(icon, color: Colors.white, size: 15),
+                  ),
+                  if (name.isNotEmpty) ...[
+                    const SizedBox(width: 7),
+                    ConstrainedBox(
+                      constraints: const BoxConstraints(maxWidth: 118),
+                      child: Text(
+                        name,
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                          fontSize: 12.5,
+                          height: 1.15,
+                          fontWeight: FontWeight.w700,
+                          color: CubedColors.ink,
+                        ),
+                      ),
+                    ),
+                  ],
+                ],
+              ),
             ),
-            // 아래쪽 꼬리(삼각형)
+            // 말풍선 꼬리 — 칩과 같은 흰색, 1px 겹쳐 이음새 없이.
             Transform.translate(
-              offset: const Offset(0, -4),
-              child: CustomPaint(
-                size: const Size(12, 8),
-                painter: _PinTailPainter(color),
+              offset: const Offset(0, -1),
+              child: const CustomPaint(
+                size: Size(14, 7),
+                painter: _ChipTailPainter(),
               ),
             ),
           ],
@@ -711,23 +712,36 @@ class _MarkerPin extends StatelessWidget {
   }
 }
 
-class _PinTailPainter extends CustomPainter {
-  _PinTailPainter(this.color);
-  final Color color;
+/// 칩 아래 말풍선 꼬리(아래로 향한 흰 삼각형) + 옅은 테두리.
+class _ChipTailPainter extends CustomPainter {
+  const _ChipTailPainter();
 
   @override
   void paint(Canvas canvas, Size size) {
-    final paint = Paint()..color = color;
     final path = Path()
       ..moveTo(0, 0)
       ..lineTo(size.width / 2, size.height)
       ..lineTo(size.width, 0)
       ..close();
-    canvas.drawPath(path, paint);
+    // 옅은 그림자로 지도 위에서 떠 보이게
+    canvas.drawShadow(path, Colors.black.withValues(alpha: 0.16), 2, false);
+    canvas.drawPath(path, Paint()..color = Colors.white);
+    // 기울어진 두 변에만 옅은 테두리(윗변은 칩과 맞닿아 생략)
+    final border = Paint()
+      ..color = Colors.black.withValues(alpha: 0.06)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 1;
+    canvas.drawPath(
+      Path()
+        ..moveTo(0, 0)
+        ..lineTo(size.width / 2, size.height)
+        ..lineTo(size.width, 0),
+      border,
+    );
   }
 
   @override
-  bool shouldRepaint(covariant _PinTailPainter old) => old.color != color;
+  bool shouldRepaint(covariant _ChipTailPainter old) => false;
 }
 
 class _FilterBar extends StatelessWidget {
