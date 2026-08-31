@@ -9,7 +9,6 @@ import '../../data/models/product.dart';
 import '../../providers/providers.dart';
 import '../auth/login_screen.dart';
 
-
 /// '오늘 이거 먹었어요' 토글 — DB 제품/촬영 제품 공용. 카카오 로그인 필요.
 class EatenTodayButton extends ConsumerWidget {
   const EatenTodayButton({
@@ -69,14 +68,17 @@ class EatenTodayButton extends ConsumerWidget {
         if (added) {
           final repo = container.read(pointsRepositoryProvider);
           try {
-            awarded = await repo.earnForLog(logId);
-            // 먹은 기록 미션(주 5회 기록 등)도 같은 순간에 진행된다.
-            await repo.fire('product_log', data: {
-              'grade': grade.name,
-              if (product.brand != null) 'brand': product.brand!,
-            }, refId: logId);
+            // 적립은 미션(서버)이 정한다 — 그램 비례 auto-award 는 제거했다.
+            // 저당 인증(일)·주 5회 기록 미션이 발동하고 실제 적립액을 돌려준다.
+            final awards = await repo.fire('product_log',
+                data: {
+                  'grade': grade.name,
+                  if (product.brand != null) 'brand': product.brand!,
+                },
+                refId: logId);
+            awarded = awards.fold(0, (s, a) => s + a.reward);
           } catch (e) {
-            debugPrint('적립 실패: $e');   // 기록 자체는 성공했으므로 막지 않는다
+            debugPrint('적립 실패: $e'); // 기록 자체는 성공했으므로 막지 않는다
           }
           container.invalidate(serverBalanceProvider);
           container.invalidate(serverLedgerProvider);
@@ -84,7 +86,8 @@ class EatenTodayButton extends ConsumerWidget {
         }
         if (context.mounted) {
           if (added && awarded > 0) {
-            await _showEarnedDialog(context, awarded, rule?.basis);
+            // awarded=미션 적립 포인트, points=아낀 당류(g) — 둘은 다르다.
+            await _showEarnedDialog(context, awarded, points, rule?.basis);
           } else {
             ScaffoldMessenger.of(context).showSnackBar(SnackBar(
               content: Text(added ? '오늘 먹은 기록에 추가했어요' : '기록을 취소했어요'),
@@ -172,8 +175,9 @@ class EatenTodayButton extends ConsumerWidget {
   }
 
   /// 적립 팝업 — 아낀 당류만큼 포인트 적립을 알린다.
+  /// [points] 는 이번에 적립된 **미션 포인트**, [savedG] 는 표시용 **아낀 당류(g)**.
   Future<void> _showEarnedDialog(
-      BuildContext context, int points, String? basis) {
+      BuildContext context, int points, int savedG, String? basis) {
     return showDialog<void>(
       context: context,
       builder: (context) => Dialog(
@@ -194,16 +198,18 @@ class EatenTodayButton extends ConsumerWidget {
                       letterSpacing: -1,
                       color: CubedColors.lime)),
               const SizedBox(height: 8),
-              const Text('아낀 당류만큼 포인트를 적립했어요',
+              const Text('저당 기록 완료!',
                   style: TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.w800,
                       color: Colors.white)),
-              const SizedBox(height: 6),
-              Text('${basis ?? '일반 제품'}보다 설탕 ${points}g을 덜 먹었어요',
-                  textAlign: TextAlign.center,
-                  style:
-                      const TextStyle(fontSize: 13, color: Colors.white70)),
+              if (savedG > 0) ...[
+                const SizedBox(height: 6),
+                Text('${basis ?? '일반 제품'}보다 설탕 ${savedG}g을 덜 먹었어요',
+                    textAlign: TextAlign.center,
+                    style:
+                        const TextStyle(fontSize: 13, color: Colors.white70)),
+              ],
               const SizedBox(height: 20),
               SizedBox(
                 width: double.infinity,
