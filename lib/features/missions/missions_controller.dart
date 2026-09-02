@@ -34,9 +34,13 @@ class MissionState {
         loading: loading ?? this.loading,
       );
 
+  /// 서버 기준 '지금'. 미션 기간키·상한·적립 리셋이 모두 서버 current_date(UTC)를
+  /// 쓰므로, 앱도 UTC 로 날짜를 계산해야 저장된 period_key 와 맞는다.
+  /// (로컬 KST 로 계산하면 UTC 자정~09시 구간에 하루가 어긋나 진행이 안 잡힌다)
+  static DateTime get _serverNow => DateTime.now().toUtc();
+
   /// 오늘 출석했는지 — 출석 도장판·버튼 상태에 쓴다.
-  bool get checkedInToday =>
-      streak.lastDate == PeriodKey.day(DateTime.now());
+  bool get checkedInToday => streak.lastDate == PeriodKey.day(_serverNow);
 
   /// 이 미션의 **지금 기간** 진행. 지난 기간의 완료가 새 기간에 새어 나오지 않게,
   /// 미션의 period 에 맞는 현재 기간키로만 조회한다.
@@ -44,10 +48,10 @@ class MissionState {
       progress['${m.code}|${currentKeyFor(m)}'] ??
       const MissionProgress(periodKey: '');
 
-  /// 미션 period 별 '지금' 기간키. mission_progress.period_key 와 같은 규칙이다.
+  /// 미션 period 별 '지금' 기간키. mission_progress.period_key(UTC)와 같은 규칙이다.
   String currentKeyFor(Mission m) => switch (m.period) {
-        MissionPeriod.daily => PeriodKey.day(DateTime.now()),
-        MissionPeriod.weekly => PeriodKey.week(DateTime.now()),
+        MissionPeriod.daily => PeriodKey.day(_serverNow),
+        MissionPeriod.weekly => PeriodKey.week(_serverNow),
         MissionPeriod.streak => streak.startDate ?? '',
         MissionPeriod.once => '',
       };
