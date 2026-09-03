@@ -40,9 +40,18 @@ class _LoggedOut extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Icon(Icons.account_circle_outlined,
-                size: 64, color: CubedColors.inkSoft),
-            const SizedBox(height: 16),
+            // 시안4 — 큐브 더미가 빈 화면을 채운다
+            Container(
+              width: 116,
+              height: 116,
+              decoration: const BoxDecoration(
+                color: CubedColors.inkCard,
+                borderRadius: BorderRadius.all(Radius.circular(32)),
+              ),
+              alignment: Alignment.center,
+              child: const SugarCubeStack(size: 64),
+            ),
+            const SizedBox(height: 20),
             const Text('로그인하고 즐겨찾기·리뷰를 관리하세요',
                 textAlign: TextAlign.center,
                 style: TextStyle(fontSize: 15, color: CubedColors.inkSoft)),
@@ -115,17 +124,23 @@ class _LoggedIn extends ConsumerWidget {
         // 프로필 헤더
         Container(
           color: CubedColors.surface,
-          padding: const EdgeInsets.fromLTRB(20, 20, 20, 24),
+          padding: const EdgeInsets.fromLTRB(20, 22, 20, 24),
           child: Row(children: [
-            CircleAvatar(
-              radius: 28,
-              backgroundColor: CubedColors.brand.withValues(alpha: 0.15),
-              child: Text(
-                name.characters.first,
-                style: const TextStyle(
-                    fontSize: 22,
-                    fontWeight: FontWeight.w800,
-                    color: CubedColors.brand),
+            Transform.rotate(
+              angle: -0.08,
+              child: Container(
+                width: 56,
+                height: 56,
+                alignment: Alignment.center,
+                decoration: BoxDecoration(
+                  color: CubedColors.brandDeep,
+                  borderRadius: BorderRadius.circular(16),
+                ),
+                child: Text(name.characters.first.toUpperCase(),
+                    style: const TextStyle(
+                        fontSize: 24,
+                        fontWeight: FontWeight.w900,
+                        color: Colors.white)),
               ),
             ),
             const SizedBox(width: 16),
@@ -135,7 +150,9 @@ class _LoggedIn extends ConsumerWidget {
                 children: [
                   Text(name,
                       style: const TextStyle(
-                          fontSize: 18, fontWeight: FontWeight.w800)),
+                          fontSize: 19,
+                          fontWeight: FontWeight.w900,
+                          letterSpacing: -0.6)),
                   if (email.isNotEmpty) ...[
                     const SizedBox(height: 2),
                     Text(email,
@@ -301,9 +318,26 @@ class _MenuTile extends StatelessWidget {
       child: InkWell(
         onTap: onTap,
         child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 15),
           child: Row(children: [
-            Icon(icon, size: 22, color: danger ? CubedColors.caution : CubedColors.inkSoft),
+            Transform.rotate(
+              angle: 0.07,
+              child: Container(
+                width: 32,
+                height: 32,
+                alignment: Alignment.center,
+                decoration: BoxDecoration(
+                  color: (danger ? CubedColors.caution : CubedColors.brandDeep)
+                      .withValues(alpha: 0.12),
+                  borderRadius: BorderRadius.circular(9),
+                ),
+                child: Icon(icon,
+                    size: 17,
+                    color: danger
+                        ? CubedColors.caution
+                        : CubedColors.brandDeep),
+              ),
+            ),
             const SizedBox(width: 14),
             Expanded(
               child: Text(label,
