@@ -1,0 +1,5 @@
+{"brand":"헬키푸키","menus":[
+{"name":"저당 스리라차 떡볶이","kind":"low_sugar","sugar_g":null,"calories":null,"price_won":null,"serving":"350g","note":"설탕 대신 대체감미료, 비유탕 조리. 필라이즈에 칼로리·탄수(당류) 영양정보 공개","source_url":"https://www.pillyze.com/foods/-koVE31PZShxOcIWeI2szA==/","confidence":"menu_board"},
+{"name":"묵은지 참치 키토김밥","kind":"low_sugar","sugar_g":null,"calories":null,"price_won":null,"serving":"1줄","note":"자체 개발 계란지단+대체감미료 소스 키토김밥. 저당/저탄수","source_url":"https://www.diningcode.com/profile.php?rid=7laYxlD82Zv5","confidence":"menu_board"},
+{"name":"키토김밥","kind":"signature","sugar_g":null,"calories":null,"price_won":null,"serving":"1줄","note":"매장 시그니처 키토김밥","source_url":"https://www.diningcode.com/profile.php?rid=7laYxlD82Zv5","confidence":"menu_board"}
+]}

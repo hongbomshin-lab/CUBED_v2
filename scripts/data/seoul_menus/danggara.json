@@ -1,0 +1,6 @@
+{"brand":"당가라과자점","menus":[
+{"name":"저당저탄수그래놀라 200g","kind":"low_sugar","sugar_g":null,"calories":null,"price_won":9000,"serving":"200g","note":"이름에 저당·저탄수 명시","source_url":"https://www.diningcode.com/profile.php?rid=LKp8vecDMDnf","confidence":"menu_board"},
+{"name":"무설탕초코라떼","kind":"low_sugar","sugar_g":null,"calories":null,"price_won":5500,"serving":"1잔","note":"무설탕 라떼","source_url":"https://www.diningcode.com/profile.php?rid=LKp8vecDMDnf","confidence":"menu_board"},
+{"name":"무설탕말차라떼","kind":"low_sugar","sugar_g":null,"calories":null,"price_won":5900,"serving":"1잔","note":"무설탕 말차 라떼","source_url":"https://www.diningcode.com/profile.php?rid=LKp8vecDMDnf","confidence":"menu_board"},
+{"name":"흑임자치즈케이크","kind":"signature","sugar_g":null,"calories":null,"price_won":8400,"serving":"1조각","note":"대표 메뉴, 무설탕·글루텐프리","source_url":"https://www.diningcode.com/profile.php?rid=LKp8vecDMDnf","confidence":"menu_board"}
+]}

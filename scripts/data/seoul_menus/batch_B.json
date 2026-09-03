@@ -1,0 +1,23 @@
+[
+{"brand":"카페 산스","menus":[
+{"name":"무가당 오리지널 티라미수","kind":"low_sugar","sugar_g":null,"calories":null,"price_won":7500,"serving":"1조각","note":"설탕 무첨가 티라미수","source_url":"https://www.diningcode.com/profile.php?rid=nXtCNi0XR9Yn","confidence":"menu_board"},
+{"name":"무가당 베리 로즈 티라미수","kind":"low_sugar","sugar_g":null,"calories":null,"price_won":8000,"serving":"1조각","note":"무가당 시리즈","source_url":"https://www.diningcode.com/profile.php?rid=nXtCNi0XR9Yn","confidence":"menu_board"},
+{"name":"오트 크림 라떼","kind":"signature","sugar_g":null,"calories":null,"price_won":6800,"serving":"1잔","note":"산스 시그니처 오트 라떼","source_url":"https://www.diningcode.com/profile.php?rid=nXtCNi0XR9Yn","confidence":"menu_board"}
+]},
+{"brand":"인터랙트","menus":[
+{"name":"설탕 없는 버터바","kind":"low_sugar","sugar_g":1.2,"calories":null,"price_won":6000,"serving":"1개","note":"설탕·밀가루 0%, 순탄수 20g 이하 표방. 당 약 1.2g(리뷰 기반)","source_url":"https://www.diningcode.com/profile.php?rid=6P7OhJJ9QlaX","confidence":"menu_board"},
+{"name":"설탕 없는 모카 크림 라떼","kind":"low_sugar","sugar_g":null,"calories":null,"price_won":8000,"serving":"1잔","note":"대체감미료 사용","source_url":"https://www.diningcode.com/profile.php?rid=6P7OhJJ9QlaX","confidence":"menu_board"},
+{"name":"설탕 없는 블루베리 케이크","kind":"signature","sugar_g":null,"calories":null,"price_won":8800,"serving":"1조각","note":"설탕없이 졸인 블루베리 콩포트+글루텐프리","source_url":"https://www.diningcode.com/profile.php?rid=6P7OhJJ9QlaX","confidence":"menu_board"}
+]},
+{"brand":"행복한 단백질","menus":[
+{"name":"프로틴 도넛","kind":"signature","sugar_g":null,"calories":null,"price_won":null,"serving":"1개","note":"성동구 마장동 고단백 카페 대표(개별 수치 미확인)","source_url":"https://www.diningcode.com/list.php?query=%ED%95%9C%EC%96%91%EB%8C%80+%EB%8B%A4%EC%9D%B4%EC%96%B4%ED%8A%B8%EC%8B%9D%EB%8B%A8","confidence":"estimated"}
+]},
+{"brand":"어나더쏭","menus":[
+{"name":"딸기 쉬폰","kind":"signature","sugar_g":null,"calories":null,"price_won":null,"serving":"1조각","note":"중곡점 대표, 쌀가루 기반(저당 표기 미확인)","source_url":"https://www.siksinhot.com/P/1051293","confidence":"menu_board"}
+]},
+{"brand":"제로카페 홍대","menus":[
+{"name":"저당 초코라떼","kind":"low_sugar","sugar_g":null,"calories":null,"price_won":5800,"serving":"1잔","note":"저당 프랜차이즈 제로카페 대표 음료","source_url":"https://www.zerocafe.co.kr/22","confidence":"menu_board"},
+{"name":"저당 바나나브레드 푸딩","kind":"low_sugar","sugar_g":null,"calories":null,"price_won":7000,"serving":"1개","note":"무설탕 제로쿠키+커스터드","source_url":"https://polle.com/place/5l96Ef/","confidence":"menu_board"},
+{"name":"저당 딸기카카오 푸딩","kind":"signature","sugar_g":null,"calories":null,"price_won":7500,"serving":"1개","note":"인기 저당 푸딩 시그니처","source_url":"https://polle.com/place/5l96Ef/","confidence":"menu_board"}
+]}
+]

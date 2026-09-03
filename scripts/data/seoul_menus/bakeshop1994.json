@@ -1,0 +1,6 @@
+{"brand":"1994 Bakeshop","menus":[
+{"name":"떠먹는 치즈케이크","kind":"low_sugar","sugar_g":null,"calories":null,"price_won":null,"serving":null,"note":"저당·글루텐프리 쌀가루 베이스, 젤라틴 미사용. 대표 저당 디저트","source_url":"https://www.diningcode.com/profile.php?rid=Dn5fkfooh4zA","confidence":"menu_board"},
+{"name":"떠먹는 레어치즈","kind":"low_sugar","sugar_g":null,"calories":null,"price_won":null,"serving":null,"note":"저당·글루텐프리, 키리 크림치즈","source_url":"https://www.diningcode.com/profile.php?rid=Dn5fkfooh4zA","confidence":"menu_board"},
+{"name":"라즈베리 피스타치오 레어치즈","kind":"low_sugar","sugar_g":null,"calories":null,"price_won":null,"serving":null,"note":"저당 지향, 피스타치오 크림","source_url":"https://www.diningcode.com/profile.php?rid=Dn5fkfooh4zA","confidence":"menu_board"},
+{"name":"들기름 커피","kind":"signature","sugar_g":null,"calories":null,"price_won":null,"serving":null,"note":"시그니처 음료, 들기름 라떼","source_url":"https://www.diningcode.com/profile.php?rid=Dn5fkfooh4zA","confidence":"menu_board"}
+]}

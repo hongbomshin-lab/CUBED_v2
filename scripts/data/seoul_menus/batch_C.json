@@ -1,0 +1,30 @@
+[
+{"brand":"차선책","menus":[
+{"name":"흑임자 갸또","kind":"low_sugar","sugar_g":null,"calories":null,"price_won":9500,"serving":"조각","note":"제로슈거·글루텐프리 갸또","source_url":"https://www.diningcode.com/profile.php?rid=rbzbwhRNBoBG","confidence":"menu_board"},
+{"name":"말차초코 갸또","kind":"low_sugar","sugar_g":null,"calories":null,"price_won":9500,"serving":"조각","note":"제로슈거·글루텐프리","source_url":"https://www.diningcode.com/profile.php?rid=rbzbwhRNBoBG","confidence":"menu_board"},
+{"name":"단호박크림치즈","kind":"signature","sugar_g":null,"calories":null,"price_won":9500,"serving":"조각","note":"제로슈거·글루텐프리 시그니처","source_url":"https://www.diningcode.com/profile.php?rid=rbzbwhRNBoBG","confidence":"menu_board"}
+]},
+{"brand":"키에리","menus":[
+{"name":"노버터 초콜릿케이크","kind":"signature","sugar_g":null,"calories":null,"price_won":null,"serving":"조각","note":"버터 미사용 담백 케이크 시그니처(저당 명시 근거 없음)","source_url":"https://www.diningcode.com/profile.php?rid=tdxy5IrPwCGT","confidence":"estimated"},
+{"name":"쌀 스콘","kind":"low_sugar","sugar_g":null,"calories":null,"price_won":null,"serving":"1개","note":"쌀·버터리스 담백(저당 직접 표기 미확인)","source_url":"https://www.diningcode.com/profile.php?rid=tdxy5IrPwCGT","confidence":"estimated"}
+]},
+{"brand":"히포디저트","menus":[
+{"name":"힙시쿠키","kind":"low_sugar","sugar_g":null,"calories":null,"price_won":null,"serving":"1개","note":"비건·글루텐프리·무설탕 쿠키","source_url":"https://www.diningcode.com/profile.php?rid=x1laBo2qXbJk","confidence":"menu_board"},
+{"name":"트리플말차마카다미아 갸또","kind":"low_sugar","sugar_g":null,"calories":null,"price_won":9300,"serving":"떠먹는 케이크","note":"글루텐프리·저당(시중 대비 약 절반 당함량)","source_url":"https://www.diningcode.com/profile.php?rid=x1laBo2qXbJk","confidence":"menu_board"},
+{"name":"히포에피쵸바(피스타치오)","kind":"signature","sugar_g":null,"calories":null,"price_won":13200,"serving":"떠먹는 케이크","note":"최고가 시그니처","source_url":"https://www.diningcode.com/profile.php?rid=x1laBo2qXbJk","confidence":"menu_board"}
+]},
+{"brand":"호두까끼형제","menus":[
+{"name":"시그니처 호두파이","kind":"signature","sugar_g":null,"calories":null,"price_won":4300,"serving":"조각","note":"양재역 호두파이 대표(저당 매장 아님)","source_url":"https://www.diningcode.com/profile.php?rid=0wBYZMUH4nHg","confidence":"menu_board"},
+{"name":"오리지널 피칸파이","kind":"signature","sugar_g":null,"calories":null,"price_won":4500,"serving":"조각","note":"대표 파이(저당 표방 없음)","source_url":"https://www.diningcode.com/profile.php?rid=0wBYZMUH4nHg","confidence":"menu_board"}
+]},
+{"brand":"무가당","menus":[
+{"name":"저당 당근케이크","kind":"signature","sugar_g":null,"calories":null,"price_won":null,"serving":"조각","note":"무설탕·무밀가루·저탄수 표방 대표 케이크","source_url":"https://www.siksinhot.com/P/1173642","confidence":"estimated"},
+{"name":"단호박 머핀","kind":"low_sugar","sugar_g":null,"calories":null,"price_won":null,"serving":"1개","note":"무설탕·저탄수 지향","source_url":"https://www.siksinhot.com/P/1173642","confidence":"estimated"},
+{"name":"쑥 머핀","kind":"low_sugar","sugar_g":null,"calories":null,"price_won":null,"serving":"1개","note":"무설탕·저탄수 지향","source_url":"https://www.siksinhot.com/P/1173642","confidence":"estimated"}
+]},
+{"brand":"리얼식단","menus":[
+{"name":"제로 레몬에이드","kind":"low_sugar","sugar_g":null,"calories":null,"price_won":5000,"serving":"1잔","note":"대체당 제로 음료","source_url":"https://www.diningcode.com/profile.php?rid=gOBo8LrprPAr","confidence":"menu_board"},
+{"name":"제로 초코라떼","kind":"low_sugar","sugar_g":null,"calories":null,"price_won":6000,"serving":"1잔","note":"대체당 제로 음료","source_url":"https://www.diningcode.com/profile.php?rid=gOBo8LrprPAr","confidence":"menu_board"},
+{"name":"스파이시투움바 흑현미 리조또","kind":"signature","sugar_g":null,"calories":null,"price_won":12900,"serving":"1인분","note":"흑현미 건강식 대표","source_url":"https://www.diningcode.com/profile.php?rid=gOBo8LrprPAr","confidence":"menu_board"}
+]}
+]
