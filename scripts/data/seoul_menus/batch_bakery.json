@@ -1,0 +1,24 @@
+[
+{"brand":"널담은공간","menus":[
+{"name":"고단백 저당 베이글","kind":"low_sugar","sugar_g":1,"calories":null,"price_won":null,"serving":"1개","note":"당류 1g·단백질 23g. 자사몰 인기 1위","source_url":"http://www.foodnews.news/news/article.html?no=1034047","confidence":"official"},
+{"name":"고단백 저당 통밀 스콘","kind":"low_sugar","sugar_g":0,"calories":null,"price_won":null,"serving":"1개","note":"당류 0g·단백질 26g","source_url":"http://www.foodnews.news/news/article.html?no=1034047","confidence":"official"},
+{"name":"고단백 저당 통밀 식빵","kind":"low_sugar","sugar_g":null,"calories":null,"price_won":10900,"serving":"1개","note":"저당·고단백 통밀 식빵","source_url":"https://m.nuldam.com/product/list.html?cate_no=139","confidence":"official"},
+{"name":"식이섬유 휘낭시에","kind":"signature","sugar_g":null,"calories":null,"price_won":null,"serving":"1개","note":"저당 카테고리 수제 휘낭시에","source_url":"https://m.nuldam.com/product/list.html?cate_no=139","confidence":"official"}
+]},
+{"brand":"스윗트윅","menus":[
+{"name":"슈가프리·글루텐프리 디저트","kind":"low_sugar","sugar_g":null,"calories":null,"price_won":null,"serving":null,"note":"설탕·밀가루 없는 디저트 표방(Better Sweets). 개별 수치 미공개","source_url":"https://noisypencils.com/sweettweak","confidence":"estimated"}
+]},
+{"brand":"스윗프로비전","menus":[
+{"name":"블루베리 크림치즈 타르트","kind":"signature","sugar_g":null,"calories":null,"price_won":null,"serving":null,"note":"공식 인스타 대표 품목, 제로슈가·글루텐프리 지향","source_url":"https://www.instagram.com/sweet_provision/","confidence":"estimated"},
+{"name":"제로슈가 키토 홀케이크","kind":"low_sugar","sugar_g":null,"calories":null,"price_won":null,"serving":"1홀","note":"제로슈가·저탄수·글루텐프리 주력","source_url":"https://www.instagram.com/sweet_provision/","confidence":"estimated"}
+]},
+{"brand":"키토빵앗간","menus":[
+{"name":"말차 휘낭시에","kind":"low_sugar","sugar_g":0.6,"calories":117,"price_won":null,"serving":"1개(38g)","note":"순탄수 3.3g·당류 0.6g. 알룰로스/에리스리톨·아몬드가루","source_url":"https://www.inout.team/search/food/detail/X8LcKo4Bf0j9hRB01vpF","confidence":"estimated"},
+{"name":"키토 휘낭시에(여러 맛)","kind":"signature","sugar_g":null,"calories":null,"price_won":null,"serving":"1개","note":"망원동 저탄수·무설탕·글루텐프리 대표군","source_url":"https://www.instagram.com/ketobbang/","confidence":"estimated"}
+]},
+{"brand":"필로베이커리","menus":[
+{"name":"무설탕 카놀리","kind":"signature","sugar_g":null,"calories":null,"price_won":2500,"serving":"1개","note":"대표 메뉴, 스테비아 사용. 10종 맛","source_url":"https://www.diningcode.com/profile.php?rid=2rFpJjvbJePB","confidence":"menu_board"},
+{"name":"무설탕 치즈케이크","kind":"low_sugar","sugar_g":null,"calories":null,"price_won":5800,"serving":"1조각","note":"무설탕 베이커리 라인","source_url":"https://www.diningcode.com/profile.php?rid=2rFpJjvbJePB","confidence":"menu_board"},
+{"name":"스모어 쿠키","kind":"low_sugar","sugar_g":null,"calories":null,"price_won":3600,"serving":"1개","note":"쿠키·샤브레 전 품목 무설탕","source_url":"https://www.diningcode.com/profile.php?rid=2rFpJjvbJePB","confidence":"menu_board"}
+]}
+]
