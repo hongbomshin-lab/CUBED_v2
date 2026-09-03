@@ -63,16 +63,14 @@ class _StoreDetailSheetState extends ConsumerState<StoreDetailSheet>
 
   void _toast(String msg) {
     if (!mounted) return;
-    ScaffoldMessenger.of(context)
-        .showSnackBar(SnackBar(content: Text(msg)));
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg)));
   }
 
   /// 일반 웹 링크 열기 (네이버 플레이스 등).
   Future<void> _launchWeb(String url) async {
     final uri = Uri.parse(url);
     try {
-      final ok =
-          await launchUrl(uri, mode: LaunchMode.externalApplication);
+      final ok = await launchUrl(uri, mode: LaunchMode.externalApplication);
       if (!ok) _toast('링크를 열 수 없어요');
     } catch (_) {
       _toast('링크를 열 수 없어요');
@@ -117,8 +115,7 @@ class _StoreDetailSheetState extends ConsumerState<StoreDetailSheet>
       // 앱 실행 실패 → 웹 폴백
     }
     try {
-      final ok =
-          await launchUrl(webUri, mode: LaunchMode.externalApplication);
+      final ok = await launchUrl(webUri, mode: LaunchMode.externalApplication);
       if (!ok) _toast('인스타그램을 열 수 없어요');
     } catch (_) {
       _toast('인스타그램을 열 수 없어요');
@@ -175,7 +172,36 @@ class _StoreDetailSheetState extends ConsumerState<StoreDetailSheet>
       ),
       builder: (_) => ReviewSheet(storeId: s.id, storeName: s.name),
     );
-    // 리뷰 제출 후 바텀시트는 유지 (Step 5에서 카운트 실시간 반영 고려)
+    // ReviewSheet 가 제출 시 storeReviewsProvider 를 invalidate 하므로 목록·카운트 즉시 반영.
+  }
+
+  /// 내 리뷰 삭제 — 매장 상세에서 바로. 확인 후 hard delete(카운트 트리거 반영).
+  Future<void> _onDeleteReview(StoreReview r) async {
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (_) => AlertDialog(
+        title: const Text('리뷰를 삭제할까요?'),
+        content: const Text('이 매장에 남긴 내 리뷰가 지워져요.'),
+        actions: [
+          TextButton(
+              onPressed: () => Navigator.of(context).pop(false),
+              child: const Text('취소')),
+          TextButton(
+              onPressed: () => Navigator.of(context).pop(true),
+              style: TextButton.styleFrom(foregroundColor: CubedColors.caution),
+              child: const Text('삭제')),
+        ],
+      ),
+    );
+    if (ok != true) return;
+    try {
+      await ref.read(storeRepositoryProvider).deleteReview(r.id);
+      ref.invalidate(storeReviewsProvider(r.storeId));
+      ref.invalidate(myReviewsProvider);
+      if (mounted) _toast('리뷰를 삭제했어요');
+    } catch (_) {
+      if (mounted) _toast('삭제에 실패했어요');
+    }
   }
 
   Future<void> _onReportMenuBoard() async {
@@ -210,13 +236,15 @@ class _StoreDetailSheetState extends ConsumerState<StoreDetailSheet>
 
     // 리뷰 목록(실시간) — 작성/수정 후 카운트·목록 즉시 반영.
     final reviewsAsync = ref.watch(storeReviewsProvider(s.id));
+    final myId = ref.watch(currentUserProvider)?.id; // 내 리뷰 수정·삭제 노출용
     final liveReviews = reviewsAsync.valueOrNull;
     final reviewCount = liveReviews?.length ?? s.reviewCount;
     final recommendCount = liveReviews != null
         ? liveReviews.where((r) => r.isRecommended).length
         : s.recommendCount;
-    final rate =
-        reviewCount == 0 ? null : ((recommendCount / reviewCount) * 100).round();
+    final rate = reviewCount == 0
+        ? null
+        : ((recommendCount / reviewCount) * 100).round();
 
     return DraggableScrollableSheet(
       initialChildSize: 0.6,
@@ -239,8 +267,10 @@ class _StoreDetailSheetState extends ConsumerState<StoreDetailSheet>
                     child: CachedNetworkImage(
                       imageUrl: primary.imageUrl,
                       fit: BoxFit.cover,
-                      placeholder: (_, __) => Container(color: CubedColors.line),
-                      errorWidget: (_, __, ___) => Container(color: CubedColors.line),
+                      placeholder: (_, __) =>
+                          Container(color: CubedColors.line),
+                      errorWidget: (_, __, ___) =>
+                          Container(color: CubedColors.line),
                     ),
                   ),
 
@@ -317,7 +347,8 @@ class _StoreDetailSheetState extends ConsumerState<StoreDetailSheet>
                             icon: Icons.access_time_rounded, text: s.hours!),
 
                       // 외부 링크 버튼
-                      if (s.instagramUrl != null || s.naverPlaceUrl != null) ...[
+                      if (s.instagramUrl != null ||
+                          s.naverPlaceUrl != null) ...[
                         const SizedBox(height: 12),
                         Wrap(spacing: 8, children: [
                           if (s.naverPlaceUrl != null)
@@ -406,7 +437,13 @@ class _StoreDetailSheetState extends ConsumerState<StoreDetailSheet>
                               )
                             : Column(
                                 children: [
-                                  for (final r in reviews) _ReviewTile(review: r),
+                                  for (final r in reviews)
+                                    _ReviewTile(
+                                      review: r,
+                                      isMine: myId != null && r.userId == myId,
+                                      onEdit: _onWriteReview,
+                                      onDelete: () => _onDeleteReview(r),
+                                    ),
                                 ],
                               ),
                       ),
@@ -416,8 +453,8 @@ class _StoreDetailSheetState extends ConsumerState<StoreDetailSheet>
 
                 // 액션 버튼
                 Padding(
-                  padding: EdgeInsets.fromLTRB(
-                      20, 16, 20, 32 + MediaQuery.viewPaddingOf(context).bottom),
+                  padding: EdgeInsets.fromLTRB(20, 16, 20,
+                      32 + MediaQuery.viewPaddingOf(context).bottom),
                   child: Row(children: [
                     Expanded(
                       child: OutlinedButton.icon(
@@ -502,8 +539,7 @@ class _MenuSection extends ConsumerWidget {
             label: uiText('lowSugarMenu', lang),
             color: CubedColors.brand,
           ),
-          for (final m in lowSugar)
-            _MenuTile(menu: m, dict: dict, lang: lang),
+          for (final m in lowSugar) _MenuTile(menu: m, dict: dict, lang: lang),
         ],
         if (signature.isNotEmpty) ...[
           if (lowSugar.isNotEmpty) const SizedBox(height: 10),
@@ -512,8 +548,7 @@ class _MenuSection extends ConsumerWidget {
             label: uiText('signatureMenu', lang),
             color: const Color(0xFFE0A100),
           ),
-          for (final m in signature)
-            _MenuTile(menu: m, dict: dict, lang: lang),
+          for (final m in signature) _MenuTile(menu: m, dict: dict, lang: lang),
         ],
         const SizedBox(height: 14),
         const Divider(color: CubedColors.line),
@@ -544,7 +579,8 @@ class _BrandMenuSection extends ConsumerWidget {
           const Icon(Icons.eco_rounded, size: 16, color: CubedColors.brand),
           const SizedBox(width: 6),
           Text(uiText('brandLowSugar', lang),
-              style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w800)),
+              style:
+                  const TextStyle(fontSize: 15, fontWeight: FontWeight.w800)),
         ]),
         const SizedBox(height: 8),
         for (final d in menus)
@@ -685,9 +721,7 @@ class _MenuTile extends StatelessWidget {
                     [
                       sub.join(' · '),
                       if (menu.note != null) dict.menuNote(menu.note!),
-                    ]
-                        .where((s) => s.isNotEmpty)
-                        .join(' · '),
+                    ].where((s) => s.isNotEmpty).join(' · '),
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
                     style: const TextStyle(
@@ -736,8 +770,9 @@ class _MenuTile extends StatelessWidget {
   static String _fmt(double v) =>
       v == v.roundToDouble() ? v.toInt().toString() : v.toStringAsFixed(1);
 
-  static String _won(int v) =>
-      v.toString().replaceAllMapped(RegExp(r'(\d)(?=(\d{3})+$)'), (m) => '${m[1]},');
+  static String _won(int v) => v
+      .toString()
+      .replaceAllMapped(RegExp(r'(\d)(?=(\d{3})+$)'), (m) => '${m[1]},');
 
   /// 저당맵 기준과 같은 색 구간 (프랜차이즈 메뉴 카드와 일관).
   static Color _sugarColor(double g) {
@@ -781,7 +816,9 @@ class _InfoRow extends StatelessWidget {
     final row = Padding(
       padding: const EdgeInsets.symmetric(vertical: 6),
       child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        Icon(icon, size: 15, color: tappable ? CubedColors.brand : CubedColors.inkSoft),
+        Icon(icon,
+            size: 15,
+            color: tappable ? CubedColors.brand : CubedColors.inkSoft),
         const SizedBox(width: 6),
         Expanded(
           child: Text(text,
@@ -836,8 +873,16 @@ class _LinkButton extends StatelessWidget {
 }
 
 class _ReviewTile extends StatelessWidget {
-  const _ReviewTile({required this.review});
+  const _ReviewTile({
+    required this.review,
+    this.isMine = false,
+    this.onEdit,
+    this.onDelete,
+  });
   final StoreReview review;
+  final bool isMine;
+  final VoidCallback? onEdit;
+  final VoidCallback? onDelete;
 
   String _relativeDate(DateTime d) {
     final diff = DateTime.now().difference(d);
@@ -864,8 +909,7 @@ class _ReviewTile extends StatelessWidget {
         children: [
           Row(children: [
             Icon(rec ? Icons.thumb_up_rounded : Icons.thumb_down_rounded,
-                size: 14,
-                color: rec ? CubedColors.brand : CubedColors.inkSoft),
+                size: 14, color: rec ? CubedColors.brand : CubedColors.inkSoft),
             const SizedBox(width: 5),
             Text(rec ? '추천' : '비추천',
                 style: TextStyle(
@@ -874,8 +918,13 @@ class _ReviewTile extends StatelessWidget {
                     color: rec ? CubedColors.brand : CubedColors.inkSoft)),
             const Spacer(),
             Text(_relativeDate(review.createdAt),
-                style: const TextStyle(
-                    fontSize: 11, color: CubedColors.inkSoft)),
+                style:
+                    const TextStyle(fontSize: 11, color: CubedColors.inkSoft)),
+            if (isMine) ...[
+              const SizedBox(width: 4),
+              _MineAction(label: '수정', onTap: onEdit),
+              _MineAction(label: '삭제', onTap: onDelete, danger: true),
+            ],
           ]),
           if (review.content != null) ...[
             const SizedBox(height: 8),
@@ -887,6 +936,28 @@ class _ReviewTile extends StatelessWidget {
       ),
     );
   }
+}
+
+/// 내 리뷰 전용 인라인 액션(수정/삭제) — 작은 텍스트 버튼.
+class _MineAction extends StatelessWidget {
+  const _MineAction({required this.label, this.onTap, this.danger = false});
+  final String label;
+  final VoidCallback? onTap;
+  final bool danger;
+
+  @override
+  Widget build(BuildContext context) => InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(6),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+          child: Text(label,
+              style: TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w700,
+                  color: danger ? CubedColors.caution : CubedColors.inkSoft)),
+        ),
+      );
 }
 
 class _FavoriteButton extends StatelessWidget {
