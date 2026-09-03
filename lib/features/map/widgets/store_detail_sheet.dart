@@ -237,6 +237,7 @@ class _StoreDetailSheetState extends ConsumerState<StoreDetailSheet>
     // 리뷰 목록(실시간) — 작성/수정 후 카운트·목록 즉시 반영.
     final reviewsAsync = ref.watch(storeReviewsProvider(s.id));
     final myId = ref.watch(currentUserProvider)?.id; // 내 리뷰 수정·삭제 노출용
+    final dict = ref.watch(dictProvider); // 주소 등 DB 값 번역용
     final liveReviews = reviewsAsync.valueOrNull;
     final reviewCount = liveReviews?.length ?? s.reviewCount;
     final recommendCount = liveReviews != null
@@ -335,7 +336,8 @@ class _StoreDetailSheetState extends ConsumerState<StoreDetailSheet>
 
                       // 주소
                       _InfoRow(
-                          icon: Icons.location_on_rounded, text: s.address),
+                          icon: Icons.location_on_rounded,
+                          text: dict.storeAddr(s.address)),
                       if (s.phone != null)
                         _InfoRow(
                           icon: Icons.phone_rounded,
@@ -353,14 +355,14 @@ class _StoreDetailSheetState extends ConsumerState<StoreDetailSheet>
                         Wrap(spacing: 8, children: [
                           if (s.naverPlaceUrl != null)
                             _LinkButton(
-                              label: '네이버 플레이스',
+                              label: uiText('naverPlace', menuLang),
                               icon: Icons.map_outlined,
                               color: const Color(0xFF03C75A),
                               onTap: () => _launchWeb(s.naverPlaceUrl!),
                             ),
                           if (s.instagramUrl != null)
                             _LinkButton(
-                              label: '인스타그램',
+                              label: uiText('instagram', menuLang),
                               icon: Icons.camera_alt_outlined,
                               color: const Color(0xFFE1306C),
                               onTap: () => _launchInstagram(s.instagramUrl!),
@@ -389,8 +391,12 @@ class _StoreDetailSheetState extends ConsumerState<StoreDetailSheet>
                   labelStyle: const TextStyle(
                       fontWeight: FontWeight.w700, fontSize: 14),
                   tabs: [
-                    Tab(text: '사진 (${_gallery.length})'),
-                    Tab(text: '메뉴판 (${_menuBoards.length})'),
+                    Tab(
+                        text:
+                            '${uiText('photosTab', menuLang)} (${_gallery.length})'),
+                    Tab(
+                        text:
+                            '${uiText('menuBoardTab', menuLang)} (${_menuBoards.length})'),
                   ],
                 ),
                 SizedBox(
@@ -412,7 +418,7 @@ class _StoreDetailSheetState extends ConsumerState<StoreDetailSheet>
                     children: [
                       const Divider(color: CubedColors.line),
                       const SizedBox(height: 4),
-                      Text('리뷰 $reviewCount',
+                      Text('${uiText('reviewsTitle', menuLang)} $reviewCount',
                           style: const TextStyle(
                               fontSize: 15, fontWeight: FontWeight.w800)),
                       const SizedBox(height: 10),
@@ -421,17 +427,18 @@ class _StoreDetailSheetState extends ConsumerState<StoreDetailSheet>
                           padding: EdgeInsets.symmetric(vertical: 16),
                           child: Center(child: CircularProgressIndicator()),
                         ),
-                        error: (_, __) => const Padding(
-                          padding: EdgeInsets.symmetric(vertical: 16),
-                          child: Text('리뷰를 불러오지 못했어요',
-                              style: TextStyle(
+                        error: (_, __) => Padding(
+                          padding: const EdgeInsets.symmetric(vertical: 16),
+                          child: Text(uiText('reviewLoadFailed', menuLang),
+                              style: const TextStyle(
                                   color: CubedColors.inkSoft, fontSize: 13)),
                         ),
                         data: (reviews) => reviews.isEmpty
-                            ? const Padding(
-                                padding: EdgeInsets.symmetric(vertical: 16),
-                                child: Text('아직 리뷰가 없어요. 첫 리뷰를 남겨보세요!',
-                                    style: TextStyle(
+                            ? Padding(
+                                padding:
+                                    const EdgeInsets.symmetric(vertical: 16),
+                                child: Text(uiText('noReviewYet', menuLang),
+                                    style: const TextStyle(
                                         color: CubedColors.inkSoft,
                                         fontSize: 13)),
                               )
@@ -440,6 +447,7 @@ class _StoreDetailSheetState extends ConsumerState<StoreDetailSheet>
                                   for (final r in reviews)
                                     _ReviewTile(
                                       review: r,
+                                      lang: menuLang,
                                       isMine: myId != null && r.userId == myId,
                                       onEdit: _onWriteReview,
                                       onDelete: () => _onDeleteReview(r),
@@ -460,7 +468,7 @@ class _StoreDetailSheetState extends ConsumerState<StoreDetailSheet>
                       child: OutlinedButton.icon(
                         onPressed: _onReportMenuBoard,
                         icon: const Icon(Icons.camera_alt_rounded, size: 16),
-                        label: const Text('메뉴판 제보'),
+                        label: Text(uiText('reportMenuBoard', menuLang)),
                         style: OutlinedButton.styleFrom(
                           foregroundColor: CubedColors.inkSoft,
                           side: const BorderSide(color: CubedColors.line),
@@ -473,7 +481,7 @@ class _StoreDetailSheetState extends ConsumerState<StoreDetailSheet>
                       child: FilledButton.icon(
                         onPressed: _onWriteReview,
                         icon: const Icon(Icons.rate_review_rounded, size: 16),
-                        label: const Text('리뷰 쓰기'),
+                        label: Text(uiText('writeReview', menuLang)),
                         style: FilledButton.styleFrom(
                           backgroundColor: CubedColors.brand,
                           padding: const EdgeInsets.symmetric(vertical: 13),
@@ -688,9 +696,10 @@ class _MenuTile extends StatelessWidget {
   Widget build(BuildContext context) {
     // 보조 정보(칼로리·가격·기준량)는 있는 것만 이어 붙인다.
     final sub = <String>[
-      if (menu.serving != null) menu.serving!,
+      if (menu.serving != null) dict.serving(menu.serving!),
       if (menu.calories != null) '${_fmt(menu.calories!)} kcal',
-      if (menu.priceWon != null) '${_won(menu.priceWon!)}원',
+      if (menu.priceWon != null)
+        '${_won(menu.priceWon!)}${uiText('wonSuffix', lang)}',
     ];
 
     return Padding(
@@ -875,11 +884,13 @@ class _LinkButton extends StatelessWidget {
 class _ReviewTile extends StatelessWidget {
   const _ReviewTile({
     required this.review,
+    required this.lang,
     this.isMine = false,
     this.onEdit,
     this.onDelete,
   });
   final StoreReview review;
+  final AppLang lang;
   final bool isMine;
   final VoidCallback? onEdit;
   final VoidCallback? onDelete;
@@ -911,7 +922,7 @@ class _ReviewTile extends StatelessWidget {
             Icon(rec ? Icons.thumb_up_rounded : Icons.thumb_down_rounded,
                 size: 14, color: rec ? CubedColors.brand : CubedColors.inkSoft),
             const SizedBox(width: 5),
-            Text(rec ? '추천' : '비추천',
+            Text(uiText(rec ? 'recommend' : 'notRecommend', lang),
                 style: TextStyle(
                     fontSize: 12,
                     fontWeight: FontWeight.w800,
@@ -922,8 +933,11 @@ class _ReviewTile extends StatelessWidget {
                     const TextStyle(fontSize: 11, color: CubedColors.inkSoft)),
             if (isMine) ...[
               const SizedBox(width: 4),
-              _MineAction(label: '수정', onTap: onEdit),
-              _MineAction(label: '삭제', onTap: onDelete, danger: true),
+              _MineAction(label: uiText('editAction', lang), onTap: onEdit),
+              _MineAction(
+                  label: uiText('deleteAction', lang),
+                  onTap: onDelete,
+                  danger: true),
             ],
           ]),
           if (review.content != null) ...[

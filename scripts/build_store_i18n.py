@@ -98,7 +98,7 @@ alter table public.franchise_translations
 alter table public.franchise_translations
   add constraint franchise_translations_kind_check
   check (kind in ('menu', 'brand', 'size', 'category',
-                  'store', 'store_menu', 'menu_note'));
+                  'store', 'store_menu', 'menu_note', 'serving', 'store_addr'));
 
 insert into public.franchise_translations (kind, source, lang, value, is_reviewed)
 values

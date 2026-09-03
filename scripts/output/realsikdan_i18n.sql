@@ -1,7 +1,7 @@
--- 리얼식단 전북도청점 대표메뉴/설명 번역 (en/ja/zh)
+-- 리얼식단 전북도청점 상세 번역 (메뉴명·설명·serving·주소) en/ja/zh
 alter table public.franchise_translations drop constraint if exists franchise_translations_kind_check;
 alter table public.franchise_translations add constraint franchise_translations_kind_check
-  check (kind in ('menu','brand','size','category','store','store_menu','menu_note'));
+  check (kind in ('menu','brand','size','category','store','store_menu','menu_note','serving','store_addr'));
 
 insert into public.franchise_translations (kind, source, lang, value, is_reviewed)
 values
@@ -19,6 +19,15 @@ values
   ('menu_note','대체당 제로 음료','zh','使用代糖的零糖饮品',true),
   ('menu_note','흑현미 건강식 대표','en','Signature black-rice healthy meal',true),
   ('menu_note','흑현미 건강식 대표','ja','黒玄米ヘルシー料理の看板メニュー',true),
-  ('menu_note','흑현미 건강식 대표','zh','黑糙米健康餐招牌菜',true)
+  ('menu_note','흑현미 건강식 대표','zh','黑糙米健康餐招牌菜',true),
+  ('serving','1잔','en','1 cup',true),
+  ('serving','1잔','ja','1杯',true),
+  ('serving','1잔','zh','1杯',true),
+  ('serving','1인분','en','1 serving',true),
+  ('serving','1인분','ja','1人前',true),
+  ('serving','1인분','zh','1人份',true),
+  ('store_addr','전북특별자치도 전주시 완산구 범안1길 12','en','12 Beoman 1-gil, Wansan-gu, Jeonju, Jeollabuk-do',true),
+  ('store_addr','전북특별자치도 전주시 완산구 범안1길 12','ja','全羅北道 全州市 完山区 ボマン1ギル 12',true),
+  ('store_addr','전북특별자치도 전주시 완산구 범안1길 12','zh','全罗北道 全州市 完山区 凡安1路 12',true)
 on conflict (kind, source, lang) do update
   set value=excluded.value, is_reviewed=excluded.is_reviewed, updated_at=now();
