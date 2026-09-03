@@ -419,11 +419,11 @@ class _ModeToggle extends StatelessWidget {
       color: CubedColors.bg,
       padding: const EdgeInsets.fromLTRB(12, 10, 12, 4),
       child: Container(
-        height: 40,
-        padding: const EdgeInsets.all(3),
+        height: 44,
+        padding: const EdgeInsets.all(4),
         decoration: BoxDecoration(
           color: CubedColors.surface,
-          borderRadius: BorderRadius.circular(20),
+          borderRadius: BorderRadius.circular(13),
           border: Border.all(color: CubedColors.line),
         ),
         child: Row(children: [
@@ -444,7 +444,7 @@ class _ModeToggle extends StatelessWidget {
           alignment: Alignment.center,
           decoration: BoxDecoration(
             color: selected ? CubedColors.brand : Colors.transparent,
-            borderRadius: BorderRadius.circular(17),
+            borderRadius: BorderRadius.circular(10),
           ),
           child: Row(
             mainAxisSize: MainAxisSize.min,
@@ -500,9 +500,17 @@ class _SearchBar extends StatelessWidget {
               controller: controller,
               onChanged: onChanged,
               textInputAction: TextInputAction.search,
+              // 한글은 디센더가 거의 없어 라인박스 안에서 글자가 위로 몰린다.
+              // 입력 내용을 컨테이너 기준으로 가운데 맞춘다.
+              textAlignVertical: TextAlignVertical.center,
               decoration: InputDecoration(
-                isCollapsed: true,
+                isDense: true,
+                contentPadding: EdgeInsets.zero,
+                // 바깥 Container 가 테두리·배경을 맡는다. (테마 슬롯 전부 해제)
+                filled: false,
                 border: InputBorder.none,
+                enabledBorder: InputBorder.none,
+                focusedBorder: InputBorder.none,
                 hintText: hint,
                 hintStyle: const TextStyle(
                     color: CubedColors.inkSoft, fontSize: 14),

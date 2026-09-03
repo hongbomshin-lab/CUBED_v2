@@ -351,9 +351,19 @@ class _SearchBar extends StatelessWidget {
               controller: controller,
               onChanged: onChanged,
               textInputAction: TextInputAction.search,
+              // 한글은 디센더가 거의 없어 라인박스 안에서 글자가 위로 몰린다.
+              // 입력 내용을 컨테이너 기준으로 가운데 맞춘다.
+              textAlignVertical: TextAlignVertical.center,
               decoration: const InputDecoration(
-                isCollapsed: true,
+                isDense: true,
+                contentPadding: EdgeInsets.zero,
+                // 바깥 Container 가 테두리·배경을 맡는다.
+                // 테마의 enabledBorder/focusedBorder/filled 를 모두 꺼야
+                // 상자가 겹쳐 그려지지 않는다.
+                filled: false,
                 border: InputBorder.none,
+                enabledBorder: InputBorder.none,
+                focusedBorder: InputBorder.none,
                 hintText: '상품명 검색 (예: 쿠키)',
                 hintStyle: TextStyle(color: CubedColors.inkSoft, fontSize: 14),
               ),
@@ -406,7 +416,7 @@ class _DealCard extends StatelessWidget {
     final (tag, cleanName) = deal.tagAndName;
     return Material(
       color: CubedColors.surface,
-      borderRadius: BorderRadius.circular(16),
+      borderRadius: BorderRadius.circular(18),
       clipBehavior: Clip.antiAlias,
       child: InkWell(
         onTap: onTap,
@@ -483,11 +493,22 @@ class _DealCard extends StatelessWidget {
                       crossAxisAlignment: CrossAxisAlignment.baseline,
                       textBaseline: TextBaseline.alphabetic,
                       children: [
-                        Text('${deal.discountRate.round()}%',
-                            style: const TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.w900,
-                                color: CubedColors.caution)),
+                        Transform.rotate(
+                          angle: -0.05,
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 7, vertical: 3),
+                            decoration: BoxDecoration(
+                              color: CubedColors.caution,
+                              borderRadius: BorderRadius.circular(7),
+                            ),
+                            child: Text('${deal.discountRate.round()}%',
+                                style: const TextStyle(
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.w900,
+                                    color: Colors.white)),
+                          ),
+                        ),
                         const SizedBox(width: 5),
                         Text('${_won(deal.salePrice)}원',
                             style: const TextStyle(

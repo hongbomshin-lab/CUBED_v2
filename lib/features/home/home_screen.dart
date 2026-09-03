@@ -4,6 +4,7 @@ import 'package:url_launcher/url_launcher.dart';
 
 import '../../core/feature_flags.dart';
 import '../../core/motion.dart';
+import '../../core/sugar_cube.dart';
 import '../../core/theme.dart';
 import '../../providers/providers.dart';
 import '../auth/login_screen.dart';
@@ -41,60 +42,150 @@ class HomeScreen extends ConsumerWidget {
                 ],
               ),
             ),
-            const SizedBox(height: 22),
-            Reveal(
+            const SizedBox(height: 26),
+
+            // 헤드라인 — 문구는 그대로, 조판만 키운다
+            const Reveal(
               delayMs: 40,
               child: Text('제로·저당, 진짜인지\n3초 만에 확인',
-                  style: Theme.of(context).textTheme.headlineMedium),
+                  style: TextStyle(
+                      color: CubedColors.ink,
+                      fontSize: 29,
+                      height: 1.24,
+                      fontWeight: FontWeight.w900,
+                      letterSpacing: -1.3)),
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: 9),
             const Reveal(
               delayMs: 60,
               child: Text('라벨 뒤에 숨은 당알코올 함정까지 읽어드려요',
-                  style: TextStyle(color: CubedColors.inkSoft, fontSize: 14.5)),
+                  style: TextStyle(color: CubedColors.inkSoft, fontSize: 14)),
             ),
-            const SizedBox(height: 24),
 
-            // 바코드 스캔 (FeatureFlags.barcodeScan 으로 노출 제어)
+            const SizedBox(height: 30),
+
+            // 히어로 — 큐브가 면 밖으로 걸친다
+            Reveal(
+              delayMs: 90,
+              child: GestureDetector(
+                onTap: () => Navigator.of(context).push(
+                  MaterialPageRoute(builder: (_) => const CaptureScreen()),
+                ),
+                child: SizedBox(
+                  height: 196,
+                  child: Stack(
+                    clipBehavior: Clip.none,
+                    children: [
+                      Positioned.fill(
+                        child: Container(
+                          decoration: BoxDecoration(
+                            color: CubedColors.inkCard,
+                            borderRadius:
+                                BorderRadius.circular(CubedFx.radiusHero),
+                          ),
+                          clipBehavior: Clip.antiAlias,
+                          child: const CubeScatter(),
+                        ),
+                      ),
+                      // 큐브 더미가 카드 위로 튀어나온다
+                      Positioned(
+                        right: -12,
+                        top: -18,
+                        child: Transform.rotate(
+                          angle: 0.14,
+                          child: const SugarCubeStack(size: 88),
+                        ),
+                      ),
+                      Positioned(
+                        left: 22,
+                        top: 24,
+                        right: 110,
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 10, vertical: 5),
+                              decoration: BoxDecoration(
+                                color: CubedColors.lime,
+                                borderRadius: BorderRadius.circular(7),
+                              ),
+                              child: const Text('AI 사진 분석',
+                                  style: TextStyle(
+                                      color: CubedColors.inkCard,
+                                      fontSize: 11.5,
+                                      fontWeight: FontWeight.w900,
+                                      letterSpacing: -0.2)),
+                            ),
+                            const SizedBox(height: 26),
+                            const Text('사진 찍고 3초',
+                                style: TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 23,
+                                    height: 1.24,
+                                    fontWeight: FontWeight.w900,
+                                    letterSpacing: -1.0)),
+                            const SizedBox(height: 9),
+                            const Text('앞면 한 장이면 끝 —\n미등록 제품만 3장 촬영',
+                                style: TextStyle(
+                                    color: Color(0xFF9FB6A8),
+                                    fontSize: 12.5,
+                                    height: 1.45)),
+                          ],
+                        ),
+                      ),
+                      Positioned(
+                        right: 20,
+                        bottom: 18,
+                        child: Container(
+                          width: 40,
+                          height: 40,
+                          decoration: BoxDecoration(
+                            color: CubedColors.lime,
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: const Icon(Icons.arrow_forward_rounded,
+                              size: 21, color: CubedColors.inkCard),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+
+            // 바코드 스캔 — FeatureFlags.barcodeScan 으로 노출을 제어한다.
+            // 플래그가 꺼져 있어도 경로는 살려 둔다.
             if (FeatureFlags.barcodeScan) ...[
+              const SizedBox(height: 12),
               Reveal(
-                delayMs: 80,
-                child: _HeroCard(
-                  chipLabel: '바코드 스캔',
+                delayMs: 120,
+                child: _CubeTile(
+                  glyph: CubeGlyph.shoot,
                   title: '바코드를 비추면 끝',
-                  subtitle: '제품 바코드로 혈당 영향·함정을 바로 분석해요',
+                  sub: '',
                   onTap: () => Navigator.of(context).push(
                     MaterialPageRoute(builder: (_) => const ScanScreen()),
                   ),
                 ),
               ),
-              const SizedBox(height: 12),
             ],
 
-            // 메인 CTA — 사진 촬영 → 분석 (등록 제품은 1장, 미등록만 3장)
-            Reveal(
-              delayMs: 90,
-              child: _HeroCard(
-                chipLabel: 'AI 사진 분석',
-                title: '사진 찍고 3초',
-                subtitle: '앞면 한 장이면 끝 — 미등록 제품만 3장 촬영',
-                onTap: () => Navigator.of(context).push(
-                  MaterialPageRoute(builder: (_) => const CaptureScreen()),
-                ),
-              ),
-            ),
-            const SizedBox(height: 12),
+            const SizedBox(height: 30),
 
+            // 기능 — 크기를 일부러 고르지 않게 둔다
             Reveal(
-              delayMs: 130,
+              delayMs: 140,
               child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Expanded(
-                    child: _MiniCard(
-                      icon: Icons.search_rounded,
-                      iconColor: CubedColors.brandDeep,
+                    flex: 5,
+                    child: _CubeTile(
+                      glyph: CubeGlyph.find,
                       title: '이름으로 검색',
-                      subtitle: '408개 제품',
+                      sub: '408개 제품',
+                      tall: true,
                       onTap: () => Navigator.of(context).push(
                         MaterialPageRoute(builder: (_) => const SearchScreen()),
                       ),
@@ -102,34 +193,34 @@ class HomeScreen extends ConsumerWidget {
                   ),
                   const SizedBox(width: 12),
                   Expanded(
-                    child: _MiniCard(
-                      icon: Icons.forum_rounded,
-                      iconColor: CubedColors.brand,
-                      title: 'AI에게 묻기',
-                      subtitle: '혈당·당류 무엇이든',
-                      onTap: () => Navigator.of(context).push(
-                        MaterialPageRoute(builder: (_) => const ChatScreen()),
-                      ),
+                    flex: 4,
+                    child: Column(
+                      children: [
+                        _CubeTile(
+                          glyph: CubeGlyph.ask,
+                          title: '물어보기',
+                          sub: '',
+                          onTap: () => Navigator.of(context).push(
+                            MaterialPageRoute(builder: (_) => const ChatScreen()),
+                          ),
+                        ),
+                        const SizedBox(height: 12),
+                        _CubeTile(
+                          glyph: CubeGlyph.log,
+                          title: '먹은 기록',
+                          sub: '',
+                          onTap: () => Navigator.of(context).push(
+                            MaterialPageRoute(builder: (_) => const DiaryScreen()),
+                          ),
+                        ),
+                      ],
                     ),
                   ),
                 ],
               ),
             ),
-            const SizedBox(height: 12),
 
-            Reveal(
-              delayMs: 170,
-              child: _WideCard(
-                icon: Icons.calendar_month_rounded,
-                title: '내가 먹은 기록',
-                subtitle: '날짜별로 먹은 제품을 돌아봐요',
-                onTap: () => Navigator.of(context).push(
-                  MaterialPageRoute(builder: (_) => const DiaryScreen()),
-                ),
-              ),
-            ),
-
-            const SizedBox(height: 30),
+            const SizedBox(height: 34),
             const Reveal(
               delayMs: 210,
               child: Text('이렇게 도와드려요',
@@ -371,227 +462,62 @@ class _DataBadge extends StatelessWidget {
   }
 }
 
-/// 다크 잉크 히어로 카드 — 라임 도트 그리드 + 라임 액션 버튼.
-class _HeroCard extends StatelessWidget {
-  const _HeroCard({
-    required this.chipLabel,
+class _CubeTile extends StatelessWidget {
+  const _CubeTile({
+    required this.glyph,
     required this.title,
-    required this.subtitle,
+    required this.sub,
     required this.onTap,
+    this.tall = false,
   });
-  final String chipLabel, title, subtitle;
+  final CubeGlyph glyph;
+  final String title, sub;
   final VoidCallback onTap;
+  final bool tall;
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(CubedFx.radiusHero),
-        boxShadow: CubedFx.shadowLift,
-      ),
-      child: Material(
-        color: CubedColors.inkCard,
-        borderRadius: BorderRadius.circular(CubedFx.radiusHero),
-        clipBehavior: Clip.antiAlias,
-        child: InkWell(
-          onTap: onTap,
-          child: Stack(
-            children: [
-              const Positioned.fill(
-                child: CustomPaint(painter: _DotGridPainter()),
-              ),
-              Padding(
-                padding: const EdgeInsets.all(22),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      children: [
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 10, vertical: 5),
-                          decoration: BoxDecoration(
-                            color: CubedColors.lime,
-                            borderRadius: BorderRadius.circular(999),
-                          ),
-                          child: Text(chipLabel,
-                              style: const TextStyle(
-                                  color: CubedColors.ink,
-                                  fontSize: 11,
-                                  fontWeight: FontWeight.w800)),
-                        ),
-                        const Spacer(),
-                        Container(
-                          width: 44,
-                          height: 44,
-                          decoration: const BoxDecoration(
-                            color: CubedColors.lime,
-                            shape: BoxShape.circle,
-                          ),
-                          child: const Icon(Icons.arrow_forward_rounded,
-                              color: CubedColors.ink, size: 22),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 20),
-                    Text(title,
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(CubedFx.radiusCard),
+      child: Container(
+        height: tall ? 168 : 78,
+        padding: const EdgeInsets.fromLTRB(16, 15, 14, 14),
+        decoration: BoxDecoration(
+          color: CubedColors.surface,
+          borderRadius: BorderRadius.circular(CubedFx.radiusCard),
+          boxShadow: CubedFx.shadowCard,
+        ),
+        child: tall
+            ? Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  CubeBadge(glyph: glyph, size: 48, tilt: -0.08),
+                  const Spacer(),
+                  Text(title,
+                      style: const TextStyle(
+                          fontSize: 17,
+                          fontWeight: FontWeight.w900,
+                          letterSpacing: -0.6)),
+                  if (sub.isNotEmpty)
+                    Text(sub,
                         style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 22,
+                            color: CubedColors.inkSoft, fontSize: 12.5)),
+                ],
+              )
+            : Row(
+                children: [
+                  CubeBadge(glyph: glyph, size: 34, tilt: 0.07),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Text(title,
+                        style: const TextStyle(
+                            fontSize: 14.5,
                             fontWeight: FontWeight.w800,
-                            letterSpacing: -0.5)),
-                    const SizedBox(height: 6),
-                    Text(subtitle,
-                        style: TextStyle(
-                            color: Colors.white.withValues(alpha: 0.72),
-                            fontSize: 13.5)),
-                  ],
-                ),
+                            letterSpacing: -0.4)),
+                  ),
+                ],
               ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-/// 히어로 카드 배경 — 은은한 라임 도트 그리드 (ZERO DOT 모티프).
-class _DotGridPainter extends CustomPainter {
-  const _DotGridPainter();
-  @override
-  void paint(Canvas canvas, Size size) {
-    final p = Paint()..color = CubedColors.lime.withValues(alpha: 0.09);
-    for (double y = 12; y < size.height; y += 20) {
-      for (double x = 12; x < size.width; x += 20) {
-        canvas.drawCircle(Offset(x, y), 1.4, p);
-      }
-    }
-  }
-
-  @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
-}
-
-class _MiniCard extends StatelessWidget {
-  const _MiniCard({
-    required this.icon,
-    required this.iconColor,
-    required this.title,
-    required this.subtitle,
-    required this.onTap,
-  });
-  final IconData icon;
-  final Color iconColor;
-  final String title, subtitle;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(CubedFx.radiusCard),
-        boxShadow: CubedFx.shadowCard,
-      ),
-      child: Material(
-        color: CubedColors.surface,
-        borderRadius: BorderRadius.circular(CubedFx.radiusCard),
-        clipBehavior: Clip.antiAlias,
-        child: InkWell(
-          onTap: onTap,
-          child: Padding(
-            padding: const EdgeInsets.all(16),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Container(
-                  width: 40,
-                  height: 40,
-                  decoration: BoxDecoration(
-                    color: iconColor.withValues(alpha: 0.1),
-                    borderRadius: BorderRadius.circular(13),
-                  ),
-                  child: Icon(icon, color: iconColor, size: 22),
-                ),
-                const SizedBox(height: 14),
-                Text(title,
-                    style: const TextStyle(
-                        fontWeight: FontWeight.w800,
-                        fontSize: 15,
-                        letterSpacing: -0.2)),
-                const SizedBox(height: 3),
-                Text(subtitle,
-                    style: const TextStyle(
-                        color: CubedColors.inkSoft, fontSize: 12)),
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _WideCard extends StatelessWidget {
-  const _WideCard({
-    required this.icon,
-    required this.title,
-    required this.subtitle,
-    required this.onTap,
-  });
-  final IconData icon;
-  final String title, subtitle;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(CubedFx.radiusCard),
-        boxShadow: CubedFx.shadowCard,
-      ),
-      child: Material(
-        color: CubedColors.surface,
-        borderRadius: BorderRadius.circular(CubedFx.radiusCard),
-        clipBehavior: Clip.antiAlias,
-        child: InkWell(
-          onTap: onTap,
-          child: Padding(
-            padding: const EdgeInsets.all(16),
-            child: Row(
-              children: [
-                Container(
-                  width: 44,
-                  height: 44,
-                  decoration: BoxDecoration(
-                    color: CubedColors.brandDeep.withValues(alpha: 0.08),
-                    borderRadius: BorderRadius.circular(14),
-                  ),
-                  child: Icon(icon, color: CubedColors.brandDeep, size: 23),
-                ),
-                const SizedBox(width: 14),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(title,
-                          style: const TextStyle(
-                              fontWeight: FontWeight.w800,
-                              fontSize: 15,
-                              letterSpacing: -0.2)),
-                      const SizedBox(height: 3),
-                      Text(subtitle,
-                          style: const TextStyle(
-                              color: CubedColors.inkSoft, fontSize: 12)),
-                    ],
-                  ),
-                ),
-                const Icon(Icons.arrow_forward_ios_rounded,
-                    color: CubedColors.inkSoft, size: 14),
-              ],
-            ),
-          ),
-        ),
       ),
     );
   }
