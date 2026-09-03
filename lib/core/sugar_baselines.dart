@@ -181,7 +181,10 @@ int sugarPointsFor({
 }) {
   final rule = sugarBaselineFor(category: category, name: name);
   if (rule == null) return 0;
-  final saved = rule.baselineG - sugar;
+  // 당류가 음수인 데이터(입력·OCR 오류)가 들어오면 기준값보다 큰 적립이 나온다.
+  // 적립은 '아낀 설탕'이라 기준값을 넘을 수 없다.
+  final s = sugar.isNaN || sugar < 0 ? 0.0 : sugar;
+  final saved = rule.baselineG - s;
   if (saved <= 0) return 0;
   return saved.round();
 }

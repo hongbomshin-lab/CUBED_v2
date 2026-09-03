@@ -1,0 +1,82 @@
+[
+  {
+    "code": "daily_checkin",
+    "title": "매일 출석체크",
+    "description": "하루 한 번 앱에 들르면 적립",
+    "icon": "event_available",
+    "trigger": "checkin",
+    "condition": {},
+    "period": "daily",
+    "target": 1,
+    "reward": 10,
+    "sort": 10,
+    "active": true
+  },
+  {
+    "code": "streak_3",
+    "title": "3일 연속 출석",
+    "description": "사흘만 이어가도 보너스",
+    "icon": "local_fire_department",
+    "trigger": "checkin",
+    "condition": {},
+    "period": "streak",
+    "target": 3,
+    "reward": 30,
+    "sort": 20,
+    "active": true
+  },
+  {
+    "code": "streak_7",
+    "title": "7일 연속 출석",
+    "description": "일주일을 채우면 크게 적립",
+    "icon": "local_fire_department",
+    "trigger": "checkin",
+    "condition": {},
+    "period": "streak",
+    "target": 7,
+    "reward": 100,
+    "sort": 21,
+    "active": true
+  },
+  {
+    "code": "streak_30",
+    "title": "30일 연속 출석",
+    "description": "한 달을 채운 사람에게",
+    "icon": "workspace_premium",
+    "trigger": "checkin",
+    "condition": {},
+    "period": "streak",
+    "target": 30,
+    "reward": 500,
+    "sort": 22,
+    "active": true
+  },
+  {
+    "code": "low_sugar_daily",
+    "title": "저당 제품 인증",
+    "description": "오늘 먹은 저당 제품을 기록하세요",
+    "icon": "restaurant",
+    "trigger": "product_log",
+    "condition": {
+      "grade": "low"
+    },
+    "period": "daily",
+    "target": 1,
+    "reward": 20,
+    "sort": 30,
+    "active": true
+  },
+  {
+    "code": "weekly_5_logs",
+    "title": "이번 주 5번 기록",
+    "description": "꾸준히 기록하면 보너스",
+    "icon": "edit_calendar",
+    "trigger": "product_log",
+    "condition": {},
+    "period": "weekly",
+    "target": 5,
+    "reward": 50,
+    "sort": 40,
+    "active": true
+  }
+]

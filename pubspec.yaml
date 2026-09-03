@@ -46,6 +46,9 @@ flutter:
   uses-material-design: true
   assets:
     - assets/brand/
+    # 미션 정의 — 코드에 박지 않고 데이터로 읽는다.
+    # 나중에 missions 테이블로 옮기면 리포지토리만 교체하면 된다.
+    - assets/missions.json
   fonts:
     - family: Pretendard
       fonts:

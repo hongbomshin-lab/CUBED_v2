@@ -58,7 +58,9 @@ class FoodLogRepository {
   }
 
   /// '오늘 이거 먹었어요' 토글 → 기록됐으면 true, 해제됐으면 false
-  Future<bool> toggleToday({
+  /// 오늘 기록 토글. 추가되면 새 기록의 id, 취소되면 null.
+  /// (id 가 필요한 이유: 서버 적립 RPC 가 '어느 기록으로 적립할지'를 받는다)
+  Future<String?> toggleToday({
     String? productId,
     required String name,
     String? brand,
@@ -72,9 +74,9 @@ class FoodLogRepository {
     final existing = await todayLogFor(productId: productId, name: name);
     if (existing != null) {
       await _db.from('product_logs').delete().eq('id', existing.id);
-      return false;
+      return null;
     }
-    await _db.from('product_logs').insert(FoodLog.insertMap(
+    final row = await _db.from('product_logs').insert(FoodLog.insertMap(
           userId: uid,
           eatenOn: DateTime.now(),
           productId: productId,
@@ -84,8 +86,8 @@ class FoodLogRepository {
           grade: grade,
           imagePath: imagePath,
           points: points,
-        ));
-    return true;
+        )).select('id').single();
+    return row['id'] as String;
   }
 
   Future<void> removeLog(String id) async {
