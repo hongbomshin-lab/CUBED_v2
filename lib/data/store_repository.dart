@@ -15,8 +15,7 @@ class StoreRepository {
   StoreRepository(this._db);
   final SupabaseClient _db;
 
-  static const _cols =
-      '*, store_photos(image_url, is_primary, photo_type)';
+  static const _cols = '*, store_photos(image_url, is_primary, photo_type)';
 
   /// 현재 지도 영역(bounding box) 안의 활성 매장을 조회.
   /// [types] 가 비어 있으면 전체, 아니면 해당 store_type 만 필터.
@@ -228,7 +227,8 @@ class StoreRepository {
   Future<List<MyReview>> myReviews(String userId, {int limit = 100}) async {
     final rows = await _db
         .from('store_reviews')
-        .select('id, store_id, is_recommended, content, created_at, stores(name)')
+        .select(
+            'id, store_id, is_recommended, content, created_at, stores(name)')
         .eq('user_id', userId)
         .eq('is_active', true)
         .order('created_at', ascending: false)
@@ -263,6 +263,13 @@ class StoreRepository {
       'content': (trimmed == null || trimmed.isEmpty) ? null : trimmed,
       'updated_at': DateTime.now().toIso8601String(),
     }, onConflict: 'store_id,user_id');
+  }
+
+  /// 리뷰 삭제 (본인 것만 — RLS 로 강제). hard delete 로 지워야
+  /// DELETE 트리거가 매장 review_count·recommend_count 를 정확히 되돌린다.
+  /// (soft delete 는 트리거가 카운트를 안 줄여 수치가 틀어진다)
+  Future<void> deleteReview(String reviewId) async {
+    await _db.from('store_reviews').delete().eq('id', reviewId);
   }
 
   /// 매장 제보 등록. 이름만 필수, 나머지는 선택(관리자가 승인 시 보완).
