@@ -1,0 +1,6 @@
+{"brand":"이로운제과","menus":[
+{"name":"콘멜로쿠키","kind":"signature","sugar_g":null,"calories":null,"price_won":null,"serving":null,"note":"비건·글루텐프리 멜로 쿠키, 대표 상품","source_url":"https://www.relaxweek.kr/_subpage/kor/popup/corpinfo.window2023.php?wm_id=105","confidence":"estimated"},
+{"name":"단호박멜로쿠키","kind":"signature","sugar_g":null,"calories":null,"price_won":null,"serving":null,"note":"단호박 비건 멜로쿠키","source_url":"https://www.relaxweek.kr/_subpage/kor/popup/corpinfo.window2023.php?wm_id=105","confidence":"estimated"},
+{"name":"튼튼쿠키","kind":"low_sugar","sugar_g":null,"calories":null,"price_won":null,"serving":null,"note":"국내산·유기농, 저당/무설탕 지향 비건 쿠키","source_url":"https://www.relaxweek.kr/_subpage/kor/popup/corpinfo.window2023.php?wm_id=105","confidence":"estimated"},
+{"name":"스노우볼","kind":"low_sugar","sugar_g":null,"calories":null,"price_won":null,"serving":null,"note":"비건·글루텐프리 저당 스노우볼","source_url":"https://www.relaxweek.kr/_subpage/kor/popup/corpinfo.window2023.php?wm_id=105","confidence":"estimated"}
+]}

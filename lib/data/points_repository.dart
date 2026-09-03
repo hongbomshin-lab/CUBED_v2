@@ -89,33 +89,46 @@ class PointsRepository {
     return rows.cast<Map<String, dynamic>>();
   }
 
-  /// 미션 진행 상황 (mission_code → count/완료여부).
-  Future<Map<String, ({int count, bool done})>> progress() async {
+  /// 미션 진행 상황 — 행 단위로 그대로 돌려준다.
+  ///
+  /// 한 미션에 기간(period_key)이 다른 여러 행이 있다(매일 출석은 날짜별로).
+  /// mission_code 로만 뭉치면 어느 날 행이 남을지 알 수 없어, **현재 기간**의
+  /// 진행이 화면에 안 뜨거나 지난 기간의 '완료'가 잘못 뜬다. 그래서 뭉치지 않고
+  /// period_key 를 붙여 넘기고, 어느 기간이 지금인지는 호출부가 고른다.
+  Future<List<({String code, String periodKey, int count, bool done})>>
+      progress() async {
     final rows = await _db
         .from('mission_progress')
-        .select('mission_code, count, completed_at');
-    return {
+        .select('mission_code, period_key, count, completed_at');
+    return [
       for (final r in rows)
-        r['mission_code'] as String: (
+        (
+          code: r['mission_code'] as String,
+          periodKey: (r['period_key'] as String?) ?? '',
           count: (r['count'] as num?)?.toInt() ?? 0,
           done: r['completed_at'] != null,
         ),
-    };
+    ];
   }
 
   /// 출석 연속 상태.
-  Future<({int current, int best, DateTime? lastDate})> streak() async {
+  Future<({int current, int best, DateTime? lastDate, String? startDate})>
+      streak() async {
     final row = await _db
         .from('user_streaks')
         .select()
         .eq('kind', 'checkin')
         .maybeSingle();
-    if (row == null) return (current: 0, best: 0, lastDate: null);
+    if (row == null) {
+      return (current: 0, best: 0, lastDate: null, startDate: null);
+    }
     final last = row['last_date'] as String?;
     return (
       current: (row['current'] as num?)?.toInt() ?? 0,
       best: (row['best'] as num?)?.toInt() ?? 0,
       lastDate: last == null ? null : DateTime.parse(last),
+      // streak 미션의 기간키. 연속이 시작된 날 그대로(문자열) 넘긴다.
+      startDate: row['start_date'] as String?,
     );
   }
 

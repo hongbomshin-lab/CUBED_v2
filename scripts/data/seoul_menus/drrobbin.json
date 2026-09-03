@@ -1,0 +1,5 @@
+{"brand":"닥터로빈","menus":[
+{"name":"시그니처 단호박 수프","kind":"signature","sugar_g":null,"calories":null,"price_won":null,"serving":"1인분","note":"고단백 저지방 두유크림+통단호박. No Sugar·No MSG·No Butter 철학의 대표 메뉴","source_url":"https://www.drrobbin.com/","confidence":"official"},
+{"name":"뽈뽀 샐러드","kind":"low_sugar","sugar_g":null,"calories":null,"price_won":null,"serving":"1인분","note":"문어+지중해 채소, 아이올리+레몬. 무설탕 철학 웰니스 샐러드","source_url":"https://drrobbin.com/category/%EC%83%90%EB%9F%AC%EB%93%9C%EC%88%98%ED%94%84/79/","confidence":"official"},
+{"name":"알배추 샐러드","kind":"low_sugar","sugar_g":null,"calories":null,"price_won":null,"serving":"1인분","note":"베이컨칩·페코리노·깻잎잼. No Sugar 지향 샐러드","source_url":"https://drrobbin.com/category/%EC%83%90%EB%9F%AC%EB%93%9C%EC%88%98%ED%94%84/79/","confidence":"official"}
+]}

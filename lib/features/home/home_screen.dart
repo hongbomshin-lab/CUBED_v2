@@ -11,6 +11,7 @@ import '../auth/login_screen.dart';
 import '../capture/capture_screen.dart';
 import '../chat/chat_screen.dart';
 import '../diary/diary_screen.dart';
+import '../record/record_entry_card.dart';
 import '../scan/scan_screen.dart';
 import '../search/search_screen.dart';
 
@@ -218,6 +219,14 @@ class HomeScreen extends ConsumerWidget {
                   ),
                 ],
               ),
+            ),
+
+            const SizedBox(height: 12),
+            // 저당 기록 진입 — '먹은 기록' 타일 바로 아래에 둬
+            // '기록하기 + 돌아보기'가 한 묶음으로 읽히게. (진입점은 이 위젯 하나뿐이라 이동 쉬움)
+            const Reveal(
+              delayMs: 155,
+              child: RecordEntryCard(),
             ),
 
             const SizedBox(height: 34),

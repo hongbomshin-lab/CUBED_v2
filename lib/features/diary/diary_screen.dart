@@ -53,8 +53,8 @@ class _DiaryScreenState extends ConsumerState<DiaryScreen> {
       return;
     }
     // 기록이 속한 달을 무효화 — await 중 달력을 넘겼어도 정확한 달을 갱신
-    container.invalidate(monthLogsProvider(
-        (year: log.eatenOn.year, month: log.eatenOn.month)));
+    container.invalidate(
+        monthLogsProvider((year: log.eatenOn.year, month: log.eatenOn.month)));
     container.invalidate(myPointsProvider); // 삭제된 기록의 포인트 반영
   }
 
@@ -81,8 +81,10 @@ class _DiaryScreenState extends ConsumerState<DiaryScreen> {
             focusedDay: _focused,
             selectedDayPredicate: (d) => isSameDay(d, _selected),
             eventLoader: (d) => byDay[FoodLog.dateKey(d)] ?? const [],
-            onDaySelected: (sel, foc) =>
-                setState(() { _selected = sel; _focused = foc; }),
+            onDaySelected: (sel, foc) => setState(() {
+              _selected = sel;
+              _focused = foc;
+            }),
             onPageChanged: (foc) => setState(() => _focused = foc),
             headerStyle: HeaderStyle(
               formatButtonVisible: false,
@@ -172,8 +174,8 @@ class _LogTile extends StatelessWidget {
       child: ListTile(
         contentPadding: const EdgeInsets.symmetric(vertical: 6),
         leading: _LogThumb(log: log),
-        title: Text(log.name,
-            style: const TextStyle(fontWeight: FontWeight.w700)),
+        title:
+            Text(log.name, style: const TextStyle(fontWeight: FontWeight.w700)),
         subtitle: Text(
           log.brand ?? (log.productId == null ? '사진으로 분석한 제품' : ''),
           style: const TextStyle(color: CubedColors.inkSoft, fontSize: 12),
@@ -184,10 +186,12 @@ class _LogTile extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.end,
           children: [
             _GradeBadge(grade: log.grade),
+            // log.points 는 '아낀 당류(g)' 값이다(포인트 아님). 포인트는 미션이 정하고
+            // 잔액·포인트 내역에서 본다. 여기선 아낀 설탕 양을 그대로 보여준다.
             if (log.points > 0)
               Padding(
                 padding: const EdgeInsets.only(top: 4),
-                child: Text('+${log.points}P',
+                child: Text('설탕 −${log.points}g',
                     style: const TextStyle(
                         fontSize: 12,
                         fontWeight: FontWeight.w800,
@@ -221,8 +225,7 @@ class _LogThumb extends ConsumerWidget {
         );
     if (src == null) return fallback();
 
-    final token =
-        ref.watch(supabaseProvider).auth.currentSession?.accessToken;
+    final token = ref.watch(supabaseProvider).auth.currentSession?.accessToken;
     final headers = src.needsAuth && token != null
         ? {'Authorization': 'Bearer $token'}
         : null;

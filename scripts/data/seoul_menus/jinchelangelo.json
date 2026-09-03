@@ -1,0 +1,5 @@
+{"brand":"진켈란젤로 치즈케이크","menus":[
+{"name":"시그니처 블루치즈 케이크","kind":"signature","sugar_g":null,"calories":null,"price_won":6900,"serving":"조각","note":"대표 시그니처. 밀가루·버터 무첨가. 홀 1호 27,500/2호 54,300","source_url":"https://www.diningcode.com/profile.php?rid=Y2zcgsDhfNLA","confidence":"menu_board"},
+{"name":"클래식 메이플치즈 케이크","kind":"signature","sugar_g":null,"calories":null,"price_won":6900,"serving":"조각","note":"밀가루·버터 무첨가","source_url":"https://www.diningcode.com/profile.php?rid=Y2zcgsDhfNLA","confidence":"menu_board"},
+{"name":"다크 쇼콜라","kind":"signature","sugar_g":null,"calories":null,"price_won":6900,"serving":"조각","note":"6종 라인업 중 하나","source_url":"https://www.diningcode.com/profile.php?rid=Y2zcgsDhfNLA","confidence":"menu_board"}
+]}
