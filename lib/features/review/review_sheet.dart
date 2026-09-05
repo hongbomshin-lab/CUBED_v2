@@ -86,7 +86,13 @@ class _ReviewSheetState extends ConsumerState<ReviewSheet> {
       Navigator.of(context).pop(true);
       _toast(_editing ? '리뷰를 수정했어요' : '리뷰를 등록했어요');
     } catch (e) {
-      _toast('리뷰 저장에 실패했어요. 잠시 후 다시 시도해 주세요');
+      // 금칙어 차단(서버 트리거) — 친절한 안내로 구분.
+      final msg = e.toString();
+      if (msg.contains('부적절한 표현') || msg.contains('23514')) {
+        _toast('부적절한 표현이 포함되어 있어요. 내용을 수정해 주세요');
+      } else {
+        _toast('리뷰 저장에 실패했어요. 잠시 후 다시 시도해 주세요');
+      }
     } finally {
       if (mounted) setState(() => _submitting = false);
     }
