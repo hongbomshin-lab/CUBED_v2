@@ -161,15 +161,53 @@ class StoreRepository {
   }
 
   /// 매장 리뷰 목록 (최신순).
+  ///
+  /// visible_store_reviews RPC 로 조회 — 비활성(자동 숨김)·내가 차단한 작성자·
+  /// 내가 신고한 리뷰를 서버에서 제외한다(Apple UGC 필터링 요건).
   Future<List<StoreReview>> reviews(String storeId, {int limit = 50}) async {
-    final rows = await _db
-        .from('store_reviews')
-        .select()
-        .eq('store_id', storeId)
-        .eq('is_active', true)
-        .order('created_at', ascending: false)
-        .limit(limit);
-    return rows.map((m) => StoreReview.fromMap(m)).toList();
+    final rows = await _db.rpc('visible_store_reviews', params: {
+      'p_store_id': storeId,
+      'p_limit': limit,
+    }) as List<dynamic>;
+    return rows
+        .cast<Map<String, dynamic>>()
+        .map((m) => StoreReview.fromMap(m))
+        .toList();
+  }
+
+  /// 리뷰 신고 — 사유 필수(spam/abuse/sexual/illegal/false_info/other).
+  /// 서로 다른 사용자 3명 이상 신고 시 DB 트리거가 자동 숨김 처리.
+  /// (본인 리뷰 신고·중복 신고는 DB 제약으로 차단)
+  Future<void> reportReview({
+    required String reviewId,
+    required String reporterId,
+    required String reason,
+    String? detail,
+  }) async {
+    final d = detail?.trim();
+    await _db.from('review_reports').insert({
+      'review_id': reviewId,
+      'reporter_id': reporterId,
+      'reason': reason,
+      'detail': (d == null || d.isEmpty) ? null : d,
+    });
+  }
+
+  /// 사용자 차단 — 차단 후 그 사용자의 리뷰는 내 화면에서 즉시 사라진다.
+  Future<void> blockUser(String blockerId, String blockedId) async {
+    await _db.from('user_blocks').upsert(
+      {'blocker_id': blockerId, 'blocked_id': blockedId},
+      onConflict: 'blocker_id,blocked_id',
+      ignoreDuplicates: true,
+    );
+  }
+
+  /// 차단 해제.
+  Future<void> unblockUser(String blockerId, String blockedId) async {
+    await _db
+        .from('user_blocks')
+        .delete()
+        .match({'blocker_id': blockerId, 'blocked_id': blockedId});
   }
 
   /// 매장 대표 메뉴 (저당 + 시그니처). 저당 메뉴를 먼저, 그 안에서 sort_order 순.
