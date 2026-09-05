@@ -26,12 +26,17 @@ class TranslationDict {
   String store(String? s) => of('store', s);
   String storeMenu(String? s) => of('store_menu', s);
   String menuNote(String? s) => of('menu_note', s);
+  String serving(String? s) => of('serving', s);
+  String storeAddr(String? s) => of('store_addr', s);
 
   /// 메뉴 표시명 번역 — 사전 키(기본명)로 찾고, 없으면 화면용 원문으로 폴백.
   String menuName(String display, String key) {
     if (!lang.needsTranslation) return display;
-    return _map['menu|${key.trim()}'] ?? _map['menu|${display.trim()}'] ?? display;
+    return _map['menu|${key.trim()}'] ??
+        _map['menu|${display.trim()}'] ??
+        display;
   }
+
   String brand(String? s) => of('brand', s);
   String size(String? s) => of('size', s);
   String category(String? s) => of('category', s);

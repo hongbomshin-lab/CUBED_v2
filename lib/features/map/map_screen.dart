@@ -361,6 +361,12 @@ class _MapScreenState extends ConsumerState<MapScreen> {
                   _fetchStores();
                 },
                 onCameraIdle: _scheduleFetch,
+                // 지도를 탭하면 검색 자판을 내리고 결과 오버레이도 닫는다.
+                // (검색 후 포커스가 남아 자판이 계속 떠 있던 문제 해결)
+                onMapTapped: (_, __) {
+                  FocusScope.of(context).unfocus();
+                  if (_searchOpen) setState(() => _searchOpen = false);
+                },
               ),
               // 프랜차이즈 토글 — 칩 줄 끝에 두면 스와이프해야 보여서 지도 위로 뺐다.
               // 토글을 위에 고정하고 '조회 중'은 그 아래에 붙인다.
