@@ -132,9 +132,13 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
         padding: const EdgeInsets.fromLTRB(24, 12, 24, 32),
         children: [
           const SizedBox(height: 8),
+          // 브랜드 마크 — 로고 → 이름 → 안내문 순서로 읽히게 한다
+          Image.asset('assets/brand/logo.png',
+              width: 76, height: 76, filterQuality: FilterQuality.medium),
+          const SizedBox(height: 18),
           const Text('ZERO DOT',
               style: TextStyle(
-                  fontSize: 32, fontWeight: FontWeight.w900, color: CubedColors.brand, letterSpacing: -1)),
+                  fontSize: 30, fontWeight: FontWeight.w900, color: CubedColors.brand, letterSpacing: -1)),
           const SizedBox(height: 6),
           const Text('로그인하고 좋아요·코멘트를 남겨보세요',
               style: TextStyle(color: CubedColors.inkSoft, fontSize: 14)),

@@ -2,7 +2,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../core/explain.dart';
-import '../../../core/rulebook.dart';
+import '../../../core/sugar_cube.dart';
 import '../../../core/theme.dart';
 import '../../../domain/interpretation.dart';
 import '../../../domain/verdict.dart';
@@ -17,25 +17,45 @@ class VerdictHero extends StatelessWidget {
   Widget build(BuildContext context) {
     final v = Verdict.of(it);
     final c = CubedColors.grade(v.grade);
+    final gt = gradeText[v.grade]!;
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(20),
+      padding: const EdgeInsets.fromLTRB(20, 22, 20, 20),
       decoration: BoxDecoration(
-        color: c.withValues(alpha: 0.08),
+        color: c.withValues(alpha: 0.07),
         borderRadius: BorderRadius.circular(CubedFx.radiusHero),
-        border: Border.all(color: c.withValues(alpha: 0.18)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          // 왼쪽에 판정, 오른쪽에 큐브. 수치는 아래 3칸이 맡는다.
+          Row(
+            children: [
+              Container(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 13, vertical: 8),
+                decoration: BoxDecoration(
+                  color: c,
+                  borderRadius: BorderRadius.circular(9),
+                ),
+                child: Text(gt.badge,
+                    style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 14.5,
+                        fontWeight: FontWeight.w900,
+                        letterSpacing: -0.4)),
+              ),
+              const Spacer(),
+              GradeCubes(grade: v.grade, cubeSize: 42),
+            ],
+          ),
+          const SizedBox(height: 20),
           Row(
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              _SignalLights(active: v.grade),
-              const SizedBox(width: 14),
               Expanded(
                 child: v.kind == VerdictKind.generic
-                    ? _GradeBadge(grade: v.grade)
+                    ? const SizedBox.shrink()
                     : _LabelVsReality(v: v),
               ),
             ],
@@ -137,60 +157,6 @@ class _LabelVsReality extends StatelessWidget {
   }
 }
 
-class _GradeBadge extends StatelessWidget {
-  const _GradeBadge({required this.grade});
-  final Grade grade;
-  @override
-  Widget build(BuildContext context) {
-    final gt = gradeText[grade]!;
-    final c = CubedColors.grade(grade);
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(gt.badge,
-            style: TextStyle(
-                color: c,
-                fontWeight: FontWeight.w800,
-                fontSize: 24,
-                letterSpacing: -0.5)),
-        const SizedBox(height: 2),
-        Text(gt.desc, style: const TextStyle(color: CubedColors.inkSoft, fontSize: 13, height: 1.4)),
-      ],
-    );
-  }
-}
-
-class _SignalLights extends StatelessWidget {
-  const _SignalLights({required this.active});
-  final Grade active;
-  @override
-  Widget build(BuildContext context) {
-    Widget dot(Grade g) {
-      final on = g == active;
-      return Container(
-        margin: const EdgeInsets.symmetric(vertical: 3),
-        width: 18, height: 18,
-        decoration: BoxDecoration(
-          shape: BoxShape.circle,
-          color: on ? CubedColors.grade(g) : CubedColors.grade(g).withValues(alpha: 0.18),
-          boxShadow: on
-              ? [BoxShadow(color: CubedColors.grade(g).withValues(alpha: 0.5), blurRadius: 8, spreadRadius: 1)]
-              : null,
-        ),
-      );
-    }
-
-    return Container(
-      padding: const EdgeInsets.all(6),
-      decoration: BoxDecoration(
-        color: CubedColors.ink,
-        borderRadius: BorderRadius.circular(16),
-      ),
-      child: Column(children: [dot(Grade.caution), dot(Grade.mid), dot(Grade.low)]),
-    );
-  }
-}
-
 class _Stat extends StatelessWidget {
   const _Stat({required this.label, required this.value});
   final String label, value;
@@ -199,7 +165,7 @@ class _Stat extends StatelessWidget {
     return Expanded(
       child: Column(
         children: [
-          Text(value, style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 16)),
+          Text(value, style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 20, letterSpacing: -0.6)),
           const SizedBox(height: 2),
           Text(label, style: const TextStyle(color: CubedColors.inkSoft, fontSize: 11)),
         ],
