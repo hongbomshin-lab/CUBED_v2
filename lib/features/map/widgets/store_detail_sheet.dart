@@ -204,6 +204,74 @@ class _StoreDetailSheetState extends ConsumerState<StoreDetailSheet>
     }
   }
 
+  /// 리뷰 신고 — 로그인 확인 → 사유 선택 시트 → 접수. 접수 후 내 화면에서 즉시 숨김.
+  Future<void> _onReportReview(StoreReview r) async {
+    final user = ref.read(currentUserProvider);
+    if (user == null) {
+      await Navigator.of(context).push(
+        MaterialPageRoute(builder: (_) => const LoginScreen()),
+      );
+      return;
+    }
+    final lang = ref.read(menuLangProvider);
+    final reason = await showModalBottomSheet<String>(
+      context: context,
+      backgroundColor: CubedColors.surface,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      builder: (_) => _ReportReasonSheet(lang: lang),
+    );
+    if (reason == null) return;
+    try {
+      await ref.read(storeRepositoryProvider).reportReview(
+            reviewId: r.id,
+            reporterId: user.id,
+            reason: reason,
+          );
+      ref.invalidate(storeReviewsProvider(r.storeId)); // 신고한 리뷰 즉시 숨김
+      if (mounted) _toast(uiText('reportDone', lang));
+    } catch (_) {
+      if (mounted) _toast(uiText('reviewLoadFailed', lang));
+    }
+  }
+
+  /// 사용자 차단 — 확인 → 차단. 이후 그 사용자의 리뷰는 내 화면에서 사라진다.
+  Future<void> _onBlockUser(StoreReview r) async {
+    final user = ref.read(currentUserProvider);
+    if (user == null) {
+      await Navigator.of(context).push(
+        MaterialPageRoute(builder: (_) => const LoginScreen()),
+      );
+      return;
+    }
+    final lang = ref.read(menuLangProvider);
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (_) => AlertDialog(
+        title: Text(uiText('blockConfirmTitle', lang)),
+        content: Text(uiText('blockConfirmBody', lang)),
+        actions: [
+          TextButton(
+              onPressed: () => Navigator.of(context).pop(false),
+              child: Text(uiText('cancelAction', lang))),
+          TextButton(
+              onPressed: () => Navigator.of(context).pop(true),
+              style: TextButton.styleFrom(foregroundColor: CubedColors.caution),
+              child: Text(uiText('blockAction', lang))),
+        ],
+      ),
+    );
+    if (ok != true) return;
+    try {
+      await ref.read(storeRepositoryProvider).blockUser(user.id, r.userId);
+      ref.invalidate(storeReviewsProvider(r.storeId));
+      if (mounted) _toast(uiText('blockDone', lang));
+    } catch (_) {
+      if (mounted) _toast(uiText('reviewLoadFailed', lang));
+    }
+  }
+
   Future<void> _onReportMenuBoard() async {
     final user = ref.read(currentUserProvider);
     if (user == null) {
@@ -451,6 +519,8 @@ class _StoreDetailSheetState extends ConsumerState<StoreDetailSheet>
                                       isMine: myId != null && r.userId == myId,
                                       onEdit: _onWriteReview,
                                       onDelete: () => _onDeleteReview(r),
+                                      onReport: () => _onReportReview(r),
+                                      onBlock: () => _onBlockUser(r),
                                     ),
                                 ],
                               ),
@@ -888,12 +958,16 @@ class _ReviewTile extends StatelessWidget {
     this.isMine = false,
     this.onEdit,
     this.onDelete,
+    this.onReport,
+    this.onBlock,
   });
   final StoreReview review;
   final AppLang lang;
   final bool isMine;
   final VoidCallback? onEdit;
   final VoidCallback? onDelete;
+  final VoidCallback? onReport;
+  final VoidCallback? onBlock;
 
   String _relativeDate(DateTime d) {
     final diff = DateTime.now().difference(d);
@@ -938,6 +1012,30 @@ class _ReviewTile extends StatelessWidget {
                   label: uiText('deleteAction', lang),
                   onTap: onDelete,
                   danger: true),
+            ] else if (onReport != null || onBlock != null) ...[
+              const SizedBox(width: 2),
+              PopupMenuButton<String>(
+                icon: const Icon(Icons.more_horiz_rounded,
+                    size: 18, color: CubedColors.inkSoft),
+                padding: EdgeInsets.zero,
+                constraints: const BoxConstraints(minWidth: 36, minHeight: 28),
+                splashRadius: 18,
+                onSelected: (v) {
+                  if (v == 'report') onReport?.call();
+                  if (v == 'block') onBlock?.call();
+                },
+                itemBuilder: (_) => [
+                  if (onReport != null)
+                    PopupMenuItem(
+                        value: 'report',
+                        child: Text(uiText('reportAction', lang))),
+                  if (onBlock != null)
+                    PopupMenuItem(
+                        value: 'block',
+                        child: Text(uiText('blockAction', lang),
+                            style: const TextStyle(color: CubedColors.caution))),
+                ],
+              ),
             ],
           ]),
           if (review.content != null) ...[
@@ -972,6 +1070,57 @@ class _MineAction extends StatelessWidget {
                   color: danger ? CubedColors.caution : CubedColors.inkSoft)),
         ),
       );
+}
+
+/// 리뷰 신고 사유 선택 시트 — 선택 시 사유 코드를 pop 으로 반환.
+class _ReportReasonSheet extends StatelessWidget {
+  const _ReportReasonSheet({required this.lang});
+  final AppLang lang;
+
+  static const _reasons = [
+    ('spam', 'reasonSpam'),
+    ('abuse', 'reasonAbuse'),
+    ('sexual', 'reasonSexual'),
+    ('illegal', 'reasonIllegal'),
+    ('false_info', 'reasonFalseInfo'),
+    ('other', 'reasonOther'),
+  ];
+
+  @override
+  Widget build(BuildContext context) {
+    return SafeArea(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const SizedBox(height: 12),
+          const Center(child: _Handle()),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(20, 16, 20, 4),
+            child: Text(uiText('reportReviewTitle', lang),
+                style:
+                    const TextStyle(fontSize: 16, fontWeight: FontWeight.w800)),
+          ),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(20, 0, 20, 8),
+            child: Text(uiText('reportReasonHint', lang),
+                style:
+                    const TextStyle(fontSize: 13, color: CubedColors.inkSoft)),
+          ),
+          for (final (code, key) in _reasons)
+            ListTile(
+              title: Text(uiText(key, lang),
+                  style: const TextStyle(
+                      fontSize: 15, fontWeight: FontWeight.w600)),
+              trailing: const Icon(Icons.chevron_right_rounded,
+                  color: CubedColors.inkSoft),
+              onTap: () => Navigator.of(context).pop(code),
+            ),
+          const SizedBox(height: 8),
+        ],
+      ),
+    );
+  }
 }
 
 class _FavoriteButton extends StatelessWidget {
