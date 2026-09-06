@@ -9,6 +9,7 @@ import '../../core/theme.dart';
 import '../../data/models/product.dart';
 import '../../providers/providers.dart';
 import '../auth/login_screen.dart';
+import '../diary/diary_screen.dart';
 
 /// 저당 기록 페이지 — 먹은 저당 제품을 검색·선택해 기록하면 미션 포인트가 쌓인다.
 ///
@@ -30,7 +31,18 @@ class _RecordScreenState extends ConsumerState<RecordScreen> {
 
     return Scaffold(
       backgroundColor: CubedColors.bg,
-      appBar: AppBar(title: const Text('저당 기록')),
+      appBar: AppBar(
+        title: const Text('저당 기록'),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.calendar_month_rounded),
+            tooltip: '내가 먹은 기록',
+            onPressed: () => Navigator.of(context).push(
+              MaterialPageRoute(builder: (_) => const DiaryScreen()),
+            ),
+          ),
+        ],
+      ),
       body: Column(
         children: [
           const Padding(
