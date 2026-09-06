@@ -10,7 +10,6 @@ import '../../providers/providers.dart';
 import '../auth/login_screen.dart';
 import '../capture/capture_screen.dart';
 import '../chat/chat_screen.dart';
-import '../diary/diary_screen.dart';
 import '../record/record_entry_card.dart';
 import '../scan/scan_screen.dart';
 import '../search/search_screen.dart';
@@ -195,26 +194,14 @@ class HomeScreen extends ConsumerWidget {
                   const SizedBox(width: 12),
                   Expanded(
                     flex: 4,
-                    child: Column(
-                      children: [
-                        _CubeTile(
-                          glyph: CubeGlyph.ask,
-                          title: '물어보기',
-                          sub: '',
-                          onTap: () => Navigator.of(context).push(
-                            MaterialPageRoute(builder: (_) => const ChatScreen()),
-                          ),
-                        ),
-                        const SizedBox(height: 12),
-                        _CubeTile(
-                          glyph: CubeGlyph.log,
-                          title: '먹은 기록',
-                          sub: '',
-                          onTap: () => Navigator.of(context).push(
-                            MaterialPageRoute(builder: (_) => const DiaryScreen()),
-                          ),
-                        ),
-                      ],
+                    child: _CubeTile(
+                      glyph: CubeGlyph.ask,
+                      title: '물어보기',
+                      sub: '',
+                      tall: true,
+                      onTap: () => Navigator.of(context).push(
+                        MaterialPageRoute(builder: (_) => const ChatScreen()),
+                      ),
                     ),
                   ),
                 ],
@@ -222,8 +209,8 @@ class HomeScreen extends ConsumerWidget {
             ),
 
             const SizedBox(height: 12),
-            // 저당 기록 진입 — '먹은 기록' 타일 바로 아래에 둬
-            // '기록하기 + 돌아보기'가 한 묶음으로 읽히게. (진입점은 이 위젯 하나뿐이라 이동 쉬움)
+            // 저당 기록 단일 진입 — 카드는 기록(RecordScreen)을 열고,
+            // 거기서 '내가 먹은 기록(달력)'과 서로 오갈 수 있어 한 기능으로 묶인다.
             const Reveal(
               delayMs: 155,
               child: RecordEntryCard(),

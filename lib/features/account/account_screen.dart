@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../core/sugar_baselines.dart';
 import '../../core/theme.dart';
+import '../points/point_card.dart';
 import '../missions/missions_screen.dart';
 import '../points/points_history_screen.dart';
 import '../../providers/providers.dart';
@@ -165,12 +165,9 @@ class _LoggedIn extends ConsumerWidget {
           ]),
         ),
 
-        // 슈가포인트 히어로 카드
-        const Padding(
-          padding: EdgeInsets.fromLTRB(16, 12, 16, 0),
-          child: _PointsCard(),
-        ),
+        // 내 포인트 카드 — 미션으로 모은 실제 잔액(포인트 내역과 동일 소스).
         const SizedBox(height: 12),
+        const PointCard(),
 
         // 포인트를 본 다음 '어떻게 더 모으지'로 이어지도록 바로 아래에 둔다.
         _MenuTile(
@@ -222,76 +219,6 @@ class _LoggedIn extends ConsumerWidget {
           onTap: () => _confirmSignOut(context, ref),
         ),
       ],
-    );
-  }
-}
-
-/// 슈가포인트 — 다크 잉크 카드 위 라임 펀치 숫자.
-/// 1P = 일반 제품 대비 아낀 설탕 1g. 각설탕(3g) 환산으로 체감시킨다.
-class _PointsCard extends ConsumerWidget {
-  const _PointsCard();
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final async = ref.watch(myPointsProvider);
-    final points = async.valueOrNull;
-    final cubes = points == null ? null : sugarCubesFor(points);
-    return Container(
-      padding: const EdgeInsets.fromLTRB(22, 20, 22, 20),
-      decoration: BoxDecoration(
-        color: CubedColors.inkCard,
-        borderRadius: BorderRadius.circular(CubedFx.radiusHero),
-        boxShadow: CubedFx.shadowLift,
-      ),
-      child: Row(
-        children: [
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text('슈가포인트',
-                    style: TextStyle(
-                        fontSize: 13,
-                        fontWeight: FontWeight.w700,
-                        letterSpacing: 0.2,
-                        color: Colors.white70)),
-                const SizedBox(height: 6),
-                Text.rich(
-                  TextSpan(children: [
-                    TextSpan(
-                        text: points == null ? '—' : '$points',
-                        style: const TextStyle(
-                            fontSize: 34,
-                            fontWeight: FontWeight.w800,
-                            letterSpacing: -1,
-                            height: 1.1,
-                            color: CubedColors.lime)),
-                    const TextSpan(
-                        text: ' P',
-                        style: TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.w800,
-                            color: CubedColors.lime)),
-                  ]),
-                ),
-                const SizedBox(height: 6),
-                Text(
-                  async.hasError
-                      ? '포인트를 불러오지 못했어요'
-                      : points == null
-                          ? '아낀 설탕을 계산하고 있어요'
-                          : points == 0
-                              ? '저당 제품을 기록하면 아낀 설탕만큼 쌓여요'
-                              : '설탕 ${points}g 아꼈어요 · 각설탕 약 $cubes개',
-                  style: const TextStyle(fontSize: 13, color: Colors.white70),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(width: 12),
-          const SugarCubeStack(),
-        ],
-      ),
     );
   }
 }

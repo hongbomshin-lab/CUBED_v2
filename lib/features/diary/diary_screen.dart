@@ -8,6 +8,7 @@ import '../../core/theme.dart';
 import '../../data/models/food_log.dart';
 import '../../providers/providers.dart';
 import '../auth/login_screen.dart';
+import '../record/record_screen.dart';
 import 'log_image_url.dart';
 
 /// 먹은 기록 달력 — 월 뷰 + 선택일 리스트. 보기·스와이프 삭제 전용 (스펙 §3).
@@ -75,6 +76,28 @@ class _DiaryScreenState extends ConsumerState<DiaryScreen> {
       appBar: AppBar(title: const Text('내가 먹은 기록')),
       body: Column(
         children: [
+          // 기록 + 돌아보기를 한 곳에 — 여기서 바로 오늘 기록으로.
+          Padding(
+            padding: const EdgeInsets.fromLTRB(20, 12, 20, 8),
+            child: SizedBox(
+              width: double.infinity,
+              child: FilledButton.icon(
+                style: FilledButton.styleFrom(
+                  backgroundColor: CubedColors.brand,
+                  padding: const EdgeInsets.symmetric(vertical: 13),
+                ),
+                icon: const Icon(Icons.add_task_rounded, size: 18),
+                label: const Text('오늘 저당 기록하기',
+                    style: TextStyle(fontWeight: FontWeight.w800)),
+                onPressed: () async {
+                  await Navigator.of(context).push(
+                    MaterialPageRoute(builder: (_) => const RecordScreen()),
+                  );
+                  if (mounted) ref.invalidate(monthLogsProvider(_monthKey));
+                },
+              ),
+            ),
+          ),
           TableCalendar<FoodLog>(
             firstDay: DateTime(2026, 1, 1),
             lastDay: _lastDay,
