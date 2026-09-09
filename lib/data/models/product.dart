@@ -2,6 +2,10 @@ import 'sweetener.dart';
 
 /// 제품 (products 테이블) + 조인된 감미료 목록
 class Product {
+  /// OCR 제보 draft 제품의 임시 id. products 테이블에 아직 없는 상태라
+  /// FK가 걸린 커뮤니티(댓글·좋아요)는 이용 불가 — [isDraft] 로 분기한다.
+  static const draftProductId = 'ocr-temp';
+
   final String productId;
   final String name;
   final String? brand;
@@ -55,6 +59,9 @@ class Product {
   });
 
   List<String> get slugs => sweeteners.map((e) => e.slug).toList();
+
+  /// products 테이블에 아직 없는 OCR 제보 draft 인지. 커뮤니티(댓글·좋아요) 분기용.
+  bool get isDraft => productId == draftProductId;
 
   /// 한 단위 표현: "1캔(355ml)" / "1개(50g)"
   String get unitDesc {
