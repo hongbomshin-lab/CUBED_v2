@@ -71,6 +71,7 @@ class SocialSection extends ConsumerWidget {
                 await ref.read(socialRepositoryProvider)
                     .addComment(productId, body, nickname: nick);
                 ref.invalidate(commentsProvider(productId));
+                ref.invalidate(myCommentsProvider); // 마이페이지 '작성한 댓글' 갱신
               } catch (e) {
                 if (context.mounted) {
                   ScaffoldMessenger.of(context)
@@ -104,10 +105,23 @@ class SocialSection extends ConsumerWidget {
                 return _CommentTile(
                   comment: c,
                   mine: mine,
+                  onEdit: mine
+                      ? () async {
+                          final edited =
+                              await _editCommentDialog(context, c.body);
+                          if (edited == null || edited == c.body) return;
+                          await ref
+                              .read(socialRepositoryProvider)
+                              .updateComment(c.id, edited);
+                          ref.invalidate(commentsProvider(productId));
+                          ref.invalidate(myCommentsProvider);
+                        }
+                      : null,
                   onDelete: mine
                       ? () async {
                           await ref.read(socialRepositoryProvider).deleteComment(c.id);
                           ref.invalidate(commentsProvider(productId));
+                          ref.invalidate(myCommentsProvider);
                         }
                       : null,
                 );
@@ -242,10 +256,46 @@ class _CommentInputState extends State<_CommentInput> {
   }
 }
 
+/// 코멘트 수정 다이얼로그 — 수정된 내용을 반환(취소/무변경 시 null).
+Future<String?> _editCommentDialog(BuildContext context, String initial) async {
+  final ctrl = TextEditingController(text: initial);
+  final result = await showDialog<String>(
+    context: context,
+    builder: (_) => AlertDialog(
+      title: const Text('댓글 수정'),
+      content: TextField(
+        controller: ctrl,
+        autofocus: true,
+        maxLength: 500,
+        minLines: 1,
+        maxLines: 4,
+        decoration: const InputDecoration(counterText: ''),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(context),
+          child: const Text('취소'),
+        ),
+        TextButton(
+          onPressed: () {
+            final t = ctrl.text.trim();
+            Navigator.pop(context, t.isEmpty ? null : t);
+          },
+          child: const Text('저장'),
+        ),
+      ],
+    ),
+  );
+  ctrl.dispose();
+  return result;
+}
+
 class _CommentTile extends StatelessWidget {
-  const _CommentTile({required this.comment, required this.mine, this.onDelete});
+  const _CommentTile(
+      {required this.comment, required this.mine, this.onEdit, this.onDelete});
   final Comment comment;
   final bool mine;
+  final VoidCallback? onEdit;
   final VoidCallback? onDelete;
 
   @override
@@ -286,6 +336,15 @@ class _CommentTile extends StatelessWidget {
               ],
             ),
           ),
+          if (onEdit != null)
+            GestureDetector(
+              onTap: onEdit,
+              child: const Padding(
+                padding: EdgeInsets.only(left: 8),
+                child: Icon(Icons.edit_rounded,
+                    size: 15, color: CubedColors.inkSoft),
+              ),
+            ),
           if (onDelete != null)
             GestureDetector(
               onTap: onDelete,

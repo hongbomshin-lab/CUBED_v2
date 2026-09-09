@@ -80,8 +80,9 @@ class _ReviewSheetState extends ConsumerState<ReviewSheet> {
             isRecommended: _recommend!,
             content: _content.text,
           );
-      // 리뷰 목록 갱신
+      // 리뷰 목록 갱신 — 매장 상세 + 마이페이지('작성한 리뷰') 둘 다.
       ref.invalidate(storeReviewsProvider(widget.storeId));
+      ref.invalidate(myReviewsProvider);
       if (!mounted) return;
       Navigator.of(context).pop(true);
       _toast(_editing ? '리뷰를 수정했어요' : '리뷰를 등록했어요');
