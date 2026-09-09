@@ -126,6 +126,29 @@ st, r = req('PATCH', f'/rest/v1/product_comments?id=eq.{CA}', A_tok,
 unchanged = (body_of(CA) or {}).get('body') == 'A가 수정한 댓글'
 check('15 빈 body 수정 서버 거부 + 원본 유지', st >= 400 and unchanged, f'{st} {r}')
 
+# ── 마이페이지 수정/삭제 → 제품 상세 목록 동기화(교차 반영) ──
+def in_product_list(cid, body=None):
+    st, l = req('GET', f'/rest/v1/product_comments?product_id=eq.{PID}&select=id,body', ANON)
+    row = next((x for x in (l or []) if x['id'] == cid), None)
+    return row is not None and (body is None or row['body'] == body)
+
+def in_my_list(cid, tok, uid, body=None):
+    st, l = req('GET', f'/rest/v1/product_comments?user_id=eq.{uid}&select=id,body', tok)
+    row = next((x for x in (l or []) if x['id'] == cid), None)
+    return row is not None and (body is None or row['body'] == body)
+
+# 16 마이페이지 수정 → 제품 댓글 목록에 새 내용 반영
+req('PATCH', f'/rest/v1/product_comments?id=eq.{CA}', A_tok, {'body': '동기화된 수정본'})
+check('16 수정이 제품 댓글 목록에 반영', in_product_list(CA, '동기화된 수정본'))
+
+# 17 마이페이지 수정 → 마이 목록에도 새 내용 반영
+check('17 수정이 마이 목록에 반영', in_my_list(CA, A_tok, A, '동기화된 수정본'))
+
+# 18 마이페이지 삭제 → 제품 목록 + 마이 목록 양쪽에서 제거
+req('DELETE', f'/rest/v1/product_comments?id=eq.{CA}', A_tok)
+check('18 삭제가 양쪽 목록에서 제거',
+      not in_product_list(CA) and not in_my_list(CA, A_tok, A))
+
 # 정리
 req('DELETE', f'/rest/v1/product_comments?user_id=eq.{A}', A_tok)
 req('DELETE', f'/rest/v1/product_comments?user_id=eq.{B}', B_tok)

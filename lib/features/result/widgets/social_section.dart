@@ -5,6 +5,7 @@ import '../../../core/theme.dart';
 import '../../../data/models/comment.dart';
 import '../../../providers/providers.dart';
 import '../../auth/login_screen.dart';
+import '../../social/comment_edit_sheet.dart';
 
 /// 좋아요 + 코멘트 섹션 — 카카오 로그인한 사용자만 작성 가능(조회는 누구나).
 class SocialSection extends ConsumerWidget {
@@ -107,8 +108,8 @@ class SocialSection extends ConsumerWidget {
                   mine: mine,
                   onEdit: mine
                       ? () async {
-                          final edited =
-                              await _editCommentDialog(context, c.body);
+                          final edited = await showCommentEditSheet(context,
+                              initial: c.body);
                           if (edited == null || edited == c.body) return;
                           try {
                             await ref
@@ -126,9 +127,19 @@ class SocialSection extends ConsumerWidget {
                       : null,
                   onDelete: mine
                       ? () async {
-                          await ref.read(socialRepositoryProvider).deleteComment(c.id);
-                          ref.invalidate(commentsProvider(productId));
-                          ref.invalidate(myCommentsProvider);
+                          if (!await confirmDeleteComment(context)) return;
+                          try {
+                            await ref
+                                .read(socialRepositoryProvider)
+                                .deleteComment(c.id);
+                            ref.invalidate(commentsProvider(productId));
+                            ref.invalidate(myCommentsProvider);
+                          } catch (e) {
+                            if (context.mounted) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(content: Text('삭제에 실패했어요: $e')));
+                            }
+                          }
                         }
                       : null,
                 );
@@ -261,40 +272,6 @@ class _CommentInputState extends State<_CommentInput> {
       ],
     );
   }
-}
-
-/// 코멘트 수정 다이얼로그 — 수정된 내용을 반환(취소/무변경 시 null).
-Future<String?> _editCommentDialog(BuildContext context, String initial) async {
-  final ctrl = TextEditingController(text: initial);
-  final result = await showDialog<String>(
-    context: context,
-    builder: (_) => AlertDialog(
-      title: const Text('댓글 수정'),
-      content: TextField(
-        controller: ctrl,
-        autofocus: true,
-        maxLength: 500,
-        minLines: 1,
-        maxLines: 4,
-        decoration: const InputDecoration(counterText: ''),
-      ),
-      actions: [
-        TextButton(
-          onPressed: () => Navigator.pop(context),
-          child: const Text('취소'),
-        ),
-        TextButton(
-          onPressed: () {
-            final t = ctrl.text.trim();
-            Navigator.pop(context, t.isEmpty ? null : t);
-          },
-          child: const Text('저장'),
-        ),
-      ],
-    ),
-  );
-  ctrl.dispose();
-  return result;
 }
 
 class _CommentTile extends StatelessWidget {
