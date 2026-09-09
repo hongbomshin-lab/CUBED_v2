@@ -110,11 +110,18 @@ class SocialSection extends ConsumerWidget {
                           final edited =
                               await _editCommentDialog(context, c.body);
                           if (edited == null || edited == c.body) return;
-                          await ref
-                              .read(socialRepositoryProvider)
-                              .updateComment(c.id, edited);
-                          ref.invalidate(commentsProvider(productId));
-                          ref.invalidate(myCommentsProvider);
+                          try {
+                            await ref
+                                .read(socialRepositoryProvider)
+                                .updateComment(c.id, edited);
+                            ref.invalidate(commentsProvider(productId));
+                            ref.invalidate(myCommentsProvider);
+                          } catch (e) {
+                            if (context.mounted) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(content: Text('수정에 실패했어요: $e')));
+                            }
+                          }
                         }
                       : null,
                   onDelete: mine
