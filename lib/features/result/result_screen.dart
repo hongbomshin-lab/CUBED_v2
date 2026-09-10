@@ -119,11 +119,15 @@ class _Body extends ConsumerWidget {
         const SizedBox(height: 20),
         _AskAiButton(product: p),
 
-        // ── 4층: 커뮤니티
-        const SizedBox(height: 28),
-        const Divider(height: 1, color: CubedColors.line),
-        const SizedBox(height: 20),
-        SocialSection(productId: p.productId),
+        // ── 4층: 커뮤니티 (좋아요·댓글)
+        // OCR 제보 draft(products 미등록)는 FK가 걸려 참여 불가 → 섹션을 숨긴다.
+        // (검수 후 정식 등록되면 노출)
+        if (!p.isDraft) ...[
+          const SizedBox(height: 28),
+          const Divider(height: 1, color: CubedColors.line),
+          const SizedBox(height: 20),
+          SocialSection(productId: p.productId),
+        ],
 
         // 검수 안내
         if (!p.verified) ...[

@@ -78,6 +78,11 @@ class SocialRepository {
     await _db.from('product_comments').delete().eq('id', id);
   }
 
+  /// 코멘트 수정 (본인 것만 — RLS 로 강제).
+  Future<void> updateComment(int id, String body) async {
+    await _db.from('product_comments').update({'body': body}).eq('id', id);
+  }
+
   /// 내가 작성한 댓글 전체 (최신순) — 제품명 포함. 마이페이지용.
   Future<List<MyComment>> myComments(String userId, {int limit = 100}) async {
     final rows = await _db

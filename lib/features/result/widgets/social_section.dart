@@ -5,6 +5,7 @@ import '../../../core/theme.dart';
 import '../../../data/models/comment.dart';
 import '../../../providers/providers.dart';
 import '../../auth/login_screen.dart';
+import '../../social/comment_edit_sheet.dart';
 
 /// 좋아요 + 코멘트 섹션 — 카카오 로그인한 사용자만 작성 가능(조회는 누구나).
 class SocialSection extends ConsumerWidget {
@@ -71,6 +72,7 @@ class SocialSection extends ConsumerWidget {
                 await ref.read(socialRepositoryProvider)
                     .addComment(productId, body, nickname: nick);
                 ref.invalidate(commentsProvider(productId));
+                ref.invalidate(myCommentsProvider); // 마이페이지 '작성한 댓글' 갱신
               } catch (e) {
                 if (context.mounted) {
                   ScaffoldMessenger.of(context)
@@ -104,10 +106,40 @@ class SocialSection extends ConsumerWidget {
                 return _CommentTile(
                   comment: c,
                   mine: mine,
+                  onEdit: mine
+                      ? () async {
+                          final edited = await showCommentEditSheet(context,
+                              initial: c.body);
+                          if (edited == null || edited == c.body) return;
+                          try {
+                            await ref
+                                .read(socialRepositoryProvider)
+                                .updateComment(c.id, edited);
+                            ref.invalidate(commentsProvider(productId));
+                            ref.invalidate(myCommentsProvider);
+                          } catch (e) {
+                            if (context.mounted) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(content: Text('수정에 실패했어요: $e')));
+                            }
+                          }
+                        }
+                      : null,
                   onDelete: mine
                       ? () async {
-                          await ref.read(socialRepositoryProvider).deleteComment(c.id);
-                          ref.invalidate(commentsProvider(productId));
+                          if (!await confirmDeleteComment(context)) return;
+                          try {
+                            await ref
+                                .read(socialRepositoryProvider)
+                                .deleteComment(c.id);
+                            ref.invalidate(commentsProvider(productId));
+                            ref.invalidate(myCommentsProvider);
+                          } catch (e) {
+                            if (context.mounted) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(content: Text('삭제에 실패했어요: $e')));
+                            }
+                          }
                         }
                       : null,
                 );
@@ -243,9 +275,11 @@ class _CommentInputState extends State<_CommentInput> {
 }
 
 class _CommentTile extends StatelessWidget {
-  const _CommentTile({required this.comment, required this.mine, this.onDelete});
+  const _CommentTile(
+      {required this.comment, required this.mine, this.onEdit, this.onDelete});
   final Comment comment;
   final bool mine;
+  final VoidCallback? onEdit;
   final VoidCallback? onDelete;
 
   @override
@@ -286,6 +320,15 @@ class _CommentTile extends StatelessWidget {
               ],
             ),
           ),
+          if (onEdit != null)
+            GestureDetector(
+              onTap: onEdit,
+              child: const Padding(
+                padding: EdgeInsets.only(left: 8),
+                child: Icon(Icons.edit_rounded,
+                    size: 15, color: CubedColors.inkSoft),
+              ),
+            ),
           if (onDelete != null)
             GestureDetector(
               onTap: onDelete,

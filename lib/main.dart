@@ -36,6 +36,13 @@ class CubedApp extends StatelessWidget {
       title: 'ZERO DOT',
       debugShowCheckedModeBanner: false,
       theme: buildCubedTheme(),
+      // 전역: 빈 곳을 탭하면 키보드/포커스 해제. TextField·버튼 등은 자식이
+      // 탭을 먼저 가져가므로 영향 없고, 여백을 탭할 때만 포커스가 풀린다.
+      builder: (context, child) => GestureDetector(
+        behavior: HitTestBehavior.translucent,
+        onTap: () => FocusManager.instance.primaryFocus?.unfocus(),
+        child: child ?? const SizedBox.shrink(),
+      ),
       home: const MainShell(),
     );
   }

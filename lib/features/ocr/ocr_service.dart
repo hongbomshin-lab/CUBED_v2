@@ -37,7 +37,7 @@ class OcrResult {
             ))
         .toList();
     final parsedProduct = Product(
-      productId: 'ocr-temp',
+      productId: Product.draftProductId,
       name: (m['name'] as String?) ?? '촬영한 제품',
       brand: m['brand'] as String?,
       category: m['category'] as String?,
