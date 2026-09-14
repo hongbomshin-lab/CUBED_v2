@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../../core/explain.dart';
 import '../../core/product_thumb.dart';
@@ -295,12 +296,35 @@ class _NumbersSection extends StatelessWidget {
                 style: const TextStyle(
                     color: CubedColors.inkSoft, fontSize: 12, height: 1.5)),
           ),
+          // 스토어 정책(1.4.1): 건강 정보의 판정 기준·출처를 앱 안에서 접근 가능하게.
+          Align(
+            alignment: Alignment.centerLeft,
+            child: TextButton(
+              style: TextButton.styleFrom(
+                padding: EdgeInsets.zero,
+                minimumSize: const Size(0, 32),
+                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+              ),
+              onPressed: () => launchUrl(Uri.parse(kMedicalSourcesUrl),
+                  mode: LaunchMode.externalApplication),
+              child: const Text('판정 기준 및 출처',
+                  style: TextStyle(
+                      color: CubedColors.inkSoft,
+                      fontSize: 11,
+                      decoration: TextDecoration.underline)),
+            ),
+          ),
           const SizedBox(height: 8),
         ],
       ),
     );
   }
 }
+
+/// 혈당 영향 등급의 판정 기준·근거 문헌 공개 페이지 (Notion 호스팅).
+/// 스토어 심사 1.4.1(건강 정보 출처 표기) 대응 — 개인정보처리방침과 같은 방식.
+const kMedicalSourcesUrl =
+    'https://atlantic-whale-582.notion.site/ZERO-DOT-3db28df6a5b980d58c93ea3880e7c347';
 
 /// AI 채팅 딥링크 — 제품명을 들고 질문과 함께 진입
 class _AskAiButton extends StatelessWidget {
