@@ -324,7 +324,7 @@ class _NumbersSection extends StatelessWidget {
 /// 혈당 영향 등급의 판정 기준·근거 문헌 공개 페이지 (Notion 호스팅).
 /// 스토어 심사 1.4.1(건강 정보 출처 표기) 대응 — 개인정보처리방침과 같은 방식.
 const kMedicalSourcesUrl =
-    'https://atlantic-whale-582.notion.site/ZERO-DOT-3db28df6a5b980d58c93ea3880e7c347';
+    'https://atlantic-whale-582.notion.site/ZERO-DOT-3db28df6a5b980d58c93ea3880e7c347?pvs=73';
 
 /// AI 채팅 딥링크 — 제품명을 들고 질문과 함께 진입
 class _AskAiButton extends StatelessWidget {

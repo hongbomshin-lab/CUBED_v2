@@ -110,7 +110,7 @@ ZERO DOT(저당맵)는 가공식품의 **영양성분 표기값**을 바탕으�
 내부 메모 (공개 페이지에는 붙여넣지 않음)
 - 용도: Apple 심사 1.4.1(건강 정보 출처 표기) 대응.
 - 호스팅: Notion 공개 페이지
-  https://atlantic-whale-582.notion.site/ZERO-DOT-3db28df6a5b980d58c93ea3880e7c347
+  https://atlantic-whale-582.notion.site/ZERO-DOT-3db28df6a5b980d58c93ea3880e7c347?pvs=73
 - 앱 연동: 분석 결과 화면 "숫자로 보기" 하단 '판정 기준 및 출처' 링크
   (result_screen.dart, kMedicalSourcesUrl).
 - 참고문헌 7건 전부 실존 검증 완료(2026-09-15). 문서 내용은 앱 rulebook.dart·
