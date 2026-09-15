@@ -121,4 +121,20 @@ class AuthRepository {
     if (name is String && name.trim().isNotEmpty) return name.trim();
     return '회원';
   }
+
+  /// 현재 세션의 로그인 방식 표시 문구. appMetadata.provider 는
+  /// 'apple' · 'kakao' · 'email' 중 하나가 들어온다(Supabase 규약).
+  String providerLabel() {
+    final p = currentUser?.appMetadata['provider'];
+    switch (p) {
+      case 'apple':
+        return 'Apple 로그인됨';
+      case 'kakao':
+        return '카카오 로그인됨';
+      case 'email':
+        return '이메일 로그인됨';
+      default:
+        return '로그인됨';
+    }
+  }
 }
