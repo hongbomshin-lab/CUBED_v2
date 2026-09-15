@@ -49,11 +49,30 @@ class AuthRepository {
       throw const AuthException('Apple 로그인에서 ID 토큰을 받지 못했습니다.');
     }
 
-    return _db.auth.signInWithIdToken(
+    final res = await _db.auth.signInWithIdToken(
       provider: OAuthProvider.apple,
       idToken: idToken,
       nonce: rawNonce,
     );
+
+    // Apple은 최초 인증 1회에만 이름을 준다(이후 로그인은 항상 null).
+    // identityToken에는 이름이 없으므로 여기서 저장하지 않으면 영영 받지 못한다.
+    // 이메일 가입과 같은 키(name·nickname)로 넣어 마이페이지 표시를 통일한다.
+    final name = [credential.familyName, credential.givenName]
+        .whereType<String>()
+        .join()
+        .trim();
+    if (name.isNotEmpty) {
+      try {
+        await _db.auth.updateUser(
+          UserAttributes(data: {'name': name, 'nickname': name}),
+        );
+      } catch (_) {
+        // 이름 저장 실패가 로그인 자체를 막지는 않는다.
+      }
+    }
+
+    return res;
   }
 
   /// 회원가입 (이메일=아이디, 비밀번호, 닉네임). 이메일 확인이 꺼져 있으면 즉시 세션 수립.
@@ -101,5 +120,21 @@ class AuthRepository {
     final name = (m['name'] ?? m['nickname'] ?? m['full_name']);
     if (name is String && name.trim().isNotEmpty) return name.trim();
     return '회원';
+  }
+
+  /// 현재 세션의 로그인 방식 표시 문구. appMetadata.provider 는
+  /// 'apple' · 'kakao' · 'email' 중 하나가 들어온다(Supabase 규약).
+  String providerLabel() {
+    final p = currentUser?.appMetadata['provider'];
+    switch (p) {
+      case 'apple':
+        return 'Apple 로그인됨';
+      case 'kakao':
+        return '카카오 로그인됨';
+      case 'email':
+        return '이메일 로그인됨';
+      default:
+        return '로그인됨';
+    }
   }
 }

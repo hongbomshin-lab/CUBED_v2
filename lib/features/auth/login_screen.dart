@@ -21,6 +21,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   final _nick = TextEditingController();
   bool _busy = false;
   String? _error;
+  bool _closed = false; // 세션 이벤트가 여러 번 와도 pop 은 1회만
 
   @override
   void dispose() {
@@ -121,9 +122,13 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
 
   @override
   Widget build(BuildContext context) {
-    // 로그인 성공 시 자동으로 닫기
+    // 로그인 성공 시 자동으로 닫기.
+    // 세션 수립 직후 프로필 갱신(Apple 이름 저장 등)으로 USER_UPDATED 가 한 번 더
+    // 오면 pop 이 중복 실행되어 아래 화면까지 닫히므로(검은 화면), 최초 1회만 닫는다.
     ref.listen(currentUserProvider, (prev, next) {
-      if (next != null && mounted) Navigator.of(context).pop(true);
+      if (next == null || _closed || !mounted) return;
+      _closed = true;
+      Navigator.of(context).pop(true);
     });
 
     return Scaffold(

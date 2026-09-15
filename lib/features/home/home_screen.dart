@@ -334,7 +334,7 @@ class _AccountChip extends ConsumerWidget {
                     const Icon(Icons.person_rounded, color: CubedColors.brand),
                 title: Text(auth.displayName(),
                     style: const TextStyle(fontWeight: FontWeight.w700)),
-                subtitle: const Text('카카오 로그인됨'),
+                subtitle: Text(auth.providerLabel()),
               ),
               ListTile(
                 leading: const Icon(Icons.logout_rounded),
